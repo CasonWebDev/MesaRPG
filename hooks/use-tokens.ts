@@ -21,6 +21,7 @@ interface UseTokensReturn {
   clearSelection: () => void
   moveToken: (tokenId: string, position: { top: number; left: number }) => void
   createToken: (tokenData: Omit<TokenData, 'id'>) => Promise<void>
+  updateToken: (tokenId: string, updates: Partial<TokenData>) => Promise<void>
   removeToken: (tokenId: string) => void
   refreshTokens: () => Promise<void>
 }
@@ -35,7 +36,7 @@ export function useTokens({
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  const { socket, tokenMoves, clearTokenMoves, isConnected } = useSocket(campaignId)
+  const { socket, tokenMoves, tokenCreations, tokenUpdates, tokenRefreshes, tokensCleared, clearTokenMoves, clearTokenCreations, clearTokenUpdates, clearTokenRefreshes, clearTokensCleared, isConnected } = useSocket(campaignId)
 
   // Carregar tokens do servidor
   const loadTokens = useCallback(async () => {
@@ -80,6 +81,18 @@ export function useTokens({
 
       setTokens(tokensWithIds)
       console.log('✅ Tokens carregados com sucesso:', tokensWithIds.length)
+      
+      // Debug: Check if tokens have size properties after loading
+      tokensWithIds.forEach(token => {
+        if (token.tokenSize || token.sizeType) {
+          console.log(`📏 Client: Token loaded with size:`, {
+            id: token.id,
+            name: token.name,
+            tokenSize: token.tokenSize,
+            sizeType: token.sizeType
+          })
+        }
+      })
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Erro desconhecido'
       setError(errorMessage)
@@ -117,6 +130,100 @@ export function useTokens({
       clearTokenMoves()
     }
   }, [tokenMoves, clearTokenMoves])
+
+  // Processar criações de tokens recebidas via WebSocket
+  useEffect(() => {
+    if (tokenCreations.length > 0) {
+      tokenCreations.forEach(tokenCreation => {
+        console.log('🎯 Processing token creation from WebSocket:', tokenCreation.token)
+        setTokens(prevTokens => {
+          // Verificar se o token já existe (evitar duplicatas)
+          const exists = prevTokens.some(token => token.id === tokenCreation.token.id)
+          if (exists) {
+            console.log('Token already exists, skipping:', tokenCreation.token.id)
+            return prevTokens
+          }
+          
+          console.log('Adding new token to local state:', tokenCreation.token.id)
+          return [...prevTokens, tokenCreation.token]
+        })
+      })
+      
+      // Limpar criações processadas
+      clearTokenCreations()
+    }
+  }, [tokenCreations, clearTokenCreations])
+
+  // Processar atualizações de tokens recebidas via WebSocket
+  useEffect(() => {
+    if (tokenUpdates.length > 0) {
+      tokenUpdates.forEach(tokenUpdate => {
+        console.log('🔄 Processing token update from WebSocket:', tokenUpdate)
+        
+        // Debug: Check if this is a size update
+        const isSizeUpdate = tokenUpdate.updates?.tokenSize || tokenUpdate.updates?.sizeType
+        if (isSizeUpdate) {
+          console.log(`📏 Client: Size update for token ${tokenUpdate.tokenId}:`, {
+            tokenSize: tokenUpdate.updates.tokenSize,
+            sizeType: tokenUpdate.updates.sizeType
+          })
+        }
+        
+        // Debug: Check if this is a large avatar update
+        const hasLargeAvatar = tokenUpdate.updates?.src && tokenUpdate.updates.src.length > 1000
+        if (hasLargeAvatar) {
+          console.log(`🖼️ Client: Large avatar update for token ${tokenUpdate.tokenId}, size: ${tokenUpdate.updates.src.length}`)
+        }
+        
+        setTokens(prevTokens => {
+          const updatedTokens = prevTokens.map(token => 
+            token.id === tokenUpdate.tokenId 
+              ? { ...token, ...tokenUpdate.updates }
+              : token
+          )
+          
+          if (hasLargeAvatar) {
+            const updatedToken = updatedTokens.find(t => t.id === tokenUpdate.tokenId)
+            console.log(`🖼️ Client: Token updated with avatar, final src length: ${updatedToken?.src?.length || 0}`)
+          }
+          
+          return updatedTokens
+        })
+      })
+      
+      // Limpar atualizações processadas
+      clearTokenUpdates()
+    }
+  }, [tokenUpdates, clearTokenUpdates])
+
+  // Processar notificações de refresh de tokens (para dados grandes)
+  useEffect(() => {
+    if (tokenRefreshes.length > 0) {
+      tokenRefreshes.forEach(tokenRefresh => {
+        console.log('🔔 Processing token refresh notification from WebSocket:', tokenRefresh)
+        
+        // Reload tokens from server to get updated data including large avatars
+        loadTokens()
+      })
+      
+      // Limpar notificações processadas
+      clearTokenRefreshes()
+    }
+  }, [tokenRefreshes, clearTokenRefreshes, loadTokens])
+
+  // Processar limpeza de tokens recebida via WebSocket
+  useEffect(() => {
+    if (tokensCleared.length > 0) {
+      tokensCleared.forEach(tokensClear => {
+        console.log('🧹 Processing tokens clear from WebSocket:', tokensClear)
+        console.log(`Clearing all tokens for campaign ${tokensClear.campaignId} by ${tokensClear.userName}`)
+        setTokens([])
+      })
+      
+      // Limpar eventos processados
+      clearTokensCleared()
+    }
+  }, [tokensCleared, clearTokensCleared])
 
   // Seleção de tokens
   const selectToken = useCallback((tokenId: string) => {
@@ -172,39 +279,47 @@ export function useTokens({
         id: `token-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
       }
 
-      // Atualizar localmente primeiro
+      console.log('🎯 Creating token:', newToken)
+
+      // Atualizar localmente primeiro (optimistic update)
       setTokens(prevTokens => [...prevTokens, newToken])
 
-      // Salvar no servidor
-      const currentTokens = [...tokens, newToken]
-      
-      const response = await fetch(`/api/campaigns/${campaignId}/game-state`, {
-        method: 'POST',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          tokens: currentTokens
-        })
-      })
-
-      if (!response.ok) {
-        // Reverter mudança local se falhou
-        setTokens(prevTokens => prevTokens.filter(t => t.id !== newToken.id))
-        throw new Error('Erro ao salvar token no servidor')
-      }
-
-      // Notificar outros usuários via WebSocket
+      // Enviar via WebSocket para persistência e sincronização
       if (socket && isConnected) {
-        socket.emit('game:update-state', {
+        console.log('📡 Sending token_create via WebSocket')
+        socket.emit('token_create', {
           campaignId,
-          gameState: { tokens: currentTokens }
+          tokenData: newToken
         })
+      } else {
+        console.log('❌ No socket connection, falling back to HTTP')
+        // Fallback para HTTP se WebSocket não estiver disponível
+        const currentTokens = [...tokens, newToken]
+        
+        const response = await fetch(`/api/campaigns/${campaignId}/game-state`, {
+          method: 'POST',
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            tokens: currentTokens
+          })
+        })
+
+        if (!response.ok) {
+          // Reverter mudança local se falhou
+          setTokens(prevTokens => prevTokens.filter(t => t.id !== newToken.id))
+          throw new Error('Erro ao salvar token no servidor')
+        }
       }
+
+      console.log('✅ Token creation initiated successfully')
 
     } catch (error) {
-      console.error('Erro ao criar token:', error)
+      console.error('❌ Erro ao criar token:', error)
+      // Reverter mudança local em caso de erro
+      setTokens(prevTokens => prevTokens.filter(t => t.id !== newToken.id))
       throw error
     }
   }, [tokens, campaignId, socket, isConnected])
@@ -264,6 +379,74 @@ export function useTokens({
     }
   }, [tokens, userRole, userId, campaignId, socket, isConnected])
 
+  // Atualizar token
+  const updateToken = useCallback(async (tokenId: string, updates: Partial<TokenData>) => {
+    try {
+      const token = tokens.find(t => t.id === tokenId)
+      if (!token) {
+        throw new Error('Token não encontrado')
+      }
+
+      // Criar token atualizado
+      const updatedToken = { ...token, ...updates }
+
+      console.log('🎯 Updating token:', { tokenId, updates })
+
+      // Atualizar localmente primeiro (optimistic update)
+      setTokens(prevTokens => 
+        prevTokens.map(t => 
+          t.id === tokenId 
+            ? updatedToken
+            : t
+        )
+      )
+
+      // Always use WebSocket for token updates (players can't use HTTP API)
+      if (socket && isConnected) {
+        // Check if updates contain large data (base64 images)
+        const hasLargeData = JSON.stringify(updates).length > 50000 // 50KB limit
+        
+        if (hasLargeData) {
+          console.log('🖼️ Large data detected, using WebSocket notification approach for players')
+          
+          // Send lightweight notification via WebSocket for sync
+          console.log('📡 Sending lightweight update notification via WebSocket')
+          socket.emit('token_update_notification', {
+            campaignId,
+            tokenId,
+            updateType: 'character_link',
+            characterId: updates.characterId,
+            characterName: updates.name,
+            characterType: updates.characterType
+          })
+        } else {
+          console.log('📡 Sending token_update via WebSocket')
+          socket.emit('token_update', {
+            campaignId,
+            tokenId,
+            updates: updates
+          })
+        }
+      } else {
+        console.log('❌ No socket connection available')
+        throw new Error('Conexão WebSocket necessária para atualizar tokens')
+      }
+
+      console.log('✅ Token update initiated successfully')
+
+    } catch (error) {
+      console.error('❌ Erro ao atualizar token:', error)
+      // Reverter mudança local em caso de erro
+      const originalToken = tokens.find(t => t.id === tokenId)
+      if (originalToken) {
+        setTokens(prevTokens => 
+          prevTokens.map(t => t.id === tokenId ? originalToken : t)
+        )
+      }
+      throw error
+    }
+  }, [tokens, campaignId, socket, isConnected])
+
   return {
     tokens,
     selectedTokenIds,
@@ -274,6 +457,7 @@ export function useTokens({
     clearSelection,
     moveToken,
     createToken,
+    updateToken,
     removeToken,
     refreshTokens: loadTokens
   }

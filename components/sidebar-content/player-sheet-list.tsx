@@ -8,17 +8,39 @@ import { ContentListItem } from "./content-list-item"
 import { useCharacters } from "@/hooks/use-characters"
 
 function getCharacterAvatar(character: any) {
-  if (!character.template?.fields) return null
+  if (!character.template?.fields) {
+    // Se não há template, usar placeholder baseado no tipo
+    return getTypePlaceholder(character.type)
+  }
   
   const templateFields = Array.isArray(character.template.fields) 
     ? character.template.fields 
     : (typeof character.template.fields === 'string' ? JSON.parse(character.template.fields) : [])
   
   const imageField = templateFields.find((field: any) => field.type === 'image')
-  if (!imageField) return null
+  if (!imageField) {
+    // Se não há campo de imagem, usar placeholder baseado no tipo
+    return getTypePlaceholder(character.type)
+  }
   
   const characterData = typeof character.data === 'string' ? JSON.parse(character.data) : character.data
-  return characterData[imageField.name] || null
+  const savedAvatar = characterData[imageField.name]
+  
+  // Se há avatar salvo, usar ele; senão usar placeholder baseado no tipo
+  return savedAvatar || getTypePlaceholder(character.type)
+}
+
+function getTypePlaceholder(type: string) {
+  switch (type) {
+    case 'PC':
+      return '/placeholder-PC-token.png'
+    case 'NPC':
+      return '/placeholder-NPC-token.png'
+    case 'CREATURE':
+      return '/placeholder-Creature-token.png'
+    default:
+      return '/placeholder.svg'
+  }
 }
 
 function getCharacterSummary(character: any) {

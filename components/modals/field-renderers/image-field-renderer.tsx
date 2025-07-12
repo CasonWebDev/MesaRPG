@@ -3,7 +3,8 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
-import { Upload, X, Image as ImageIcon } from "lucide-react"
+import { Upload, X, Image as ImageIcon, AlertTriangle } from "lucide-react"
+import { useImageCompression, formatBytes } from "@/hooks/use-image-compression"
 
 interface ImageFieldRendererProps {
   field: any
@@ -13,6 +14,7 @@ interface ImageFieldRendererProps {
 
 export function ImageFieldRenderer({ field, value, onChange }: ImageFieldRendererProps) {
   const [isDragging, setIsDragging] = useState(false)
+  const { isProcessing, compressionInfo, compressImage, clearCompressionInfo } = useImageCompression()
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault()
@@ -41,14 +43,19 @@ export function ImageFieldRenderer({ field, value, onChange }: ImageFieldRendere
     }
   }
 
-  const handleFileUpload = (file: File) => {
-    // Por enquanto, vamos usar URL local para desenvolvimento
-    // Em produção, isso seria enviado para um serviço de upload
-    const reader = new FileReader()
-    reader.onload = (e) => {
-      onChange(e.target?.result as string)
+  const handleFileUpload = async (file: File) => {
+    try {
+      const compressedBase64 = await compressImage(file, {
+        maxWidth: 200,
+        maxHeight: 200,
+        quality: 0.8,
+        showToasts: true
+      })
+      
+      onChange(compressedBase64)
+    } catch (error) {
+      console.error('❌ Erro ao processar imagem:', error)
     }
-    reader.readAsDataURL(file)
   }
 
   const handleUrlChange = (url: string) => {
@@ -57,6 +64,7 @@ export function ImageFieldRenderer({ field, value, onChange }: ImageFieldRendere
 
   const clearImage = () => {
     onChange('')
+    clearCompressionInfo()
   }
 
   return (
@@ -78,6 +86,12 @@ export function ImageFieldRenderer({ field, value, onChange }: ImageFieldRendere
             <X className="h-4 w-4" />
           </Button>
         )}
+      </div>
+      
+      {/* Info sobre otimização */}
+      <div className="text-xs text-muted-foreground">
+        💡 <strong>Dica:</strong> Imagens são automaticamente otimizadas para melhor performance. 
+        Recomendado: arquivos até 100KB para melhor sincronização.
       </div>
 
       {/* Upload Area */}
@@ -124,11 +138,36 @@ export function ImageFieldRenderer({ field, value, onChange }: ImageFieldRendere
           variant="outline"
           size="sm"
           className="mt-4"
+          disabled={isProcessing}
           onClick={() => document.getElementById(`upload-${field.id}`)?.click()}
         >
           <Upload className="mr-2 h-4 w-4" />
-          {value ? 'Alterar Imagem' : 'Escolher Arquivo'}
+          {isProcessing ? 'Processando...' : (value ? 'Alterar Imagem' : 'Escolher Arquivo')}
         </Button>
+        
+        {/* Compression Info */}
+        {compressionInfo && (
+          <div className="mt-2 p-2 bg-green-50 border border-green-200 rounded-md">
+            <div className="flex items-center gap-2 text-green-700 text-xs">
+              <AlertTriangle className="h-3 w-3" />
+              <span className="font-medium">Imagem otimizada:</span>
+            </div>
+            <div className="text-xs text-green-600 mt-1">
+              {formatBytes(compressionInfo.originalSize)} → {formatBytes(compressionInfo.compressedSize)} 
+              <span className="font-medium"> ({compressionInfo.compressionRatio}% menor)</span>
+            </div>
+          </div>
+        )}
+        
+        {/* Processing indicator */}
+        {isProcessing && (
+          <div className="mt-2 p-2 bg-blue-50 border border-blue-200 rounded-md">
+            <div className="flex items-center gap-2 text-blue-700 text-xs">
+              <div className="animate-spin h-3 w-3 border border-blue-600 border-t-transparent rounded-full"></div>
+              <span>Comprimindo e otimizando imagem...</span>
+            </div>
+          </div>
+        )}
       </Card>
     </div>
   )

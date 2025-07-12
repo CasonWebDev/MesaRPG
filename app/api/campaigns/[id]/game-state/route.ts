@@ -89,7 +89,9 @@ export async function GET(
       locked: token.locked || false,
       scale: token.scale || 1,
       rotation: token.rotation || 0,
-      opacity: token.opacity || 1
+      opacity: token.opacity || 1,
+      tokenSize: token.tokenSize || 40,
+      sizeType: token.sizeType || 'medium'
     }))
 
     return NextResponse.json({

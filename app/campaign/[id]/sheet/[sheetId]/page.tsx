@@ -181,6 +181,7 @@ export default function SheetPage({
           characterData={sheetData}
           isEditing={isEditing}
           onDataChange={handleDataChange}
+          characterType={character?.type as 'PC' | 'NPC' | 'CREATURE'}
         />
       </main>
     </div>

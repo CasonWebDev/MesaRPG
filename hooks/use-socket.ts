@@ -18,6 +18,33 @@ export interface TokenMove {
   userId: string
 }
 
+export interface TokenCreate {
+  token: any
+  userId: string
+}
+
+export interface TokenUpdate {
+  tokenId: string
+  updates: Partial<any>
+  token: any
+  userId: string
+}
+
+export interface TokenRefresh {
+  tokenId: string
+  updateType: string
+  characterId?: string
+  characterName?: string
+  characterType?: string
+  userId: string
+}
+
+export interface TokensClear {
+  campaignId: string
+  userId: string
+  userName: string
+}
+
 export interface GameStateUpdate {
   gameState: any
   userId: string
@@ -39,6 +66,10 @@ export function useSocket(campaignId?: string) {
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [connectedPlayers, setConnectedPlayers] = useState<PlayerUpdate[]>([])
   const [tokenMoves, setTokenMoves] = useState<TokenMove[]>([])
+  const [tokenCreations, setTokenCreations] = useState<TokenCreate[]>([])
+  const [tokenUpdates, setTokenUpdates] = useState<TokenUpdate[]>([])
+  const [tokenRefreshes, setTokenRefreshes] = useState<TokenRefresh[]>([])
+  const [tokensCleared, setTokensCleared] = useState<TokensClear[]>([])
   const [joinedCampaign, setJoinedCampaign] = useState<string | null>(null)
   
   // Debug log
@@ -153,6 +184,26 @@ export function useSocket(campaignId?: string) {
           setTokenMoves(prev => [...prev, tokenMove])
         }
 
+        const handleTokenCreate = (tokenCreate: TokenCreate) => {
+          console.log('Token created:', tokenCreate)
+          setTokenCreations(prev => [...prev, tokenCreate])
+        }
+
+        const handleTokenUpdate = (tokenUpdate: TokenUpdate) => {
+          console.log('Token updated:', tokenUpdate)
+          setTokenUpdates(prev => [...prev, tokenUpdate])
+        }
+
+        const handleTokenRefresh = (tokenRefresh: TokenRefresh) => {
+          console.log('🔔 Token refresh notification:', tokenRefresh)
+          setTokenRefreshes(prev => [...prev, tokenRefresh])
+        }
+
+        const handleTokensClear = (tokensClear: TokensClear) => {
+          console.log('Tokens cleared:', tokensClear)
+          setTokensCleared(prev => [...prev, tokensClear])
+        }
+
         const handleError = (error: string) => {
           console.error('❌ Socket error:', error)
         }
@@ -170,6 +221,10 @@ export function useSocket(campaignId?: string) {
         socketInstance.on('player:leave', handlePlayerLeave)
         socketInstance.on('players:list', handlePlayersList)
         socketInstance.on('game:token-move', handleTokenMove)
+        socketInstance.on('game:token-created', handleTokenCreate)
+        socketInstance.on('game:token-updated', handleTokenUpdate)
+        socketInstance.on('game:token-refresh', handleTokenRefresh)
+        socketInstance.on('game:tokens-cleared', handleTokensClear)
         socketInstance.on('campaign:joined', handleCampaignJoined)
         socketInstance.on('error', handleError)
 
@@ -185,6 +240,10 @@ export function useSocket(campaignId?: string) {
           socketInstance.off('player:leave', handlePlayerLeave)
           socketInstance.off('players:list', handlePlayersList)
           socketInstance.off('game:token-move', handleTokenMove)
+          socketInstance.off('game:token-created', handleTokenCreate)
+          socketInstance.off('game:token-updated', handleTokenUpdate)
+          socketInstance.off('game:token-refresh', handleTokenRefresh)
+          socketInstance.off('game:tokens-cleared', handleTokensClear)
           socketInstance.off('campaign:joined', handleCampaignJoined)
           socketInstance.off('error', handleError)
         }
@@ -255,6 +314,15 @@ export function useSocket(campaignId?: string) {
     })
   }
 
+  const createToken = (tokenData: any) => {
+    if (!socket || !campaignId) return
+
+    socket.emit('token_create', {
+      campaignId,
+      tokenData
+    })
+  }
+
   const updateGameState = (gameState: any) => {
     if (!socket || !campaignId) return
 
@@ -292,12 +360,21 @@ export function useSocket(campaignId?: string) {
     messages,
     connectedPlayers,
     tokenMoves,
+    tokenCreations,
+    tokenUpdates,
+    tokenRefreshes,
+    tokensCleared,
     sendMessage,
     moveToken,
+    createToken,
     updateGameState,
     onTokenMove,
     onGameStateUpdate,
     onMapActivate,
-    clearTokenMoves: () => setTokenMoves([])
+    clearTokenMoves: () => setTokenMoves([]),
+    clearTokenCreations: () => setTokenCreations([]),
+    clearTokenUpdates: () => setTokenUpdates([]),
+    clearTokenRefreshes: () => setTokenRefreshes([]),
+    clearTokensCleared: () => setTokensCleared([])
   }
 }
