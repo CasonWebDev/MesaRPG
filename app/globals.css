@@ -1,0 +1,74 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 220 10% 9%; /* Stone 900 */
+    --foreground: 48 15% 95%; /* Stone 50 */
+
+    --card: 48 33% 94%; /* Parchment */
+    --card-foreground: 220 10% 15%; /* Stone 800 */
+
+    --popover: 48 33% 94%;
+    --popover-foreground: 220 10% 15%;
+
+    --primary: 34 83% 58%; /* Amber 500 */
+    --primary-foreground: 220 10% 9%;
+
+    --secondary: 220 10% 25%;
+    --secondary-foreground: 48 15% 95%;
+
+    --muted: 220 10% 25%;
+    --muted-foreground: 48 15% 65%;
+
+    --accent: 34 83% 58%;
+    --accent-foreground: 220 10% 9%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 48 15% 95%;
+
+    --border: 220 10% 30%;
+    --input: 220 10% 30%;
+    --ring: 34 83% 58%;
+
+    --radius: 0.5rem;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground font-body;
+  }
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    @apply font-heading;
+  }
+}
+
+/* Custom Scrollbar Styles */
+@layer components {
+  /* For Webkit browsers (Chrome, Safari, Edge) */
+  ::-webkit-scrollbar {
+    @apply w-2;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-secondary/30;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-primary/50 rounded-lg;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-primary;
+  }
+}

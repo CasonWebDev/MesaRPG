@@ -1,0 +1,290 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  password  String
+  role      Role     @default(PLAYER)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relacionamentos
+  ownedCampaigns Campaign[] @relation("GameMaster")
+  campaignMemberships CampaignMember[]
+  chatMessages    ChatMessage[]
+  characters      Character[]
+  uploadedFiles   File[]     @relation("UploadedFiles")
+  createdInvites  CampaignInvite[] @relation("CreatedInvites")
+  usedInvites     CampaignInvite[] @relation("UsedInvites")
+  ownedTokens     Token[]    @relation("OwnedTokens")
+  createdTokens   Token[]    @relation("CreatedTokens")
+
+  @@map("users")
+}
+
+model Campaign {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  system      String   @default("Generic")
+  ownerId     String
+  isActive    Boolean  @default(true)
+  playerLimit Int?     @default(8)
+  settings    String   @default("{}")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relacionamentos
+  owner           User             @relation("GameMaster", fields: [ownerId], references: [id], onDelete: Cascade)
+  members         CampaignMember[]
+  maps            Map[]
+  characters      Character[]
+  chatMessages    ChatMessage[]
+  handouts        Handout[]
+  gameState       GameState?
+  sheetTemplates  SheetTemplate[]
+  files           File[]
+  invites         CampaignInvite[]
+  tokens          Token[]
+
+  @@map("campaigns")
+}
+
+model CampaignMember {
+  id         String @id @default(cuid())
+  campaignId String
+  userId     String
+  role       Role   @default(PLAYER)
+  joinedAt   DateTime @default(now())
+
+  // Relacionamentos
+  campaign Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([campaignId, userId])
+  @@map("campaign_members")
+}
+
+model Map {
+  id          String   @id @default(cuid())
+  campaignId  String
+  name        String
+  description String?
+  imageUrl    String?
+  isActive    Boolean  @default(false)
+  gridSize    Int      @default(20)
+  settings    String   @default("{}")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relacionamentos
+  campaign Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+
+  @@map("maps")
+}
+
+model Character {
+  id         String        @id @default(cuid())
+  campaignId String
+  userId     String?
+  name       String
+  type       CharacterType
+  data       String        @default("{}")
+  tokenData  String        @default("{}")
+  templateId String?
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
+
+  // Relacionamentos
+  campaign Campaign      @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  user     User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
+  template SheetTemplate? @relation(fields: [templateId], references: [id], onDelete: SetNull)
+  tokens   Token[]
+
+  @@map("characters")
+}
+
+model ChatMessage {
+  id         String      @id @default(cuid())
+  campaignId String
+  userId     String
+  message    String
+  type       MessageType @default(CHAT)
+  metadata   String      @default("{}")
+  createdAt  DateTime    @default(now())
+
+  // Relacionamentos
+  campaign Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("chat_messages")
+}
+
+model Handout {
+  id         String   @id @default(cuid())
+  campaignId String
+  name       String
+  content    String
+  attachments String  @default("[]")
+  sharedWith  String  @default("[]")
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  // Relacionamentos
+  campaign Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+
+  @@map("handouts")
+}
+
+model GameState {
+  id            String   @id @default(cuid())
+  campaignId    String   @unique
+  activeMapId   String?
+  tokens        String   @default("[]")
+  gameData      String   @default("{}")
+  lastActivity  DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relacionamentos
+  campaign Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+
+  @@map("game_states")
+}
+
+model SheetTemplate {
+  id         String   @id @default(cuid())
+  campaignId String
+  name       String
+  type       CharacterType
+  fields     String   @default("[]")
+  isDefault  Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  // Relacionamentos
+  campaign   Campaign    @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  characters Character[]
+
+  @@map("sheet_templates")
+}
+
+model File {
+  id           String      @id @default(cuid())
+  campaignId   String
+  name         String
+  originalName String
+  url          String
+  type         String
+  size         Int
+  category     FileCategory @default(MISC)
+  uploadedById String
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  // Relacionamentos
+  campaign   Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  uploadedBy User     @relation("UploadedFiles", fields: [uploadedById], references: [id], onDelete: Cascade)
+
+  @@map("files")
+}
+
+model CampaignInvite {
+  id         String   @id @default(cuid())
+  campaignId String
+  token      String   @unique
+  createdById String
+  usedById   String?
+  expiresAt  DateTime?
+  usedAt     DateTime?
+  createdAt  DateTime @default(now())
+
+  // Relacionamentos
+  campaign    Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  createdBy   User     @relation("CreatedInvites", fields: [createdById], references: [id], onDelete: Cascade)
+  usedBy      User?    @relation("UsedInvites", fields: [usedById], references: [id], onDelete: SetNull)
+
+  @@map("campaign_invites")
+}
+
+model Token {
+  id           String     @id @default(cuid())
+  campaignId   String
+  name         String
+  x            Float
+  y            Float
+  imageUrl     String?
+  size         Float      @default(1)
+  rotation     Float      @default(0)
+  visible      Boolean    @default(true)
+  characterId  String?
+  ownerId      String
+  type         TokenType  @default(CUSTOM)
+  autoCreated  Boolean    @default(false)
+  syncAvatar   Boolean    @default(false)
+  borderColor  String     @default("#6b7280")
+  showName     Boolean    @default(true)
+  showHealthBar Boolean   @default(false)
+  conditions   String     @default("[]")
+  canPlayerMove Boolean?
+  locked       Boolean    @default(false)
+  hidden       Boolean    @default(false)
+  ownershipType String    @default("manual")
+  lastSyncAt   DateTime?
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  createdBy    String
+
+  // Relacionamentos
+  campaign   Campaign   @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  character  Character? @relation(fields: [characterId], references: [id], onDelete: SetNull)
+  owner      User       @relation("OwnedTokens", fields: [ownerId], references: [id], onDelete: Cascade)
+  creator    User       @relation("CreatedTokens", fields: [createdBy], references: [id], onDelete: Cascade)
+
+  @@map("tokens")
+}
+
+// Enums
+enum Role {
+  GM
+  PLAYER
+  ADMIN
+}
+
+enum FileCategory {
+  MAP
+  TOKEN
+  AVATAR
+  HANDOUT
+  MISC
+}
+
+enum CharacterType {
+  PC
+  NPC
+  CREATURE
+}
+
+enum MessageType {
+  CHAT
+  DICE_ROLL
+  SYSTEM
+  OOC
+}
+
+enum TokenType {
+  PC
+  NPC
+  CREATURE
+  CUSTOM
+}
