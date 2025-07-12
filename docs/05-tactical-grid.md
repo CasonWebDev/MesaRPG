@@ -2,13 +2,13 @@
 
 ## Visão Geral
 
-O sistema de Grid Tático do MesaRPG é um sistema **básico e funcional** que prioriza **estabilidade e simplicidade** sobre complexidade prematura. Oferece movimento livre de tokens com sincronização em tempo real via WebSocket, garantindo uma experiência confiável para campanhas de RPG online.
+O sistema de Grid Tático do MesaRPG é um sistema **completo e funcional** que oferece movimento livre de tokens, vinculação a personagens, e gerenciamento avançado com sincronização em tempo real via WebSocket. Prioriza estabilidade e simplicidade, garantindo uma experiência confiável e rica para campanhas de RPG online.
 
 ## Características Principais
 
 ### 1. Grid Básico Fixo
 - **Dimensões**: 800x600px para visualização consistente
-- **Layout**: Simples e limpo sem overlays complexos
+- **Layout**: Simples e limpo com mapas dinâmicos
 - **Objetivo**: Garantir funcionamento estável em qualquer resolução
 
 ### 2. Sistema de Coordenadas Simples
@@ -23,9 +23,27 @@ O sistema de Grid Tático do MesaRPG é um sistema **básico e funcional** que p
 - **UX**: Movimento fluido e responsivo
 
 ### 4. Persistência Garantida
-- **Database**: Posições salvas automaticamente no `gameState.tokens`
+- **Database**: Posições e configurações salvas automaticamente no `gameState.tokens`
 - **WebSocket**: Sincronização em tempo real
-- **Refresh-Safe**: Posições mantidas após refresh da página
+- **Refresh-Safe**: Todas as propriedades mantidas após refresh da página
+
+### 5. Gerenciamento Avançado de Tokens
+- **Criação**: Tokens genéricos via menu de contexto (botão direito)
+- **Vinculação**: Link de tokens a fichas de personagens (PC, NPC, CREATURE)
+- **Tamanhos**: Três opções de tamanho (Pequeno 20px, Médio 40px, Grande 60px)
+- **Deleção**: Remoção com confirmação via menu de contexto
+- **Avatares**: Suporte a imagens customizadas e placeholders específicos por tipo
+
+### 6. Menu de Contexto Inteligente
+- **Token existente**: Vincular personagem, alterar tamanho, deletar
+- **Grid vazio**: Adicionar token genérico, limpar grid
+- **Estados visuais**: Feedback para ações disponíveis e restrições
+
+### 7. Sistema de Placeholders Elegante
+- **PC**: `/placeholder-PC-token.png` - Personagem jogável
+- **NPC**: `/placeholder-NPC-token.png` - Personagem não-jogável  
+- **CREATURE**: `/placeholder-Creature-token.png` - Criaturas e monstros
+- **Genérico**: `/placeholder-generic.png` - Tokens sem tipo específico
 
 ## Arquitetura Técnica
 
@@ -675,6 +693,8 @@ interface TokenData {
   scale?: number
   rotation?: number
   opacity?: number
+  tokenSize?: number  // Tamanho em pixels (20, 40, 60)
+  sizeType?: 'small' | 'medium' | 'large'  // Tipo de tamanho
 }
 ```
 

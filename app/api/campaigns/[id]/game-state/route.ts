@@ -95,10 +95,13 @@ export async function GET(
     }))
 
     return NextResponse.json({
-      activeMap: activeMap,
-      tokens: formattedTokens,
-      gameData: gameState.gameData ? JSON.parse(gameState.gameData) : {},
-      lastActivity: gameState.lastActivity.toISOString()
+      gameState: {
+        activeMap: activeMap,
+        tokens: formattedTokens,
+        gameData: gameState.gameData ? JSON.parse(gameState.gameData) : {},
+        gridConfig: gameState.gridConfig ? JSON.parse(gameState.gridConfig) : {},
+        lastActivity: gameState.lastActivity.toISOString()
+      }
     })
 
   } catch (error) {
@@ -126,7 +129,7 @@ export async function POST(
 
     const resolvedParams = await params
     const campaignId = resolvedParams.id
-    const { tokens, gameData, activeMapId } = await request.json()
+    const { tokens, gameData, activeMapId, gridConfig } = await request.json()
 
     // Check if user has access to this campaign and is GM
     const campaign = await prisma.campaign.findUnique({
@@ -150,13 +153,15 @@ export async function POST(
         tokens: tokens ? JSON.stringify(tokens) : undefined,
         gameData: gameData ? JSON.stringify(gameData) : undefined,
         activeMapId: activeMapId || undefined,
+        gridConfig: gridConfig ? JSON.stringify(gridConfig) : undefined,
         lastActivity: new Date()
       },
       create: {
         campaignId,
         tokens: JSON.stringify(tokens || []),
         gameData: JSON.stringify(gameData || {}),
-        activeMapId: activeMapId || null
+        activeMapId: activeMapId || null,
+        gridConfig: JSON.stringify(gridConfig || {})
       }
     })
 
@@ -166,6 +171,7 @@ export async function POST(
         tokens: gameState.tokens ? JSON.parse(gameState.tokens) : [],
         gameData: gameState.gameData ? JSON.parse(gameState.gameData) : {},
         activeMapId: gameState.activeMapId,
+        gridConfig: gameState.gridConfig ? JSON.parse(gameState.gridConfig) : {},
         lastActivity: gameState.lastActivity.toISOString()
       }
     })

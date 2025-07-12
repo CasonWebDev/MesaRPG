@@ -153,6 +153,7 @@ model GameState {
   activeMapId   String?
   tokens        String   @default("[]")
   gameData      String   @default("{}")
+  gridConfig    String   @default("{}")
   lastActivity  DateTime @default(now())
   updatedAt     DateTime @updatedAt
 

@@ -68,8 +68,8 @@ export async function GET(
       return NextResponse.json({ error: 'Character não encontrado' }, { status: 404 })
     }
 
-    // Verificar permissões: GM pode ver todos, jogador só seus próprios PCs
-    if (!isGM && character.userId !== user.id) {
+    // Verificar permissões: GM pode ver todos, jogador pode ver seus PCs e NPCs/Criaturas (para vinculação)
+    if (!isGM && character.type === 'PC' && character.userId !== user.id) {
       return NextResponse.json({ error: 'Acesso negado ao character' }, { status: 403 })
     }
 
