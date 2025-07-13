@@ -9,6 +9,7 @@ import { useActiveMap } from "@/hooks/use-active-map"
 import { useTokens } from "@/hooks/use-tokens"
 import { useSocket } from "@/hooks/use-socket"
 import { LinkCharacterModal } from "@/components/modals/link-character-modal"
+import { Eraser } from "lucide-react"
 import { useState, useEffect, useRef, useCallback } from "react"
 
 export interface TokenData {
@@ -131,10 +132,16 @@ export function TacticalGrid({
   const [currentFogArea, setCurrentFogArea] = useState<{ x: number; y: number; width: number; height: number } | null>(null)
   const [selectedFogType, setSelectedFogType] = useState<FogType>('dense')
   const [selectedFogColor, setSelectedFogColor] = useState('#8b5cf6') // Roxo arcano
+  
+  // Eraser (area selection) state
+  const [isErasingArea, setIsErasingArea] = useState(false)
+  const [eraserStartPoint, setEraserStartPoint] = useState<{ x: number; y: number } | null>(null)
+  const [currentEraserArea, setCurrentEraserArea] = useState<{ x: number; y: number; width: number; height: number } | null>(null)
   const [showFogTypePalette, setShowFogTypePalette] = useState(false)
 
   // Toolbar state
-  const [activeTool, setActiveTool] = useState<'select' | 'measure' | 'draw' | 'mark' | 'fog' | 'eraser'>('select')
+  const [activeTool, setActiveTool] = useState<'select' | 'measure' | 'draw' | 'mark' | 'fog'>('select')
+  const [fogMode, setFogMode] = useState<'create' | 'erase'>('create')
   
   // Context menu state
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number; visible: boolean }>({
@@ -483,6 +490,34 @@ export function TacticalGrid({
         setFogAreas(data.newFogAreas)
       }
     }
+
+    const handleFogClearAll = (data: {
+      userId: string
+      campaignId: string
+    }) => {
+      console.log('📨 Received fog clear all from user:', data.userId)
+      
+      // Only apply if this update is from someone else (avoid feedback loop)
+      if (data.userId !== userId) {
+        console.log('🧹 Clearing all fog areas from other user')
+        setFogAreas([])
+      }
+    }
+
+    const handleFogAreaErase = (data: {
+      eraserArea: { x: number; y: number; width: number; height: number }
+      newFogAreas: typeof fogAreas
+      userId: string
+      campaignId: string
+    }) => {
+      console.log('📨 Received fog area erase from user:', data.userId)
+      
+      // Only apply if this update is from someone else (avoid feedback loop)
+      if (data.userId !== userId) {
+        console.log('🧹 Applying fog area erase from other user')
+        setFogAreas(data.newFogAreas)
+      }
+    }
     
     socket.on('grid:config-updated', handleGridConfigUpdate)
     socket.on('game:token-move', handleTokenMove)
@@ -495,6 +530,8 @@ export function TacticalGrid({
     socket.on('fog:show', handleFogShow)
     socket.on('fog:hide', handleFogHide)
     socket.on('fog:cell-erase', handleFogCellErase)
+    socket.on('fog:clear-all', handleFogClearAll)
+    socket.on('fog:area-erase', handleFogAreaErase)
     
     return () => {
       socket.off('grid:config-updated', handleGridConfigUpdate)
@@ -508,6 +545,8 @@ export function TacticalGrid({
       socket.off('fog:show', handleFogShow)
       socket.off('fog:hide', handleFogHide)
       socket.off('fog:cell-erase', handleFogCellErase)
+      socket.off('fog:clear-all', handleFogClearAll)
+      socket.off('fog:area-erase', handleFogAreaErase)
     }
   }, [socket, isConnected, userId, isGM])
   
@@ -704,11 +743,11 @@ export function TacticalGrid({
     }
   }
 
-  // Handle clearing all tokens from grid
+  // Handle clearing all tokens and fog areas from grid
   const handleClearGrid = async () => {
     try {
       const confirmClear = window.confirm(
-        `Tem certeza que deseja limpar o grid?\n\nIsso irá remover todos os ${tokens?.length || 0} tokens do mapa.\n\nEsta ação não pode ser desfeita.`
+        `Tem certeza que deseja limpar o grid?\n\nIsso irá remover:\n• Todos os ${tokens?.length || 0} tokens\n• Todas as ${fogAreas?.length || 0} áreas de névoa\n\nEsta ação não pode ser desfeita.`
       )
       
       if (!confirmClear) {
@@ -716,10 +755,14 @@ export function TacticalGrid({
         return
       }
 
-      console.log('🧹 Clearing grid - removing all tokens')
+      console.log('🧹 Clearing grid - removing all tokens and fog areas')
       
       // Clear tokens locally first (optimistic update)
       const previousTokens = tokens || []
+      
+      // Clear fog areas locally first (optimistic update)
+      const previousFogAreas = fogAreas || []
+      setFogAreas([])
       
       // Update local state immediately
       // This will be handled by the useTokens hook through WebSocket
@@ -730,6 +773,15 @@ export function TacticalGrid({
         socket?.emit('token_clear_all', {
           campaignId
         })
+        
+        // Also clear fog areas via WebSocket if there are any
+        if (previousFogAreas.length > 0) {
+          console.log('📡 Broadcasting fog clear to all users')
+          socket?.emit('fog:clear-all', {
+            campaignId,
+            userId
+          })
+        }
       } else {
         console.log('❌ No socket connection, falling back to HTTP')
         // Fallback para HTTP se WebSocket não estiver disponível
@@ -740,22 +792,29 @@ export function TacticalGrid({
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            tokens: []
+            tokens: [],
+            fogAreas: []
           })
         })
 
         if (!response.ok) {
-          throw new Error('Erro ao limpar tokens no servidor')
+          throw new Error('Erro ao limpar tokens e névoa no servidor')
         }
         
         // Force reload tokens from server
         window.location.reload()
       }
       
+      // Persist empty fog areas to server
+      if (previousFogAreas.length > 0) {
+        console.log('💾 Persisting empty fog areas to server')
+        await persistFogAreas([])
+      }
+      
       // Close context menu
       setContextMenu(prev => ({ ...prev, visible: false }))
       
-      console.log('✅ Grid clearing initiated successfully')
+      console.log('✅ Grid clearing initiated successfully - tokens and fog areas cleared')
 
     } catch (error) {
       console.error('❌ Erro ao limpar grid:', error)
@@ -963,32 +1022,48 @@ export function TacticalGrid({
         console.log('📏 Measurement tool activated - Click two points to measure')
         setShowColorPalette(false)
         setShowMarkerPalette(false)
+        setShowFogTypePalette(false)
         break
       case 'draw':
         console.log('✏️ Drawing tool activated - Click and drag to draw')
         setShowColorPalette(true)
         setShowMarkerPalette(false)
+        setShowFogTypePalette(false)
         break
       case 'mark':
         console.log('📍 Marking tool activated - Click to place markers')
         setShowColorPalette(false)
         setShowMarkerPalette(true)
+        setShowFogTypePalette(false)
         break
       case 'fog':
         console.log('🌫️ Fog of war tool activated - Click and drag to create fog areas')
         setShowColorPalette(false)
         setShowMarkerPalette(false)
         setShowFogTypePalette(true)
+        // Reset fog mode to create when selecting fog tool
+        setFogMode('create')
         // Clear any active fog creation state
         setIsCreatingFog(false)
         setFogStartPoint(null)
         setCurrentFogArea(null)
+        // Clear any active eraser state
+        setIsErasingArea(false)
+        setEraserStartPoint(null)
+        setCurrentEraserArea(null)
         break
       default:
         console.log('👆 Selection tool activated')
         setShowColorPalette(false)
         setShowMarkerPalette(false)
         setShowFogTypePalette(false)
+        // Clear any active states
+        setIsCreatingFog(false)
+        setFogStartPoint(null)
+        setCurrentFogArea(null)
+        setIsErasingArea(false)
+        setEraserStartPoint(null)
+        setCurrentEraserArea(null)
         break
     }
   }
@@ -1393,6 +1468,126 @@ export function TacticalGrid({
     setCurrentFogArea(null)
   }, [activeTool, isCreatingFog, currentFogArea, fogStartPoint, userId, canEmitSocketEvents, socket, campaignId, fogAreas])
 
+  // ===== ERASER AREA SELECTION FUNCTIONS =====
+  
+  const handleEraserStart = useCallback((e: React.MouseEvent) => {
+    if (activeTool !== 'fog' || fogMode !== 'erase' || !isGM) return
+    
+    e.preventDefault()
+    e.stopPropagation()
+    
+    console.log('🧹 Starting eraser area selection')
+    
+    const rect = e.currentTarget.getBoundingClientRect()
+    const x = e.clientX - rect.left
+    const y = e.clientY - rect.top
+    
+    // Snap to grid
+    const snapped = snapPositionToGrid(x, y)
+    
+    setIsErasingArea(true)
+    setEraserStartPoint(snapped)
+    setCurrentEraserArea({
+      x: snapped.x,
+      y: snapped.y,
+      width: 0,
+      height: 0
+    })
+  }, [activeTool, fogMode, isGM, snapPositionToGrid])
+
+  const handleEraserMove = useCallback((e: React.MouseEvent) => {
+    if (activeTool !== 'fog' || fogMode !== 'erase' || !isErasingArea || !eraserStartPoint) return
+    
+    e.preventDefault()
+    e.stopPropagation()
+    
+    const rect = e.currentTarget.getBoundingClientRect()
+    const x = e.clientX - rect.left
+    const y = e.clientY - rect.top
+    
+    // Snap to grid
+    const snapped = snapPositionToGrid(x, y)
+    
+    // Calculate rectangle aligned to grid
+    const minX = Math.min(eraserStartPoint.x, snapped.x)
+    const minY = Math.min(eraserStartPoint.y, snapped.y)
+    const maxX = Math.max(eraserStartPoint.x, snapped.x)
+    const maxY = Math.max(eraserStartPoint.y, snapped.y)
+    
+    // Ensure width and height are multiples of grid size
+    const width = maxX - minX + gridSize
+    const height = maxY - minY + gridSize
+    
+    setCurrentEraserArea({
+      x: minX,
+      y: minY,
+      width: width,
+      height: height
+    })
+  }, [activeTool, fogMode, isErasingArea, eraserStartPoint, snapPositionToGrid, gridSize])
+
+  const handleEraserEnd = useCallback((e: React.MouseEvent) => {
+    if (activeTool !== 'fog' || fogMode !== 'erase' || !isErasingArea || !currentEraserArea || !eraserStartPoint) return
+    
+    console.log(`🧹 Finished selecting eraser area:`, currentEraserArea)
+    
+    // Only process if the area has meaningful size
+    if (currentEraserArea.width < gridSize || currentEraserArea.height < gridSize) {
+      console.log('🧹 Eraser area too small, ignoring')
+      setIsErasingArea(false)
+      setEraserStartPoint(null)
+      setCurrentEraserArea(null)
+      return
+    }
+
+    // Find fog areas that intersect with the eraser area
+    const fogsToModify = fogAreas.filter(fog => {
+      return !(
+        fog.x >= currentEraserArea.x + currentEraserArea.width ||
+        fog.x + fog.width <= currentEraserArea.x ||
+        fog.y >= currentEraserArea.y + currentEraserArea.height ||
+        fog.y + fog.height <= currentEraserArea.y
+      )
+    })
+
+    if (fogsToModify.length > 0) {
+      let newFogAreas = [...fogAreas]
+      let modified = false
+
+      fogsToModify.forEach(fog => {
+        // Remove this fog area
+        newFogAreas = newFogAreas.filter(f => f.id !== fog.id)
+        
+        // Create fragments excluding the erased area
+        const fragmentedAreas = createFogFragmentsFromArea(fog, currentEraserArea, gridSize)
+        newFogAreas = [...newFogAreas, ...fragmentedAreas]
+        modified = true
+      })
+
+      if (modified) {
+        setFogAreas(newFogAreas)
+        
+        // Broadcast the complete new fog state
+        if (canEmitSocketEvents()) {
+          console.log('📡 Broadcasting fog area erasure to all users')
+          socket?.emit('fog:area-erase', {
+            campaignId,
+            eraserArea: currentEraserArea,
+            newFogAreas,
+            userId
+          })
+        }
+        
+        // Persist updated fog areas to server
+        persistFogAreas(newFogAreas)
+      }
+    }
+    
+    setIsErasingArea(false)
+    setEraserStartPoint(null)
+    setCurrentEraserArea(null)
+  }, [activeTool, fogMode, isErasingArea, currentEraserArea, eraserStartPoint, gridSize, fogAreas, canEmitSocketEvents, socket, campaignId, userId])
+
   // Handle fog area right-click for removal (GM only)
   const handleFogRightClick = useCallback((fogId: string, e: React.MouseEvent) => {
     if (!isGM) return
@@ -1572,6 +1767,52 @@ export function TacticalGrid({
     return fragments
   }, [])
 
+  // Helper function to create fog fragments when an area is erased
+  const createFogFragmentsFromArea = useCallback((originalFog: typeof fogAreas[0], eraserArea: { x: number; y: number; width: number; height: number }, gridSize: number) => {
+    const fragments: typeof fogAreas = []
+    
+    // Calculate the grid cells that make up the original fog area
+    const startCellX = originalFog.x / gridSize
+    const startCellY = originalFog.y / gridSize
+    const endCellX = (originalFog.x + originalFog.width) / gridSize
+    const endCellY = (originalFog.y + originalFog.height) / gridSize
+    
+    // Calculate the grid cells of the eraser area
+    const eraserStartCellX = eraserArea.x / gridSize
+    const eraserStartCellY = eraserArea.y / gridSize
+    const eraserEndCellX = (eraserArea.x + eraserArea.width) / gridSize
+    const eraserEndCellY = (eraserArea.y + eraserArea.height) / gridSize
+    
+    // Create fragments for each cell that's NOT in the eraser area
+    for (let cellY = startCellY; cellY < endCellY; cellY++) {
+      for (let cellX = startCellX; cellX < endCellX; cellX++) {
+        // Skip cells that are inside the eraser area
+        const isInEraserArea = 
+          cellX >= eraserStartCellX && cellX < eraserEndCellX &&
+          cellY >= eraserStartCellY && cellY < eraserEndCellY
+        
+        if (isInEraserArea) {
+          continue
+        }
+        
+        // Create a fragment for this cell
+        fragments.push({
+          id: `${originalFog.id}_area_fragment_${cellX}_${cellY}_${Date.now()}`,
+          x: cellX * gridSize,
+          y: cellY * gridSize,
+          width: gridSize,
+          height: gridSize,
+          type: originalFog.type,
+          color: originalFog.color,
+          userId: originalFog.userId,
+          timestamp: Date.now()
+        })
+      }
+    }
+    
+    return fragments
+  }, [])
+
   // Helper function to get fog area visual styles
   const getFogAreaStyles = useCallback((fog: typeof fogAreas[0]) => {
     const baseStyles = {
@@ -1651,10 +1892,10 @@ export function TacticalGrid({
           overflow: 'hidden'
         }}
         onContextMenu={handleContextMenu}
-        onClick={activeTool === 'measure' ? handleMeasurementClick : activeTool === 'mark' ? handleMarkerClick : activeTool === 'eraser' ? handleEraserClick : undefined}
-        onMouseDown={activeTool === 'draw' ? handleDrawingStart : activeTool === 'fog' ? handleFogStart : undefined}
-        onMouseMove={activeTool === 'draw' ? handleDrawingMove : activeTool === 'fog' ? handleFogMove : undefined}
-        onMouseUp={activeTool === 'draw' ? handleDrawingEnd : activeTool === 'fog' ? handleFogEnd : undefined}
+        onClick={activeTool === 'measure' ? handleMeasurementClick : activeTool === 'mark' ? handleMarkerClick : undefined}
+        onMouseDown={activeTool === 'draw' ? handleDrawingStart : activeTool === 'fog' ? (fogMode === 'create' ? handleFogStart : handleEraserStart) : undefined}
+        onMouseMove={activeTool === 'draw' ? handleDrawingMove : activeTool === 'fog' ? (fogMode === 'create' ? handleFogMove : handleEraserMove) : undefined}
+        onMouseUp={activeTool === 'draw' ? handleDrawingEnd : activeTool === 'fog' ? (fogMode === 'create' ? handleFogEnd : handleEraserEnd) : undefined}
       >
         {/* Loading */}
         {mapLoading && (
@@ -1882,9 +2123,10 @@ export function TacticalGrid({
         )}
 
         {/* Eraser tool instructions */}
-        {activeTool === 'eraser' && isGM && (
+        {activeTool === 'fog' && fogMode === 'erase' && isGM && (
           <div className="absolute bottom-4 left-4 bg-red-600 bg-opacity-90 text-white px-3 py-2 rounded text-sm">
-            🧹 Clique em uma célula com névoa para removê-la • Clique direito remove área inteira
+            {isErasingArea && "🧹 Arraste para selecionar área a apagar"}
+            {!isErasingArea && "🧹 Arraste para selecionar área de névoa a remover • Clique direito remove área inteira"}
           </div>
         )}
 
@@ -1932,6 +2174,28 @@ export function TacticalGrid({
               {selectedFogType === 'dense' ? '🌫️' : selectedFogType === 'thin' ? '🌤️' : '✨'}
               <span className="ml-1">
                 {selectedFogType.toUpperCase()}
+              </span>
+            </div>
+          </div>
+        )}
+
+        {/* Current eraser area being selected */}
+        {isErasingArea && currentEraserArea && currentEraserArea.width > 0 && currentEraserArea.height > 0 && (
+          <div
+            className="absolute z-30 border-2 border-red-500 border-dashed pointer-events-none"
+            style={{
+              left: currentEraserArea.x,
+              top: currentEraserArea.y,
+              width: currentEraserArea.width,
+              height: currentEraserArea.height,
+              backgroundColor: 'rgba(255, 0, 0, 0.2)',
+              backdropFilter: 'brightness(1.2)'
+            }}
+          >
+            <div className="absolute inset-0 flex items-center justify-center text-white text-xs font-bold">
+              🧹
+              <span className="ml-1">
+                APAGAR
               </span>
             </div>
           </div>
@@ -2132,10 +2396,8 @@ export function TacticalGrid({
       )}
 
       {/* Fog Type Palette - Only show when fog tool is active */}
-      {isGM && showFogTypePalette && (
+      {isGM && showFogTypePalette && activeTool === 'fog' && (
         <div className="absolute left-4 top-1/2 -translate-y-1/2 flex flex-col gap-2 bg-gray-800 border border-gray-600 rounded-lg p-3 z-40">
-          <div className="text-white text-xs font-bold mb-2 text-center">Tipos de Névoa</div>
-          
           {fogTypes.map((fogType) => (
             <button
               key={fogType.id}
@@ -2150,6 +2412,22 @@ export function TacticalGrid({
               <span>{fogType.icon}</span>
             </button>
           ))}
+
+          {/* Fog mode separator */}
+          <div className="border-t border-gray-600 my-2"></div>
+
+          {/* Fog Mode Toggle - Create vs Erase */}
+          <button
+            onClick={() => setFogMode(fogMode === 'create' ? 'erase' : 'create')}
+            className={`w-12 h-12 rounded-lg border-2 transition-all flex flex-col items-center justify-center text-lg ${
+              fogMode === 'erase'
+                ? 'border-red-400 scale-110 bg-red-900/50 text-red-200' 
+                : 'border-gray-400 hover:border-red-300 bg-gray-800 hover:bg-red-900/30 text-gray-300'
+            }`}
+            title={fogMode === 'create' ? 'Mudar para modo borracha' : 'Mudar para modo criação'}
+          >
+            <Eraser size={20} />
+          </button>
 
           {/* Magical fog colors - only show when magical fog is selected */}
           {selectedFogType === 'magical' && (
