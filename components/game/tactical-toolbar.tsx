@@ -6,10 +6,11 @@ import {
   Ruler, 
   Pencil, 
   MapPin, 
-  Wind
+  Wind,
+  Eraser
 } from "lucide-react"
 
-type ToolType = 'select' | 'measure' | 'draw' | 'mark' | 'fog'
+type ToolType = 'select' | 'measure' | 'draw' | 'mark' | 'fog' | 'eraser'
 
 interface TacticalToolbarProps {
   isGM: boolean
@@ -60,6 +61,12 @@ export function TacticalToolbar({ isGM, onToolSelect }: TacticalToolbarProps) {
       name: 'Névoa de Guerra',
       icon: Wind,
       description: 'Ferramenta de névoa de guerra'
+    },
+    {
+      id: 'eraser' as ToolType,
+      name: 'Borracha',
+      icon: Eraser,
+      description: 'Remover névoa seletivamente'
     }
   ]
 

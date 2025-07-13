@@ -111,6 +111,9 @@ export function TacticalGrid({
   const [selectedMarkerIcon, setSelectedMarkerIcon] = useState('💀') // Caveira padrão
   const [showMarkerPalette, setShowMarkerPalette] = useState(false)
   
+  // Fog of War types
+  type FogType = 'dense' | 'thin' | 'magical'
+  
   // Fog of War state
   const [fogAreas, setFogAreas] = useState<{
     id: string
@@ -118,15 +121,20 @@ export function TacticalGrid({
     y: number
     width: number
     height: number
+    type: FogType
+    color?: string
     userId: string
     timestamp: number
   }[]>([])
   const [isCreatingFog, setIsCreatingFog] = useState(false)
   const [fogStartPoint, setFogStartPoint] = useState<{ x: number; y: number } | null>(null)
   const [currentFogArea, setCurrentFogArea] = useState<{ x: number; y: number; width: number; height: number } | null>(null)
+  const [selectedFogType, setSelectedFogType] = useState<FogType>('dense')
+  const [selectedFogColor, setSelectedFogColor] = useState('#8b5cf6') // Roxo arcano
+  const [showFogTypePalette, setShowFogTypePalette] = useState(false)
 
   // Toolbar state
-  const [activeTool, setActiveTool] = useState<'select' | 'measure' | 'draw' | 'mark' | 'fog'>('select')
+  const [activeTool, setActiveTool] = useState<'select' | 'measure' | 'draw' | 'mark' | 'fog' | 'eraser'>('select')
   
   // Context menu state
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number; visible: boolean }>({
@@ -164,6 +172,37 @@ export function TacticalGrid({
     { name: 'Espada', icon: '⚔️' },
     { name: 'Escudo', icon: '🛡️' },
     { name: 'Fogo', icon: '🔥' }
+  ]
+
+  // Fog types
+  const fogTypes = [
+    { 
+      id: 'dense' as FogType, 
+      name: 'Névoa Densa', 
+      icon: '🌫️', 
+      description: 'Bloqueia completamente a visão' 
+    },
+    { 
+      id: 'thin' as FogType, 
+      name: 'Névoa Tênue', 
+      icon: '🌤️', 
+      description: 'Véu semitransparente com blur' 
+    },
+    { 
+      id: 'magical' as FogType, 
+      name: 'Névoa Mágica', 
+      icon: '✨', 
+      description: 'Colorida e configurável' 
+    }
+  ]
+
+  // Magical fog colors
+  const magicalFogColors = [
+    { name: 'Arcana', value: '#8b5cf6', icon: '🔮' }, // Roxo
+    { name: 'Veneno', value: '#10b981', icon: '☠️' }, // Verde
+    { name: 'Divina', value: '#f3f4f6', icon: '✨' }, // Branco
+    { name: 'Gelo', value: '#3b82f6', icon: '❄️' }, // Azul
+    { name: 'Fogo', value: '#ef4444', icon: '🔥' }  // Vermelho
   ]
   
   console.log('🎮 TacticalGrid using integrated useTokens with persistence')
@@ -921,6 +960,7 @@ export function TacticalGrid({
         console.log('🌫️ Fog of war tool activated - Click and drag to create fog areas')
         setShowColorPalette(false)
         setShowMarkerPalette(false)
+        setShowFogTypePalette(true)
         // Clear any active fog creation state
         setIsCreatingFog(false)
         setFogStartPoint(null)
@@ -930,6 +970,7 @@ export function TacticalGrid({
         console.log('👆 Selection tool activated')
         setShowColorPalette(false)
         setShowMarkerPalette(false)
+        setShowFogTypePalette(false)
         break
     }
   }
@@ -1280,6 +1321,8 @@ export function TacticalGrid({
         y: currentFogArea.y,
         width: currentFogArea.width,
         height: currentFogArea.height,
+        type: selectedFogType,
+        color: selectedFogType === 'magical' ? selectedFogColor : undefined,
         userId,
         timestamp: Date.now()
       }
@@ -1389,6 +1432,104 @@ export function TacticalGrid({
     return isPointInFog(marker.position.x, marker.position.y)
   }, [isGM, isPointInFog])
 
+  // Handle eraser click on fog areas (GM only)
+  const handleEraserClick = useCallback((e: React.MouseEvent) => {
+    if (activeTool !== 'eraser' || !isGM) return
+    
+    e.preventDefault()
+    e.stopPropagation()
+    
+    const rect = e.currentTarget.getBoundingClientRect()
+    const x = e.clientX - rect.left
+    const y = e.clientY - rect.top
+    
+    console.log(`🧹 Eraser click at:`, { x, y })
+    
+    // Find fog area at this point
+    const fogToRemove = fogAreas.find(fog => 
+      x >= fog.x && 
+      x <= fog.x + fog.width && 
+      y >= fog.y && 
+      y <= fog.y + fog.height
+    )
+    
+    if (fogToRemove) {
+      console.log(`🗑️ Erasing fog area: ${fogToRemove.id}`)
+      
+      // Remove from local fog areas immediately
+      const newFogAreas = fogAreas.filter(f => f.id !== fogToRemove.id)
+      setFogAreas(newFogAreas)
+      
+      // Broadcast removal to all users
+      if (canEmitSocketEvents()) {
+        console.log('📡 Broadcasting fog removal via eraser to all users', { campaignId, fogId: fogToRemove.id })
+        socket?.emit('fog:hide', {
+          campaignId,
+          fogId: fogToRemove.id,
+          userId
+        })
+      }
+      
+      // Persist updated fog areas to server
+      persistFogAreas(newFogAreas)
+    }
+  }, [activeTool, isGM, fogAreas, canEmitSocketEvents, socket, campaignId, userId])
+
+  // Helper function to get fog area visual styles
+  const getFogAreaStyles = useCallback((fog: typeof fogAreas[0]) => {
+    const baseStyles = {
+      position: 'absolute' as const,
+      left: fog.x,
+      top: fog.y,
+      width: fog.width,
+      height: fog.height,
+      zIndex: 20,
+      pointerEvents: isGM ? ('auto' as const) : ('none' as const),
+      cursor: isGM ? (activeTool === 'eraser' ? 'crosshair' : 'pointer') : 'default'
+    }
+
+    if (isGM) {
+      // GM view: subtle overlay with dashed border
+      return {
+        ...baseStyles,
+        backgroundColor: fog.type === 'magical' && fog.color 
+          ? `${fog.color}30` // 30 = low opacity
+          : 'rgba(0, 0, 0, 0.3)',
+        border: '2px dashed rgba(156, 163, 175, 0.8)', // gray-400
+        backdropFilter: fog.type === 'thin' ? 'blur(2px)' : undefined
+      }
+    } else {
+      // Player view: different effects based on fog type
+      switch (fog.type) {
+        case 'dense':
+          return {
+            ...baseStyles,
+            backgroundColor: 'rgba(0, 0, 0, 0.95)' // Almost opaque black
+          }
+        case 'thin':
+          return {
+            ...baseStyles,
+            backgroundColor: 'rgba(128, 128, 128, 0.4)', // Semi-transparent gray
+            backdropFilter: 'blur(3px)'
+          }
+        case 'magical':
+          return {
+            ...baseStyles,
+            backgroundColor: fog.color ? `${fog.color}4D` : '#8b5cf64D', // 4D = 30% opacity
+            backdropFilter: 'blur(1px)',
+            background: fog.color 
+              ? `radial-gradient(circle, ${fog.color}4D 0%, ${fog.color}1A 100%)`
+              : 'radial-gradient(circle, #8b5cf64D 0%, #8b5cf61A 100%)'
+          }
+        default:
+          return {
+            ...baseStyles,
+            backgroundColor: 'rgba(0, 0, 0, 0.8)'
+          }
+      }
+    }
+  }, [isGM, activeTool])
+
   // Get map image with cache busting - memoized to prevent unnecessary re-renders
   const getMapImage = useCallback(() => {
     if (activeMap?.imageUrl) {
@@ -1408,7 +1549,7 @@ export function TacticalGrid({
           overflow: 'hidden'
         }}
         onContextMenu={handleContextMenu}
-        onClick={activeTool === 'measure' ? handleMeasurementClick : activeTool === 'mark' ? handleMarkerClick : undefined}
+        onClick={activeTool === 'measure' ? handleMeasurementClick : activeTool === 'mark' ? handleMarkerClick : activeTool === 'eraser' ? handleEraserClick : undefined}
         onMouseDown={activeTool === 'draw' ? handleDrawingStart : activeTool === 'fog' ? handleFogStart : undefined}
         onMouseMove={activeTool === 'draw' ? handleDrawingMove : activeTool === 'fog' ? handleFogMove : undefined}
         onMouseUp={activeTool === 'draw' ? handleDrawingEnd : activeTool === 'fog' ? handleFogEnd : undefined}
@@ -1638,26 +1779,27 @@ export function TacticalGrid({
           </div>
         )}
 
-        {/* Fog Areas - Dark overlay for players, semi-transparent for GM */}
+        {/* Eraser tool instructions */}
+        {activeTool === 'eraser' && isGM && (
+          <div className="absolute bottom-4 left-4 bg-red-600 bg-opacity-90 text-white px-3 py-2 rounded text-sm">
+            🧹 Clique em uma área de névoa para remover
+          </div>
+        )}
+
+        {/* Fog Areas - Different visual effects based on type */}
         {fogAreas.map((fog) => (
           <div
             key={fog.id}
-            className={`absolute z-20 ${isGM ? 'pointer-events-auto cursor-pointer border-2 border-gray-400 border-dashed' : 'pointer-events-none'}`}
-            style={{
-              left: fog.x,
-              top: fog.y,
-              width: fog.width,
-              height: fog.height,
-              backgroundColor: isGM ? 'rgba(0, 0, 0, 0.3)' : 'rgba(0, 0, 0, 0.8)',
-              // For GM: show subtle overlay with dashed border
-              // For Players: show dark overlay that hides content
-            }}
+            style={getFogAreaStyles(fog)}
             onContextMenu={isGM ? (e) => handleFogRightClick(fog.id, e) : undefined}
-            title={isGM ? "Clique direito para remover névoa" : undefined}
+            title={isGM ? `${fog.type.charAt(0).toUpperCase() + fog.type.slice(1)} fog - Right-click to remove` : undefined}
           >
             {isGM && (
               <div className="absolute inset-0 flex items-center justify-center text-white text-xs font-bold opacity-70">
-                FOG
+                {fog.type === 'dense' ? '🌫️' : fog.type === 'thin' ? '🌤️' : '✨'}
+                <span className="ml-1">
+                  {fog.type.toUpperCase()}
+                </span>
               </div>
             )}
           </div>
@@ -1672,11 +1814,17 @@ export function TacticalGrid({
               top: currentFogArea.y,
               width: currentFogArea.width,
               height: currentFogArea.height,
-              backgroundColor: 'rgba(0, 0, 0, 0.2)'
+              backgroundColor: selectedFogType === 'magical' && selectedFogColor 
+                ? `${selectedFogColor}30` 
+                : 'rgba(0, 0, 0, 0.2)',
+              backdropFilter: selectedFogType === 'thin' ? 'blur(2px)' : undefined
             }}
           >
             <div className="absolute inset-0 flex items-center justify-center text-white text-xs font-bold">
-              NOVA NÉVOA
+              {selectedFogType === 'dense' ? '🌫️' : selectedFogType === 'thin' ? '🌤️' : '✨'}
+              <span className="ml-1">
+                {selectedFogType.toUpperCase()}
+              </span>
             </div>
           </div>
         )}
@@ -1872,6 +2020,54 @@ export function TacticalGrid({
               {marker.icon}
             </button>
           ))}
+        </div>
+      )}
+
+      {/* Fog Type Palette - Only show when fog tool is active */}
+      {isGM && showFogTypePalette && (
+        <div className="absolute left-4 top-1/2 -translate-y-1/2 flex flex-col gap-2 bg-gray-800 border border-gray-600 rounded-lg p-3 z-40">
+          <div className="text-white text-xs font-bold mb-2 text-center">Tipos de Névoa</div>
+          
+          {fogTypes.map((fogType) => (
+            <button
+              key={fogType.id}
+              onClick={() => setSelectedFogType(fogType.id)}
+              className={`w-12 h-12 rounded-lg border-2 transition-all flex flex-col items-center justify-center text-lg ${
+                selectedFogType === fogType.id 
+                  ? 'border-white scale-110 bg-gray-700' 
+                  : 'border-gray-400 hover:border-gray-200 bg-gray-800 hover:bg-gray-700'
+              }`}
+              title={`${fogType.name} - ${fogType.description}`}
+            >
+              <span>{fogType.icon}</span>
+            </button>
+          ))}
+
+          {/* Magical fog colors - only show when magical fog is selected */}
+          {selectedFogType === 'magical' && (
+            <>
+              <div className="border-t border-gray-600 mt-2 pt-2">
+                <div className="text-white text-xs font-bold mb-2 text-center">Cores Mágicas</div>
+                <div className="flex flex-col gap-1">
+                  {magicalFogColors.map((color) => (
+                    <button
+                      key={color.value}
+                      onClick={() => setSelectedFogColor(color.value)}
+                      className={`w-12 h-8 rounded border-2 transition-all flex items-center justify-center text-sm ${
+                        selectedFogColor === color.value 
+                          ? 'border-white scale-105' 
+                          : 'border-gray-400 hover:border-gray-200'
+                      }`}
+                      style={{ backgroundColor: color.value }}
+                      title={color.name}
+                    >
+                      <span className="drop-shadow-lg">{color.icon}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </>
+          )}
         </div>
       )}
 
