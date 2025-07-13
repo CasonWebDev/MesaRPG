@@ -1,11 +1,14 @@
 "use client"
 
+import { useState } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
-import { Eye, Shield } from "lucide-react"
+import { Eye, Shield, Trash2 } from "lucide-react"
 import { ContentListItem } from "./content-list-item"
+import { DeleteCharacterModal } from "../modals/delete-character-modal"
 import { useCharacters } from "@/hooks/use-characters"
+import { toast } from "sonner"
 
 function getCharacterAvatar(character: any) {
   if (!character.template?.fields) {
@@ -72,13 +75,27 @@ interface PlayerSheetListProps {
 }
 
 export function PlayerSheetList({ campaignId }: PlayerSheetListProps) {
-  const { loading, getPlayerCharacters } = useCharacters({ 
+  const [deletingCharacter, setDeletingCharacter] = useState<any>(null)
+  
+  const { loading, getPlayerCharacters, deleteCharacter } = useCharacters({ 
     campaignId, 
     type: 'PC',
     createdBy: 'player'
   })
 
   const playerCharacters = getPlayerCharacters()
+
+  const handleDelete = async () => {
+    if (!deletingCharacter) return
+    
+    try {
+      await deleteCharacter(deletingCharacter.id)
+      setDeletingCharacter(null)
+      toast.success('Personagem excluído com sucesso!')
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Erro ao excluir personagem')
+    }
+  }
 
   if (loading) {
     return (
@@ -126,10 +143,33 @@ export function PlayerSheetList({ campaignId }: PlayerSheetListProps) {
                 </TooltipTrigger>
                 <TooltipContent>Visualizar Ficha</TooltipContent>
               </Tooltip>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="h-7 w-7" 
+                    onClick={() => setDeletingCharacter(character)}
+                  >
+                    <Trash2 className="h-4 w-4 text-destructive" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Excluir Personagem</TooltipContent>
+              </Tooltip>
             </ContentListItem>
           )
         })}
       </TooltipProvider>
+
+      {/* Modal de confirmação de exclusão */}
+      {deletingCharacter && (
+        <DeleteCharacterModal
+          isOpen={!!deletingCharacter}
+          onClose={() => setDeletingCharacter(null)}
+          onConfirm={handleDelete}
+          character={deletingCharacter}
+        />
+      )}
     </div>
   )
 }

@@ -8,6 +8,7 @@ import { UserRoleDisplay } from "@/types/roles"
 import { useActiveMap } from "@/hooks/use-active-map"
 import { useTokens } from "@/hooks/use-tokens"
 import { useSocket } from "@/hooks/use-socket"
+import { useMapFreeze } from "@/hooks/use-map-freeze"
 import { LinkCharacterModal } from "@/components/modals/link-character-modal"
 import { Eraser } from "lucide-react"
 import { useState, useEffect, useRef, useCallback } from "react"
@@ -53,8 +54,9 @@ export function TacticalGrid({
     removeToken 
   } = useTokens({ campaignId, userRole: userRole === 'Mestre' ? 'GM' : 'PLAYER', userId })
   const { socket, isConnected } = useSocket(campaignId)
+  const { mapFrozen } = useMapFreeze(campaignId, userRole === 'Mestre')
   
-  const isGM = userRole === 'Mestre' || userRole === 'GM'
+  const isGM = userRole === 'Mestre'
   
   // Helper to check if we can emit WebSocket events safely
   const canEmitSocketEvents = useCallback(() => {
@@ -449,6 +451,8 @@ export function TacticalGrid({
         y: number
         width: number
         height: number
+        type: FogType
+        color?: string
         userId: string
         timestamp: number
       }
@@ -1670,7 +1674,7 @@ export function TacticalGrid({
 
   // Handle eraser click to remove single grid cells from fog areas (GM only)
   const handleEraserClick = useCallback((e: React.MouseEvent) => {
-    if (activeTool !== 'eraser' || !isGM) return
+    if (activeTool !== 'fog' || fogMode !== 'erase' || !isGM) return
     
     e.preventDefault()
     e.stopPropagation()
@@ -1823,7 +1827,7 @@ export function TacticalGrid({
       height: fog.height,
       zIndex: 20,
       pointerEvents: isGM ? ('auto' as const) : ('none' as const),
-      cursor: isGM ? (activeTool === 'eraser' ? 'crosshair' : 'pointer') : 'default'
+      cursor: isGM ? (activeTool === 'fog' && fogMode === 'erase' ? 'crosshair' : 'pointer') : 'default'
     }
 
     if (isGM) {
@@ -1878,7 +1882,8 @@ export function TacticalGrid({
     if (activeMap?.imageUrl) {
       return activeMap.imageUrl
     }
-    return "/placeholder.svg"
+    // Use floresta template as default fallback for better visual experience
+    return "/placeholder-floresta.png"
   }, [activeMap?.imageUrl])
 
   return (
@@ -2454,6 +2459,34 @@ export function TacticalGrid({
               </div>
             </>
           )}
+        </div>
+      )}
+
+      {/* Map Frozen Overlay - blocks view for non-GM users when map is frozen */}
+      {mapFrozen && !isGM && (
+        <div className="absolute inset-0 bg-black/[0.99] backdrop-blur-sm z-50 flex items-center justify-center">
+          <div className="bg-white/95 rounded-xl shadow-2xl p-8 max-w-md mx-4 text-center border border-gray-200">
+            <div className="mb-6">
+              <div className="bg-red-100 p-4 rounded-full w-20 h-20 mx-auto mb-4 flex items-center justify-center">
+                <svg className="h-10 w-10 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                </svg>
+              </div>
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">
+                Mapa em Preparação
+              </h2>
+              <p className="text-gray-600">
+                O mestre está preparando o ambiente de jogo. O mapa ficará visível novamente quando ele liberar.
+              </p>
+            </div>
+
+            <div className="bg-gray-50 rounded-lg p-4">
+              <div className="text-sm text-gray-500">
+                <p>🎭 Aguarde enquanto o mestre organiza a cena</p>
+                <p className="mt-1">⏳ Esta tela desaparecerá automaticamente</p>
+              </div>
+            </div>
+          </div>
         </div>
       )}
 

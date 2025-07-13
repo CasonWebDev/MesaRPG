@@ -110,6 +110,7 @@ export function TemplateDialog({ campaignId, type, template, onSave, trigger }: 
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 placeholder="Ex: Ficha Básica de Personagem"
                 required
+                className="bg-stone-50/50"
               />
             </div>
             

@@ -15,7 +15,7 @@ export function SelectFieldRenderer({ field, value, onChange }: SelectFieldRende
         {field.required && <span className="text-destructive ml-1">*</span>}
       </Label>
       <Select value={value} onValueChange={onChange}>
-        <SelectTrigger>
+        <SelectTrigger className="bg-stone-50/50">
           <SelectValue placeholder={`Selecione ${String(field.name).toLowerCase()}`} />
         </SelectTrigger>
         <SelectContent>

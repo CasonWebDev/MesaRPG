@@ -10,7 +10,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { Upload } from "lucide-react"
+import { Upload, Check } from "lucide-react"
 import { useState } from "react"
 import { FileUpload } from "@/components/file-manager/file-upload"
 import Image from "next/image"
@@ -23,19 +23,57 @@ interface AddContentModalProps {
   onSubmit?: (data: any) => Promise<void>
 }
 
+// Templates de mapa disponíveis
+const MAP_TEMPLATES = [
+  {
+    id: 'arenoso',
+    name: 'Deserto/Arena',
+    imageUrl: '/placeholder-arenoso.png',
+    description: 'Ambiente árido, perfeito para combates no deserto ou arenas'
+  },
+  {
+    id: 'masmorra',
+    name: 'Masmorra/Caverna',
+    imageUrl: '/placeholder-masmorra.png',
+    description: 'Ambiente subterrâneo, ideal para masmorras e cavernas'
+  },
+  {
+    id: 'floresta',
+    name: 'Floresta/Natural',
+    imageUrl: '/placeholder-floresta.png',
+    description: 'Ambiente natural, ótimo para aventuras na floresta'
+  }
+]
+
 export function AddContentModal({ itemType, isOpen, onClose, onSave, onSubmit }: AddContentModalProps) {
   const [name, setName] = useState("")
   const [description, setDescription] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const [uploadedImageUrl, setUploadedImageUrl] = useState<string | null>(null)
+  const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null)
   const [attachments, setAttachments] = useState<string[]>([])
   
   const showImageUpload = itemType === "Mapa"
   const showFileUpload = itemType === "Utilitário"
   
+  const handleTemplateSelect = (templateId: string) => {
+    const template = MAP_TEMPLATES.find(t => t.id === templateId)
+    if (template) {
+      setSelectedTemplate(templateId)
+      setUploadedImageUrl(template.imageUrl)
+      if (!name) {
+        setName(template.name)
+      }
+      if (!description) {
+        setDescription(template.description)
+      }
+    }
+  }
+
   const handleFileUpload = (fileUrl: string) => {
     if (itemType === "Mapa") {
       setUploadedImageUrl(fileUrl)
+      setSelectedTemplate(null) // Limpar template selecionado ao fazer upload
     } else {
       setAttachments(prev => [...prev, fileUrl])
     }
@@ -79,6 +117,7 @@ export function AddContentModal({ itemType, isOpen, onClose, onSave, onSubmit }:
       setName("")
       setDescription("")
       setUploadedImageUrl(null)
+      setSelectedTemplate(null)
       setAttachments([])
     } catch (error) {
       console.error('Error saving content:', error)
@@ -92,6 +131,7 @@ export function AddContentModal({ itemType, isOpen, onClose, onSave, onSubmit }:
       setName("")
       setDescription("")
       setUploadedImageUrl(null)
+      setSelectedTemplate(null)
       setAttachments([])
       onClose()
     }
@@ -99,7 +139,7 @@ export function AddContentModal({ itemType, isOpen, onClose, onSave, onSubmit }:
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-[425px] bg-parchment text-ink-text">
+      <DialogContent className="sm:max-w-[600px] bg-parchment text-ink-text max-h-[80vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Adicionar Novo {itemType}</DialogTitle>
           <DialogDescription>
@@ -137,33 +177,80 @@ export function AddContentModal({ itemType, isOpen, onClose, onSave, onSubmit }:
               />
             </div>
             {showImageUpload && (
-              <div className="grid grid-cols-4 items-start gap-4">
-                <Label className="text-right pt-2">
-                  Imagem
-                </Label>
-                <div className="col-span-3 space-y-2">
-                  <FileUpload
-                    onUploadComplete={handleFileUpload}
-                    onUploadError={handleUploadError}
-                    category="map"
-                    acceptedTypes={["image/*"]}
-                    maxFileSize={5 * 1024 * 1024} // 5MB
-                    multiple={false}
-                    disabled={isLoading}
-                    placeholder="Arraste a imagem do mapa aqui"
-                  />
-                  {uploadedImageUrl && (
-                    <div className="w-full h-32 relative rounded-md overflow-hidden border border-input bg-stone-50/30">
-                      <Image
-                        src={uploadedImageUrl}
-                        alt="Imagem enviada"
-                        fill
-                        className="object-cover"
-                      />
+              <>
+                <div className="grid grid-cols-4 items-start gap-4">
+                  <Label className="text-right pt-2">
+                    Templates
+                  </Label>
+                  <div className="col-span-3 space-y-3">
+                    <p className="text-sm text-muted-foreground">
+                      Escolha um template rápido ou faça upload da sua própria imagem
+                    </p>
+                    <div className="grid grid-cols-1 gap-2">
+                      {MAP_TEMPLATES.map((template) => (
+                        <div
+                          key={template.id}
+                          className={`flex items-center space-x-3 p-3 rounded-lg border cursor-pointer transition-colors ${
+                            selectedTemplate === template.id
+                              ? 'border-primary bg-primary/5'
+                              : 'border-input hover:border-primary/50'
+                          }`}
+                          onClick={() => handleTemplateSelect(template.id)}
+                        >
+                          <div className="relative w-12 h-12 rounded-md overflow-hidden flex-shrink-0">
+                            <Image
+                              src={template.imageUrl}
+                              alt={template.name}
+                              fill
+                              className="object-cover"
+                            />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center space-x-2">
+                              <p className="text-sm font-medium truncate">{template.name}</p>
+                              {selectedTemplate === template.id && (
+                                <Check className="h-4 w-4 text-primary flex-shrink-0" />
+                              )}
+                            </div>
+                            <p className="text-xs text-muted-foreground truncate">{template.description}</p>
+                          </div>
+                        </div>
+                      ))}
                     </div>
-                  )}
+                  </div>
                 </div>
-              </div>
+                
+                <div className="grid grid-cols-4 items-start gap-4">
+                  <Label className="text-right pt-2">
+                    Imagem Customizada
+                  </Label>
+                  <div className="col-span-3 space-y-2">
+                    <p className="text-xs text-muted-foreground">
+                      Ou faça upload da sua própria imagem (substitui o template)
+                    </p>
+                    <FileUpload
+                      onUploadComplete={handleFileUpload}
+                      onUploadError={handleUploadError}
+                      category="map"
+                      acceptedTypes={["image/*"]}
+                      maxFileSize={5 * 1024 * 1024} // 5MB
+                      multiple={false}
+                      disabled={isLoading}
+                      placeholder="Arraste sua imagem personalizada aqui"
+                    />
+                    {uploadedImageUrl && !selectedTemplate && (
+                      <div className="w-full h-32 relative rounded-md overflow-hidden border border-input bg-stone-50/30">
+                        <Image
+                          src={uploadedImageUrl}
+                          alt="Imagem personalizada"
+                          fill
+                          className="object-cover"
+                        />
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </>
             )}
             {showFileUpload && (
               <div className="grid grid-cols-4 items-start gap-4">

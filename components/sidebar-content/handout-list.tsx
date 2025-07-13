@@ -13,7 +13,7 @@ import { ShareHandoutModal } from "../modals/share-handout-modal"
 import { HandoutSearch, type HandoutFilters } from "@/components/ui/handout-search"
 import { HandoutStats } from "@/components/ui/handout-stats"
 import { useHandouts, type Handout } from "@/hooks/use-handouts"
-import { useToast } from "@/hooks/use-toast"
+import { useToast } from "@/components/ui/use-toast"
 
 interface HandoutListProps {
   campaignId: string

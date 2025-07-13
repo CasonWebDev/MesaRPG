@@ -2,12 +2,12 @@
 
 import { useState } from "react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { PlusCircle, Trash2, Eye, Loader2, Search } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { ContentListItem } from "./content-list-item"
-import { CreateCharacterModal } from "../modals/create-character-modal"
 import { DeleteCharacterModal } from "../modals/delete-character-modal"
 import { useCharacters } from "@/hooks/use-characters"
 import { toast } from "sonner"
@@ -17,15 +17,14 @@ interface CreatureListProps {
 }
 
 export function CreatureList({ campaignId }: CreatureListProps) {
-  const [isCreating, setIsCreating] = useState(false)
   const [deletingCharacter, setDeletingCharacter] = useState<any>(null)
   const [searchQuery, setSearchQuery] = useState("")
+  const router = useRouter()
 
   const { 
     characters: creatures, 
     loading, 
     error, 
-    createCharacter, 
     deleteCharacter,
     searchCharacters
   } = useCharacters({ 
@@ -38,14 +37,8 @@ export function CreatureList({ campaignId }: CreatureListProps) {
     ? searchCharacters(searchQuery).filter(char => char.type === 'CREATURE')
     : creatures.filter(char => char.type === 'CREATURE')
 
-  const handleCreate = async (data: any) => {
-    try {
-      await createCharacter({ ...data, type: 'CREATURE' })
-      setIsCreating(false)
-      toast.success('Criatura criada com sucesso!')
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Erro ao criar criatura')
-    }
+  const handleCreateCreature = () => {
+    router.push(`/campaign/${campaignId}/sheet/new?type=CREATURE&role=Mestre`)
   }
 
 
@@ -73,7 +66,7 @@ export function CreatureList({ campaignId }: CreatureListProps) {
 
   return (
     <div className="space-y-2 p-1">
-      <Button size="sm" className="w-full" onClick={() => setIsCreating(true)}>
+      <Button size="sm" className="w-full" onClick={handleCreateCreature}>
         <PlusCircle className="mr-2 h-4 w-4" /> Adicionar Criatura
       </Button>
 
@@ -147,13 +140,6 @@ export function CreatureList({ campaignId }: CreatureListProps) {
       )}
 
       {/* Modais */}
-      <CreateCharacterModal
-        isOpen={isCreating}
-        onClose={() => setIsCreating(false)}
-        onConfirm={handleCreate}
-        campaignId={campaignId}
-        characterType="CREATURE"
-      />
 
 
       {deletingCharacter && (

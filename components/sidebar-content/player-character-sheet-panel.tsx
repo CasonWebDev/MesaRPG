@@ -2,10 +2,10 @@
 
 import { useState, useEffect } from "react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { FilePlus2, BookUser, Shield } from "lucide-react"
-import { CreateCharacterDialog } from "@/components/create-character-dialog"
 import { SheetTemplate } from "@/types/sheet-template"
 import { useCharacters } from "@/hooks/use-characters"
 import { toast } from "sonner"
@@ -16,13 +16,13 @@ interface PlayerCharacterSheetPanelProps {
 }
 
 export function PlayerCharacterSheetPanel({ campaignId, playerCharacterId }: PlayerCharacterSheetPanelProps) {
-  const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [template, setTemplate] = useState<SheetTemplate | null>(null)
   const [canCreateCharacter, setCanCreateCharacter] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
+  const router = useRouter()
   
   // Usar hook para buscar personagens do jogador
-  const { characters, getPCs, refetch } = useCharacters({ 
+  const { characters, getPCs } = useCharacters({ 
     campaignId, 
     type: 'PC'
   })
@@ -55,12 +55,6 @@ export function PlayerCharacterSheetPanel({ campaignId, playerCharacterId }: Pla
     loadTemplateData()
   }, [campaignId])
 
-  // Recarregar personagens quando o dialog for fechado (personagem criado)
-  const handleDialogClose = () => {
-    setIsDialogOpen(false)
-    refetch() // Recarregar a lista de personagens
-  }
-
   const handleCreateClick = () => {
     if (!template) {
       toast.error('Nenhum template de personagem encontrado')
@@ -72,7 +66,7 @@ export function PlayerCharacterSheetPanel({ campaignId, playerCharacterId }: Pla
       return
     }
     
-    setIsDialogOpen(true)
+    router.push(`/campaign/${campaignId}/sheet/new?type=PC&role=Jogador`)
   }
 
   if (hasCharacter && character) {
@@ -180,15 +174,6 @@ export function PlayerCharacterSheetPanel({ campaignId, playerCharacterId }: Pla
           Criar Personagem
         </Button>
       </div>
-      
-      {template && (
-        <CreateCharacterDialog
-          isOpen={isDialogOpen}
-          onClose={handleDialogClose}
-          campaignId={campaignId}
-          template={template}
-        />
-      )}
     </>
   )
 }

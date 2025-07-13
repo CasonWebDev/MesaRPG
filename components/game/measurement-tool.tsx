@@ -153,7 +153,13 @@ export function MeasurementTool({
     if (!isActive || !isDrawing) return
 
     if (currentMousePos && points.length > 0) {
-      const newPoints = [...points, currentMousePos]
+      const newPoint: MeasurementPoint = {
+        x: currentMousePos.x,
+        y: currentMousePos.y,
+        gridX: Math.floor(currentMousePos.x / gridSize),
+        gridY: Math.floor(currentMousePos.y / gridSize)
+      }
+      const newPoints = [...points, newPoint]
       setPoints(newPoints)
       
       // Calculate total distance
@@ -212,7 +218,12 @@ export function MeasurementTool({
 
   const currentPoints = [...points]
   if (isDrawing && currentMousePos) {
-    currentPoints.push(currentMousePos)
+    currentPoints.push({
+      x: currentMousePos.x,
+      y: currentMousePos.y,
+      gridX: Math.floor(currentMousePos.x / gridSize),
+      gridY: Math.floor(currentMousePos.y / gridSize)
+    })
   }
 
   return (

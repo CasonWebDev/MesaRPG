@@ -313,7 +313,7 @@ export function UnifiedToolbar({
                     onMeasurementSettingsChange?.({ unit: value })
                   }
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="bg-stone-50/50">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>

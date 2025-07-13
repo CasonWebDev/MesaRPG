@@ -259,10 +259,12 @@ export function useCharacterTemplates(campaignId: string, type?: CharacterType) 
             defaultData[field.name] = field.options?.[0] || ''
             break
           case 'attributes':
-            if (field.attributes) {
+            if (field.attributes && field.groupName) {
+              const attributesData: Record<string, number> = {}
               field.attributes.forEach((attr: any) => {
-                defaultData[attr.name] = attr.defaultValue || 0
+                attributesData[attr.name] = attr.defaultValue || 0
               })
+              defaultData[field.groupName] = attributesData
             }
             break
           default:

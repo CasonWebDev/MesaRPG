@@ -2,8 +2,18 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 
+interface AttributeDefinition {
+  id: string
+  name: string
+  defaultValue: number
+}
+
 interface AttributesFieldRendererProps {
-  field: any
+  field: {
+    groupName: string
+    required?: boolean
+    attributes?: AttributeDefinition[]
+  }
   value: Record<string, number>
   onChange: (value: Record<string, number>) => void
 }
@@ -27,20 +37,20 @@ export function AttributesFieldRenderer({ field, value, onChange }: AttributesFi
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {field.attributes?.map((attributeName: string) => (
-              <div key={attributeName} className="space-y-2">
-                <Label htmlFor={`${field.groupName}-${attributeName}`}>
-                  {attributeName}
+            {field.attributes?.map((attr: AttributeDefinition) => (
+              <div key={attr.id} className="space-y-2">
+                <Label htmlFor={`${field.groupName}-${attr.name}`}>
+                  {attr.name}
                 </Label>
                 <Input
-                  id={`${field.groupName}-${attributeName}`}
+                  id={`${field.groupName}-${attr.name}`}
                   type="number"
-                  value={value[attributeName] || 0}
-                  onChange={(e) => handleAttributeChange(attributeName, Number(e.target.value))}
-                  placeholder="0"
+                  value={value[attr.name] || attr.defaultValue || 0}
+                  onChange={(e) => handleAttributeChange(attr.name, Number(e.target.value))}
+                  placeholder={attr.defaultValue?.toString() || "0"}
                   min={0}
                   max={20}
-                  className="text-center"
+                  className="text-center bg-stone-50/50"
                 />
               </div>
             ))}

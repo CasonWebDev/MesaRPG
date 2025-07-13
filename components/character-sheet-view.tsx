@@ -286,9 +286,9 @@ export function CharacterSheetView({ template, characterData, isEditing, onDataC
               <Avatar className="h-32 w-32 border-4 border-stone-300">
                 <AvatarImage
                   src={characterData[avatarField.name] || getTypePlaceholder(characterType)}
-                  alt={characterData[nameField?.name] || "Avatar"}
+                  alt={characterData[nameField?.name || 'name'] || "Avatar"}
                 />
-                <AvatarFallback>{String(characterData[nameField?.name] || "P").charAt(0)}</AvatarFallback>
+                <AvatarFallback>{String(characterData[nameField?.name || 'name'] || "P").charAt(0)}</AvatarFallback>
               </Avatar>
               {isEditing && (
                 <div className="absolute bottom-0 right-0">

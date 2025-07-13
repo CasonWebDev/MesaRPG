@@ -18,7 +18,7 @@ export function FieldPreview({ field }: FieldPreviewProps) {
           <Input
             value={field.defaultValue || ''}
             placeholder={`Digite ${String(field.name).toLowerCase()}...`}
-            className="h-8 text-sm"
+            className="h-8 text-sm bg-stone-50/50"
             disabled
           />
         )
@@ -42,7 +42,7 @@ export function FieldPreview({ field }: FieldPreviewProps) {
             value={field.defaultValue || ''}
             min={min}
             max={max}
-            className="h-8 text-sm"
+            className="h-8 text-sm bg-stone-50/50"
             disabled
           />
         )
@@ -77,7 +77,7 @@ export function FieldPreview({ field }: FieldPreviewProps) {
         return (
           <select
             value={field.defaultValue || ''}
-            className="h-8 text-sm rounded-md border border-input bg-background px-3 py-1 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+            className="h-8 text-sm rounded-md border border-input bg-stone-50/50 px-3 py-1 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
             disabled
           >
             <option value="">Selecione uma opção</option>

@@ -5,6 +5,7 @@ import { NpcList } from "./npc-list"
 import { HandoutList } from "./handout-list"
 import { CreatureList } from "./creature-list"
 import { PlayerSheetList } from "./player-sheet-list"
+import { MapFreezeControl } from "@/components/game/map-freeze-control"
 
 interface GmContentViewProps {
   campaignId: string
@@ -20,7 +21,10 @@ export function GmContentView({ campaignId, sharedHandoutIds, onShareHandout }: 
           <Map className="mr-2 h-4 w-4" /> Mapas
         </AccordionTrigger>
         <AccordionContent>
-          <MapList campaignId={campaignId} />
+          <div className="space-y-3">
+            <MapFreezeControl campaignId={campaignId} isGM={true} />
+            <MapList campaignId={campaignId} />
+          </div>
         </AccordionContent>
       </AccordionItem>
       <AccordionItem value="npcs">

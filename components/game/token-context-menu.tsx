@@ -339,7 +339,7 @@ export function TokenContextMenu({
                 value={editedToken.borderColor || token.borderColor} 
                 onValueChange={(value) => setEditedToken(prev => ({ ...prev, borderColor: value }))}
               >
-                <SelectTrigger className="bg-background">
+                <SelectTrigger className="bg-stone-50/50">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>

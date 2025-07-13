@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react'
 import { useSocket } from '@/hooks/use-socket'
-import { useToast } from '@/hooks/use-toast'
+import { useToast } from '@/components/ui/use-toast'
 import { ScrollText, Share2, Edit, Trash2 } from 'lucide-react'
 
 interface HandoutNotificationProps {

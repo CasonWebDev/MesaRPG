@@ -136,7 +136,7 @@ export function SheetTemplates({ campaign }: SheetTemplatesProps) {
           <div className="flex items-center gap-4">
             <div className="flex-1">
               <Select value={selectedSystem} onValueChange={setSelectedSystem}>
-                <SelectTrigger>
+                <SelectTrigger className="bg-stone-50/50">
                   <SelectValue placeholder="Selecione um sistema de jogo" />
                 </SelectTrigger>
                 <SelectContent>
