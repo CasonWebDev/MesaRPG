@@ -132,9 +132,12 @@ export async function POST(
     const campaignId = resolvedParams.id
     const { tokens, gameData, activeMapId, gridConfig, fogAreas } = await request.json()
 
-    // Check if user has access to this campaign and is GM
+    // Check if user has access to this campaign
     const campaign = await prisma.campaign.findUnique({
-      where: { id: campaignId }
+      where: { id: campaignId },
+      include: {
+        members: { where: { userId: session.user.id } }
+      }
     })
 
     if (!campaign) {
@@ -142,9 +145,38 @@ export async function POST(
     }
 
     const isGM = campaign.ownerId === session.user.id
+    const isPlayer = campaign.members.length > 0
 
+    if (!isGM && !isPlayer) {
+      return NextResponse.json({ error: 'Access denied' }, { status: 403 })
+    }
+
+    // For players, only allow token updates (removing their own tokens)
     if (!isGM) {
-      return NextResponse.json({ error: 'Only GMs can update game state' }, { status: 403 })
+      // Players can only update tokens (not other game state properties)
+      if (gameData !== undefined || activeMapId !== undefined || gridConfig !== undefined || fogAreas !== undefined) {
+        return NextResponse.json({ error: 'Players can only update tokens' }, { status: 403 })
+      }
+      
+      // If tokens are being updated, verify player only removes/updates their own tokens
+      if (tokens) {
+        const currentGameState = await prisma.gameState.findUnique({
+          where: { campaignId }
+        })
+        
+        const currentTokens = currentGameState?.tokens ? JSON.parse(currentGameState.tokens) : []
+        
+        // Check if any tokens are being removed that don't belong to the player
+        const removedTokens = currentTokens.filter((currentToken: any) => 
+          !tokens.find((newToken: any) => newToken.id === currentToken.id)
+        )
+        
+        for (const removedToken of removedTokens) {
+          if (removedToken.ownerId !== session.user.id) {
+            return NextResponse.json({ error: 'You can only remove your own tokens' }, { status: 403 })
+          }
+        }
+      }
     }
 
     // Update game state
