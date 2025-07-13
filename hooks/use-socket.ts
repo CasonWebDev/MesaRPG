@@ -45,6 +45,12 @@ export interface TokensClear {
   userName: string
 }
 
+export interface TokenDelete {
+  tokenId: string
+  userId: string
+  campaignId: string
+}
+
 export interface GameStateUpdate {
   gameState: any
   userId: string
@@ -70,6 +76,7 @@ export function useSocket(campaignId?: string) {
   const [tokenUpdates, setTokenUpdates] = useState<TokenUpdate[]>([])
   const [tokenRefreshes, setTokenRefreshes] = useState<TokenRefresh[]>([])
   const [tokensCleared, setTokensCleared] = useState<TokensClear[]>([])
+  const [tokensDeleted, setTokensDeleted] = useState<TokenDelete[]>([])
   const [joinedCampaign, setJoinedCampaign] = useState<string | null>(null)
   
   // Debug log
@@ -204,6 +211,11 @@ export function useSocket(campaignId?: string) {
           setTokensCleared(prev => [...prev, tokensClear])
         }
 
+        const handleTokenDelete = (tokenDelete: TokenDelete) => {
+          console.log('🗑️ Token deleted:', tokenDelete)
+          setTokensDeleted(prev => [...prev, tokenDelete])
+        }
+
         const handleError = (error: string) => {
           console.error('❌ Socket error:', error)
         }
@@ -225,6 +237,7 @@ export function useSocket(campaignId?: string) {
         socketInstance.on('game:token-updated', handleTokenUpdate)
         socketInstance.on('game:token-refresh', handleTokenRefresh)
         socketInstance.on('game:tokens-cleared', handleTokensClear)
+        socketInstance.on('game:token-deleted', handleTokenDelete)
         socketInstance.on('campaign:joined', handleCampaignJoined)
         socketInstance.on('error', handleError)
 
@@ -244,6 +257,7 @@ export function useSocket(campaignId?: string) {
           socketInstance.off('game:token-updated', handleTokenUpdate)
           socketInstance.off('game:token-refresh', handleTokenRefresh)
           socketInstance.off('game:tokens-cleared', handleTokensClear)
+          socketInstance.off('game:token-deleted', handleTokenDelete)
           socketInstance.off('campaign:joined', handleCampaignJoined)
           socketInstance.off('error', handleError)
         }
@@ -364,6 +378,7 @@ export function useSocket(campaignId?: string) {
     tokenUpdates,
     tokenRefreshes,
     tokensCleared,
+    tokensDeleted,
     sendMessage,
     moveToken,
     createToken,
@@ -375,6 +390,7 @@ export function useSocket(campaignId?: string) {
     clearTokenCreations: () => setTokenCreations([]),
     clearTokenUpdates: () => setTokenUpdates([]),
     clearTokenRefreshes: () => setTokenRefreshes([]),
-    clearTokensCleared: () => setTokensCleared([])
+    clearTokensCleared: () => setTokensCleared([]),
+    clearTokensDeleted: () => setTokensDeleted([])
   }
 }

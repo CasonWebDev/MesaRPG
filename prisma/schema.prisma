@@ -154,6 +154,7 @@ model GameState {
   tokens        String   @default("[]")
   gameData      String   @default("{}")
   gridConfig    String   @default("{}")
+  fogAreas      String   @default("[]")
   lastActivity  DateTime @default(now())
   updatedAt     DateTime @updatedAt
 

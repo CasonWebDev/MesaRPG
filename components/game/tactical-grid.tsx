@@ -42,16 +42,16 @@ export function TacticalGrid({
   userRole,
   userId
 }: TacticalGridProps) {
-  const { activeMap, isLoading, error: mapError } = useActiveMap(campaignId)
+  const { activeMap, isLoading: mapLoading, error: mapError } = useActiveMap(campaignId)
   const { 
     tokens, 
-    loading, 
+    isLoading: tokensLoading, 
     moveToken,
     createToken,
     updateToken,
     removeToken 
   } = useTokens({ campaignId, userRole: userRole === 'Mestre' ? 'GM' : 'PLAYER', userId })
-  const { socket, isConnected, joinedCampaign } = useSocket(campaignId)
+  const { socket, isConnected } = useSocket(campaignId)
   
   const isGM = userRole === 'Mestre' || userRole === 'GM'
   
@@ -111,6 +111,20 @@ export function TacticalGrid({
   const [selectedMarkerIcon, setSelectedMarkerIcon] = useState('💀') // Caveira padrão
   const [showMarkerPalette, setShowMarkerPalette] = useState(false)
   
+  // Fog of War state
+  const [fogAreas, setFogAreas] = useState<{
+    id: string
+    x: number
+    y: number
+    width: number
+    height: number
+    userId: string
+    timestamp: number
+  }[]>([])
+  const [isCreatingFog, setIsCreatingFog] = useState(false)
+  const [fogStartPoint, setFogStartPoint] = useState<{ x: number; y: number } | null>(null)
+  const [currentFogArea, setCurrentFogArea] = useState<{ x: number; y: number; width: number; height: number } | null>(null)
+
   // Toolbar state
   const [activeTool, setActiveTool] = useState<'select' | 'measure' | 'draw' | 'mark' | 'fog'>('select')
   
@@ -156,7 +170,6 @@ export function TacticalGrid({
   console.log('🔍 TacticalGrid WebSocket state:', { 
     hasSocket: !!socket, 
     isConnected, 
-    joinedCampaign, 
     campaignId,
     userRole 
   })
@@ -175,6 +188,7 @@ export function TacticalGrid({
         if (response.ok) {
           const data = await response.json()
           const gridConfig = data.gameState?.gridConfig
+          const fogState = data.gameState?.fogAreas
           
           if (gridConfig) {
             console.log('📥 Loading existing grid config:', gridConfig)
@@ -183,6 +197,11 @@ export function TacticalGrid({
             setSnapToGrid(gridConfig.snapToGrid || false)
             setGridSize(gridConfig.gridSize || 40)
             setCellValueInMeters(gridConfig.cellValueInMeters || 1.5)
+          }
+          
+          if (fogState) {
+            console.log('🌫️ Loading existing fog areas:', fogState)
+            setFogAreas(Array.isArray(fogState) ? fogState : [])
           }
         }
       } catch (error) {
@@ -377,6 +396,39 @@ export function TacticalGrid({
       setActiveMarkers(prev => prev.filter(m => m.id !== data.markerId))
     }
     
+    const handleFogShow = (data: {
+      fogArea: {
+        id: string
+        x: number
+        y: number
+        width: number
+        height: number
+        userId: string
+        timestamp: number
+      }
+      userId: string
+      campaignId: string
+    }) => {
+      console.log('📨 Received fog area from other user:', data)
+      
+      // Only show if it's from someone else (avoid showing our own fog areas twice)
+      if (data.userId !== userId) {
+        console.log('🌫️ Showing fog area from user:', data.userId)
+        setFogAreas(prev => [...prev, data.fogArea])
+      }
+    }
+    
+    const handleFogHide = (data: {
+      fogId: string
+      userId: string
+      campaignId: string
+    }) => {
+      console.log('📨 Received fog hide from user:', data.userId)
+      
+      // Hide fog area if it matches one of the active ones
+      setFogAreas(prev => prev.filter(f => f.id !== data.fogId))
+    }
+    
     socket.on('grid:config-updated', handleGridConfigUpdate)
     socket.on('game:token-move', handleTokenMove)
     socket.on('measurement:show', handleMeasurementShow)
@@ -385,6 +437,8 @@ export function TacticalGrid({
     socket.on('drawing:hide', handleDrawingHide)
     socket.on('marker:show', handleMarkerShow)
     socket.on('marker:hide', handleMarkerHide)
+    socket.on('fog:show', handleFogShow)
+    socket.on('fog:hide', handleFogHide)
     
     return () => {
       socket.off('grid:config-updated', handleGridConfigUpdate)
@@ -395,6 +449,8 @@ export function TacticalGrid({
       socket.off('drawing:hide', handleDrawingHide)
       socket.off('marker:show', handleMarkerShow)
       socket.off('marker:hide', handleMarkerHide)
+      socket.off('fog:show', handleFogShow)
+      socket.off('fog:hide', handleFogHide)
     }
   }, [socket, isConnected, userId, isGM])
   
@@ -457,7 +513,7 @@ export function TacticalGrid({
 
       console.log('📡 Broadcasting grid config via WebSocket:', gridConfig)
       
-      socket.emit('grid_config_update', {
+      socket?.emit('grid_config_update', {
         campaignId,
         config: gridConfig,
         updatedBy: userId
@@ -569,7 +625,7 @@ export function TacticalGrid({
         borderColor: 'border-gray-500',
         canPlayerMove: true,
         ownerId: userId,
-        characterId: null,
+        characterId: undefined,
         characterType: 'GENERIC' as any,
         hidden: false,
         locked: false,
@@ -614,7 +670,7 @@ export function TacticalGrid({
       // Send clear grid command via WebSocket
       if (canEmitSocketEvents()) {
         console.log('📡 Sending token_clear_all via WebSocket')
-        socket.emit('token_clear_all', {
+        socket?.emit('token_clear_all', {
           campaignId
         })
       } else {
@@ -862,9 +918,13 @@ export function TacticalGrid({
         setShowMarkerPalette(true)
         break
       case 'fog':
-        console.log('🌫️ Fog of war tool activated')
+        console.log('🌫️ Fog of war tool activated - Click and drag to create fog areas')
         setShowColorPalette(false)
         setShowMarkerPalette(false)
+        // Clear any active fog creation state
+        setIsCreatingFog(false)
+        setFogStartPoint(null)
+        setCurrentFogArea(null)
         break
       default:
         console.log('👆 Selection tool activated')
@@ -960,7 +1020,7 @@ export function TacticalGrid({
       // Broadcast measurement to all users via WebSocket - only if properly connected and joined
       if (canEmitSocketEvents()) {
         console.log('📡 Broadcasting measurement to all users', { campaignId, measurementId })
-        socket.emit('measurement_show', {
+        socket?.emit('measurement_show', {
           campaignId,
           measurement,
           userId
@@ -976,7 +1036,7 @@ export function TacticalGrid({
         
         // Broadcast hide to all users - only if properly connected and joined
         if (canEmitSocketEvents()) {
-          socket.emit('measurement_hide', {
+          socket?.emit('measurement_hide', {
             campaignId,
             measurementId,
             userId
@@ -1060,7 +1120,7 @@ export function TacticalGrid({
       // Broadcast via WebSocket - only if properly connected and joined
       if (canEmitSocketEvents()) {
         console.log('📡 Broadcasting drawing to all users', { campaignId, drawingId })
-        socket.emit('drawing_show', {
+        socket?.emit('drawing_show', {
           campaignId,
           drawing: newDrawing,
           userId
@@ -1076,7 +1136,7 @@ export function TacticalGrid({
         
         // Broadcast hide to all users - only if properly connected and joined
         if (canEmitSocketEvents()) {
-          socket.emit('drawing_hide', {
+          socket?.emit('drawing_hide', {
             campaignId,
             drawingId,
             userId
@@ -1125,7 +1185,7 @@ export function TacticalGrid({
     // Broadcast via WebSocket - only if properly connected and joined
     if (canEmitSocketEvents()) {
       console.log('📡 Broadcasting marker to all users', { campaignId, markerId, newMarker })
-      socket.emit('marker:show', {
+      socket?.emit('marker:show', {
         campaignId,
         marker: newMarker,
         userId
@@ -1154,7 +1214,7 @@ export function TacticalGrid({
     // Broadcast removal to all users
     if (canEmitSocketEvents()) {
       console.log('📡 Broadcasting marker removal to all users', { campaignId, markerId })
-      socket.emit('marker:hide', {
+      socket?.emit('marker:hide', {
         campaignId,
         markerId,
         userId
@@ -1163,6 +1223,171 @@ export function TacticalGrid({
       console.warn('⚠️ Skipping marker removal broadcast - basic check failed')
     }
   }, [isGM, canEmitSocketEvents, socket, campaignId, userId])
+
+  // Handle fog creation events - GM only
+  const handleFogStart = useCallback((e: React.MouseEvent) => {
+    if (activeTool !== 'fog' || !isGM) return
+    
+    e.preventDefault()
+    e.stopPropagation()
+    const rect = e.currentTarget.getBoundingClientRect()
+    const x = e.clientX - rect.left
+    const y = e.clientY - rect.top
+    
+    console.log(`🌫️ Starting fog creation at: (${x}, ${y})`)
+    
+    setIsCreatingFog(true)
+    setFogStartPoint({ x, y })
+    setCurrentFogArea({ x, y, width: 0, height: 0 })
+  }, [activeTool, isGM])
+
+  const handleFogMove = useCallback((e: React.MouseEvent) => {
+    if (activeTool !== 'fog' || !isCreatingFog || !fogStartPoint) return
+    
+    e.preventDefault()
+    e.stopPropagation()
+    const rect = e.currentTarget.getBoundingClientRect()
+    const x = e.clientX - rect.left
+    const y = e.clientY - rect.top
+    
+    // Calculate rectangle
+    const minX = Math.min(fogStartPoint.x, x)
+    const minY = Math.min(fogStartPoint.y, y)
+    const maxX = Math.max(fogStartPoint.x, x)
+    const maxY = Math.max(fogStartPoint.y, y)
+    
+    setCurrentFogArea({
+      x: minX,
+      y: minY,
+      width: maxX - minX,
+      height: maxY - minY
+    })
+  }, [activeTool, isCreatingFog, fogStartPoint])
+
+  const handleFogEnd = useCallback((e: React.MouseEvent) => {
+    if (activeTool !== 'fog' || !isCreatingFog || !currentFogArea || !fogStartPoint) return
+    
+    console.log(`🌫️ Finished creating fog area:`, currentFogArea)
+    
+    setIsCreatingFog(false)
+    
+    // Only create if the area is large enough (minimum 10x10 pixels)
+    if (currentFogArea.width > 10 && currentFogArea.height > 10) {
+      const fogId = `fog_${Date.now()}_${userId}`
+      const newFogArea = {
+        id: fogId,
+        x: currentFogArea.x,
+        y: currentFogArea.y,
+        width: currentFogArea.width,
+        height: currentFogArea.height,
+        userId,
+        timestamp: Date.now()
+      }
+      
+      // Add to local fog areas
+      setFogAreas(prev => [...prev, newFogArea])
+      
+      // Broadcast via WebSocket
+      if (canEmitSocketEvents()) {
+        console.log('📡 Broadcasting fog area to all users', { campaignId, fogId, newFogArea })
+        socket?.emit('fog:show', {
+          campaignId,
+          fogArea: newFogArea,
+          userId
+        })
+      } else {
+        console.warn('⚠️ Skipping fog broadcast - basic check failed')
+      }
+      
+      // Persist fog areas to server
+      persistFogAreas([...fogAreas, newFogArea])
+      
+      console.log('🌫️ Fog area created successfully')
+    }
+    
+    setFogStartPoint(null)
+    setCurrentFogArea(null)
+  }, [activeTool, isCreatingFog, currentFogArea, fogStartPoint, userId, canEmitSocketEvents, socket, campaignId, fogAreas])
+
+  // Handle fog area right-click for removal (GM only)
+  const handleFogRightClick = useCallback((fogId: string, e: React.MouseEvent) => {
+    if (!isGM) return
+    
+    e.preventDefault()
+    e.stopPropagation()
+    
+    console.log(`🗑️ GM removing fog area: ${fogId}`)
+    
+    // Remove from local fog areas immediately
+    const newFogAreas = fogAreas.filter(f => f.id !== fogId)
+    setFogAreas(newFogAreas)
+    
+    // Broadcast removal to all users
+    if (canEmitSocketEvents()) {
+      console.log('📡 Broadcasting fog removal to all users', { campaignId, fogId })
+      socket?.emit('fog:hide', {
+        campaignId,
+        fogId,
+        userId
+      })
+    } else {
+      console.warn('⚠️ Skipping fog removal broadcast - basic check failed')
+    }
+    
+    // Persist updated fog areas to server
+    persistFogAreas(newFogAreas)
+  }, [isGM, fogAreas, canEmitSocketEvents, socket, campaignId, userId])
+
+  // Persist fog areas to server
+  const persistFogAreas = async (areas: typeof fogAreas) => {
+    try {
+      const response = await fetch(`/api/campaigns/${campaignId}/game-state`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          fogAreas: areas
+        })
+      })
+
+      if (!response.ok) {
+        console.error('❌ Failed to persist fog areas to server')
+      } else {
+        console.log('✅ Fog areas persisted to server')
+      }
+    } catch (error) {
+      console.error('❌ Error persisting fog areas:', error)
+    }
+  }
+
+  // Helper function to check if a point is inside a fog area
+  const isPointInFog = useCallback((x: number, y: number) => {
+    return fogAreas.some(fog => 
+      x >= fog.x && 
+      x <= fog.x + fog.width && 
+      y >= fog.y && 
+      y <= fog.y + fog.height
+    )
+  }, [fogAreas])
+
+  // Helper function to check if a token is in fog (for players only)
+  const isTokenInFog = useCallback((token: any) => {
+    if (isGM) return false // GM can always see everything
+    
+    const tokenCenterX = token.position.left + (token.tokenSize || 40) / 2
+    const tokenCenterY = token.position.top + (token.tokenSize || 40) / 2
+    
+    return isPointInFog(tokenCenterX, tokenCenterY)
+  }, [isGM, isPointInFog])
+
+  // Helper function to check if a marker is in fog (for players only)
+  const isMarkerInFog = useCallback((marker: any) => {
+    if (isGM) return false // GM can always see everything
+    
+    return isPointInFog(marker.position.x, marker.position.y)
+  }, [isGM, isPointInFog])
 
   // Get map image with cache busting - memoized to prevent unnecessary re-renders
   const getMapImage = useCallback(() => {
@@ -1184,12 +1409,12 @@ export function TacticalGrid({
         }}
         onContextMenu={handleContextMenu}
         onClick={activeTool === 'measure' ? handleMeasurementClick : activeTool === 'mark' ? handleMarkerClick : undefined}
-        onMouseDown={activeTool === 'draw' ? handleDrawingStart : undefined}
-        onMouseMove={activeTool === 'draw' ? handleDrawingMove : undefined}
-        onMouseUp={activeTool === 'draw' ? handleDrawingEnd : undefined}
+        onMouseDown={activeTool === 'draw' ? handleDrawingStart : activeTool === 'fog' ? handleFogStart : undefined}
+        onMouseMove={activeTool === 'draw' ? handleDrawingMove : activeTool === 'fog' ? handleFogMove : undefined}
+        onMouseUp={activeTool === 'draw' ? handleDrawingEnd : activeTool === 'fog' ? handleFogEnd : undefined}
       >
         {/* Loading */}
-        {isLoading && (
+        {mapLoading && (
           <div className="absolute inset-0 flex items-center justify-center bg-gray-800">
             <div className="text-white">Carregando...</div>
           </div>
@@ -1215,7 +1440,7 @@ export function TacticalGrid({
         )}
 
         {/* No Map */}
-        {!activeMap && !isLoading && !mapError && (
+        {!activeMap && !mapLoading && !mapError && (
           <div className="absolute inset-0 flex items-center justify-center">
             <div className="text-white">Nenhum mapa ativo</div>
           </div>
@@ -1326,46 +1551,56 @@ export function TacticalGrid({
           </svg>
         </div>
 
-        {/* Markers - positioned absolutely over the grid */}
-        {activeMarkers.map((marker) => (
-          <div
-            key={marker.id}
-            className={`absolute z-30 ${isGM ? 'pointer-events-auto cursor-pointer hover:scale-110' : 'pointer-events-none'} transition-transform`}
-            style={{
-              left: marker.position.x - 15, // Center the 30px icon
-              top: marker.position.y - 15,
-              fontSize: '30px',
-              textShadow: '2px 2px 4px rgba(0,0,0,0.8)',
-              filter: 'drop-shadow(0 0 3px rgba(255,255,255,0.3))'
-            }}
-            onContextMenu={(e) => handleMarkerRightClick(marker.id, e)}
-            title={isGM ? "Clique direito para remover" : undefined}
-          >
-            {marker.icon}
-          </div>
-        ))}
+        {/* Markers - positioned absolutely over the grid, hidden in fog for players */}
+        {activeMarkers.map((marker) => {
+          const inFog = isMarkerInFog(marker)
+          if (inFog && !isGM) return null // Hide markers in fog for players
+          
+          return (
+            <div
+              key={marker.id}
+              className={`absolute z-30 ${isGM ? 'pointer-events-auto cursor-pointer hover:scale-110' : 'pointer-events-none'} transition-transform ${inFog && isGM ? 'opacity-50' : ''}`}
+              style={{
+                left: marker.position.x - 15, // Center the 30px icon
+                top: marker.position.y - 15,
+                fontSize: '30px',
+                textShadow: '2px 2px 4px rgba(0,0,0,0.8)',
+                filter: 'drop-shadow(0 0 3px rgba(255,255,255,0.3))'
+              }}
+              onContextMenu={(e) => handleMarkerRightClick(marker.id, e)}
+              title={isGM ? "Clique direito para remover" : undefined}
+            >
+              {marker.icon}
+            </div>
+          )
+        })}
 
-        {/* Tokens - Only generic tokens, clean grid if no previous session */}
-        {!loading && tokens?.map((token) => (
-          <Token 
-            key={token.id} 
-            token={token} 
-            isSelected={false}
-            onSelect={() => {}}
-            onMove={handleTokenMove}
-            canMove={true}
-            role={isGM ? 'GM' : 'PLAYER'}
-            userId={userId}
-            campaignId={campaignId}
-            zoomLevel={1}
-            onDelete={handleDeleteToken}
-            onLinkCharacter={handleLinkCharacterToToken}
-            onSizeChange={handleTokenSizeChange}
-          />
-        ))}
+        {/* Tokens - Only generic tokens, clean grid if no previous session, hidden in fog for players */}
+        {!tokensLoading && tokens?.map((token) => {
+          const inFog = isTokenInFog(token)
+          if (inFog && !isGM) return null // Hide tokens in fog for players
+          
+          return (
+            <Token 
+              key={token.id} 
+              token={token} 
+              isSelected={false}
+              onSelect={() => {}}
+              onMove={handleTokenMove}
+              canMove={true}
+              role={isGM ? 'GM' : 'PLAYER'}
+              userId={userId}
+              campaignId={campaignId}
+              zoomLevel={1}
+              onDelete={handleDeleteToken}
+              onLinkCharacter={handleLinkCharacterToToken}
+              onSizeChange={handleTokenSizeChange}
+            />
+          )
+        })}
         
         {/* Show clean grid message when no tokens */}
-        {!loading && (!tokens || tokens.length === 0) && activeMap && activeTool === 'select' && (
+        {!tokensLoading && (!tokens || tokens.length === 0) && activeMap && activeTool === 'select' && (
           <div className="absolute bottom-4 left-4 bg-black bg-opacity-60 text-white px-3 py-2 rounded text-sm">
             Grid limpo - Clique com botão direito para adicionar tokens ou configurar grade
           </div>
@@ -1392,6 +1627,57 @@ export function TacticalGrid({
         {activeTool === 'mark' && (
           <div className="absolute bottom-4 left-4 bg-purple-600 bg-opacity-90 text-white px-3 py-2 rounded text-sm">
             📍 Clique para colocar • Clique direito para remover
+          </div>
+        )}
+
+        {/* Fog tool instructions */}
+        {activeTool === 'fog' && isGM && (
+          <div className="absolute bottom-4 left-4 bg-gray-600 bg-opacity-90 text-white px-3 py-2 rounded text-sm">
+            {isCreatingFog && "🌫️ Arraste para definir área de névoa"}
+            {!isCreatingFog && "🌫️ Arraste para criar névoa • Clique direito para remover"}
+          </div>
+        )}
+
+        {/* Fog Areas - Dark overlay for players, semi-transparent for GM */}
+        {fogAreas.map((fog) => (
+          <div
+            key={fog.id}
+            className={`absolute z-20 ${isGM ? 'pointer-events-auto cursor-pointer border-2 border-gray-400 border-dashed' : 'pointer-events-none'}`}
+            style={{
+              left: fog.x,
+              top: fog.y,
+              width: fog.width,
+              height: fog.height,
+              backgroundColor: isGM ? 'rgba(0, 0, 0, 0.3)' : 'rgba(0, 0, 0, 0.8)',
+              // For GM: show subtle overlay with dashed border
+              // For Players: show dark overlay that hides content
+            }}
+            onContextMenu={isGM ? (e) => handleFogRightClick(fog.id, e) : undefined}
+            title={isGM ? "Clique direito para remover névoa" : undefined}
+          >
+            {isGM && (
+              <div className="absolute inset-0 flex items-center justify-center text-white text-xs font-bold opacity-70">
+                FOG
+              </div>
+            )}
+          </div>
+        ))}
+
+        {/* Current fog area being created */}
+        {isCreatingFog && currentFogArea && currentFogArea.width > 0 && currentFogArea.height > 0 && (
+          <div
+            className="absolute z-20 border-2 border-gray-300 border-dashed pointer-events-none"
+            style={{
+              left: currentFogArea.x,
+              top: currentFogArea.y,
+              width: currentFogArea.width,
+              height: currentFogArea.height,
+              backgroundColor: 'rgba(0, 0, 0, 0.2)'
+            }}
+          >
+            <div className="absolute inset-0 flex items-center justify-center text-white text-xs font-bold">
+              NOVA NÉVOA
+            </div>
           </div>
         )}
 

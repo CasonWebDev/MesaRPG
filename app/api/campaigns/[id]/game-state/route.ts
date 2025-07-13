@@ -100,6 +100,7 @@ export async function GET(
         tokens: formattedTokens,
         gameData: gameState.gameData ? JSON.parse(gameState.gameData) : {},
         gridConfig: gameState.gridConfig ? JSON.parse(gameState.gridConfig) : {},
+        fogAreas: gameState.fogAreas ? JSON.parse(gameState.fogAreas) : [],
         lastActivity: gameState.lastActivity.toISOString()
       }
     })
@@ -129,7 +130,7 @@ export async function POST(
 
     const resolvedParams = await params
     const campaignId = resolvedParams.id
-    const { tokens, gameData, activeMapId, gridConfig } = await request.json()
+    const { tokens, gameData, activeMapId, gridConfig, fogAreas } = await request.json()
 
     // Check if user has access to this campaign and is GM
     const campaign = await prisma.campaign.findUnique({
@@ -154,6 +155,7 @@ export async function POST(
         gameData: gameData ? JSON.stringify(gameData) : undefined,
         activeMapId: activeMapId || undefined,
         gridConfig: gridConfig ? JSON.stringify(gridConfig) : undefined,
+        fogAreas: fogAreas ? JSON.stringify(fogAreas) : undefined,
         lastActivity: new Date()
       },
       create: {
@@ -161,7 +163,8 @@ export async function POST(
         tokens: JSON.stringify(tokens || []),
         gameData: JSON.stringify(gameData || {}),
         activeMapId: activeMapId || null,
-        gridConfig: JSON.stringify(gridConfig || {})
+        gridConfig: JSON.stringify(gridConfig || {}),
+        fogAreas: JSON.stringify(fogAreas || [])
       }
     })
 
@@ -172,6 +175,7 @@ export async function POST(
         gameData: gameState.gameData ? JSON.parse(gameState.gameData) : {},
         activeMapId: gameState.activeMapId,
         gridConfig: gameState.gridConfig ? JSON.parse(gameState.gridConfig) : {},
+        fogAreas: gameState.fogAreas ? JSON.parse(gameState.fogAreas) : [],
         lastActivity: gameState.lastActivity.toISOString()
       }
     })

@@ -36,7 +36,7 @@ export function useTokens({
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  const { socket, tokenMoves, tokenCreations, tokenUpdates, tokenRefreshes, tokensCleared, clearTokenMoves, clearTokenCreations, clearTokenUpdates, clearTokenRefreshes, clearTokensCleared, isConnected } = useSocket(campaignId)
+  const { socket, tokenMoves, tokenCreations, tokenUpdates, tokenRefreshes, tokensCleared, tokensDeleted, clearTokenMoves, clearTokenCreations, clearTokenUpdates, clearTokenRefreshes, clearTokensCleared, clearTokensDeleted, isConnected } = useSocket(campaignId)
 
   // Carregar tokens do servidor
   const loadTokens = useCallback(async () => {
@@ -225,6 +225,21 @@ export function useTokens({
     }
   }, [tokensCleared, clearTokensCleared])
 
+  // Processar tokens deletados recebidos via WebSocket
+  useEffect(() => {
+    if (tokensDeleted.length > 0) {
+      tokensDeleted.forEach(tokenDelete => {
+        console.log('🗑️ Processing token delete from WebSocket:', tokenDelete)
+        console.log(`Removing token ${tokenDelete.tokenId} for campaign ${tokenDelete.campaignId} by ${tokenDelete.userId}`)
+        setTokens(prev => prev.filter(token => token.id !== tokenDelete.tokenId))
+        setSelectedTokenIds(prev => prev.filter(id => id !== tokenDelete.tokenId))
+      })
+      
+      // Limpar eventos processados
+      clearTokensDeleted()
+    }
+  }, [tokensDeleted, clearTokensDeleted])
+
   // Seleção de tokens
   const selectToken = useCallback((tokenId: string) => {
     setSelectedTokenIds(prev => {
@@ -363,11 +378,13 @@ export function useTokens({
         throw new Error('Erro ao remover token do servidor')
       }
 
-      // Notificar outros usuários via WebSocket
+      // Notificar outros usuários via WebSocket sobre a remoção específica do token
       if (socket && isConnected) {
-        socket.emit('game:update-state', {
+        console.log('📡 Broadcasting token removal via WebSocket:', tokenId)
+        socket.emit('token_delete', {
           campaignId,
-          gameState: { tokens: newTokens }
+          tokenId,
+          userId
         })
       }
 
