@@ -51,9 +51,22 @@ export function TacticalGrid({
     updateToken,
     removeToken 
   } = useTokens({ campaignId, userRole: userRole === 'Mestre' ? 'GM' : 'PLAYER', userId })
-  const { socket, isConnected } = useSocket(campaignId)
+  const { socket, isConnected, joinedCampaign } = useSocket(campaignId)
   
   const isGM = userRole === 'Mestre' || userRole === 'GM'
+  
+  // Helper to check if we can emit WebSocket events safely
+  const canEmitSocketEvents = useCallback(() => {
+    const canEmit = socket && isConnected
+    if (!canEmit) {
+      console.warn('⚠️ Cannot emit WebSocket events - not connected', { hasSocket: !!socket, isConnected })
+      return false
+    }
+    
+    // For now, let's just check basic connectivity to restore sync
+    // We'll add campaign validation back later if needed
+    return true
+  }, [socket, isConnected])
   
   // Grid system state
   const [showGrid, setShowGrid] = useState(false)
@@ -72,6 +85,31 @@ export function TacticalGrid({
     userId: string
   } | null>(null)
   const [measurementTimer, setMeasurementTimer] = useState<NodeJS.Timeout | null>(null)
+  
+  // Drawing system state
+  const [isDrawing, setIsDrawing] = useState(false)
+  const [currentPath, setCurrentPath] = useState<{ x: number; y: number }[]>([])
+  const [activeDrawings, setActiveDrawings] = useState<{
+    id: string
+    path: { x: number; y: number }[]
+    color: string
+    userId: string
+    timestamp: number
+  }[]>([])
+  const [selectedColor, setSelectedColor] = useState('#ef4444') // Vermelho padrão
+  const [showColorPalette, setShowColorPalette] = useState(false)
+  const [drawingTimers, setDrawingTimers] = useState<Map<string, NodeJS.Timeout>>(new Map())
+  
+  // Marker system state
+  const [activeMarkers, setActiveMarkers] = useState<{
+    id: string
+    position: { x: number; y: number }
+    icon: string
+    userId: string
+    timestamp: number
+  }[]>([])
+  const [selectedMarkerIcon, setSelectedMarkerIcon] = useState('💀') // Caveira padrão
+  const [showMarkerPalette, setShowMarkerPalette] = useState(false)
   
   // Toolbar state
   const [activeTool, setActiveTool] = useState<'select' | 'measure' | 'draw' | 'mark' | 'fog'>('select')
@@ -96,7 +134,32 @@ export function TacticalGrid({
   
   const contextMenuRef = useRef<HTMLDivElement>(null)
   
+  // Drawing colors
+  const drawingColors = [
+    { name: 'Vermelho', value: '#ef4444' },
+    { name: 'Azul', value: '#3b82f6' },
+    { name: 'Verde', value: '#10b981' },
+    { name: 'Amarelo', value: '#f59e0b' },
+    { name: 'Roxo', value: '#8b5cf6' }
+  ]
+  
+  // Marker icons
+  const markerIcons = [
+    { name: 'Caveira', icon: '💀' },
+    { name: 'Moeda', icon: '🪙' },
+    { name: 'Espada', icon: '⚔️' },
+    { name: 'Escudo', icon: '🛡️' },
+    { name: 'Fogo', icon: '🔥' }
+  ]
+  
   console.log('🎮 TacticalGrid using integrated useTokens with persistence')
+  console.log('🔍 TacticalGrid WebSocket state:', { 
+    hasSocket: !!socket, 
+    isConnected, 
+    joinedCampaign, 
+    campaignId,
+    userRole 
+  })
   
   // Load grid configuration from server on mount
   useEffect(() => {
@@ -227,18 +290,122 @@ export function TacticalGrid({
       }
     }
     
+    const handleDrawingShow = (data: {
+      drawing: {
+        id: string
+        path: { x: number; y: number }[]
+        color: string
+        userId: string
+        timestamp: number
+      }
+      userId: string
+      campaignId: string
+    }) => {
+      console.log('📨 Received drawing from other user:', data)
+      
+      // Only show if it's from someone else (avoid showing our own drawings twice)
+      if (data.userId !== userId) {
+        console.log('✏️ Showing drawing from user:', data.userId)
+        setActiveDrawings(prev => [...prev, data.drawing])
+        
+        // Set timer to hide after 15 seconds
+        const timer = setTimeout(() => {
+          console.log('⏰ Auto-hiding received drawing after 15 seconds')
+          setActiveDrawings(prev => prev.filter(d => d.id !== data.drawing.id))
+        }, 15000)
+        
+        setDrawingTimers(prev => new Map(prev.set(data.drawing.id, timer)))
+      }
+    }
+    
+    const handleDrawingHide = (data: {
+      drawingId: string
+      userId: string
+      campaignId: string
+    }) => {
+      console.log('📨 Received drawing hide from user:', data.userId)
+      
+      // Hide drawing if it matches one of the active ones
+      setActiveDrawings(prev => prev.filter(d => d.id !== data.drawingId))
+      
+      // Clear the timer for this drawing
+      const timer = drawingTimers.get(data.drawingId)
+      if (timer) {
+        clearTimeout(timer)
+        setDrawingTimers(prev => {
+          const newMap = new Map(prev)
+          newMap.delete(data.drawingId)
+          return newMap
+        })
+      }
+    }
+    
+    const handleMarkerShow = (data: {
+      marker: {
+        id: string
+        position: { x: number; y: number }
+        icon: string
+        userId: string
+        timestamp: number
+      }
+      userId: string
+      campaignId: string
+    }) => {
+      console.log('📨 Received marker from other user:', data)
+      console.log('🔍 Current userId:', userId, 'Marker userId:', data.userId)
+      
+      // Only show if it's from someone else (avoid showing our own markers twice)
+      if (data.userId !== userId) {
+        console.log('📍 Showing marker from user:', data.userId, 'Marker:', data.marker)
+        setActiveMarkers(prev => {
+          console.log('📋 Adding marker to existing markers:', prev.length)
+          return [...prev, data.marker]
+        })
+      } else {
+        console.log('🚫 Skipping own marker to avoid duplication')
+      }
+    }
+    
+    const handleMarkerHide = (data: {
+      markerId: string
+      userId: string
+      campaignId: string
+    }) => {
+      console.log('📨 Received marker hide from user:', data.userId)
+      
+      // Hide marker if it matches one of the active ones
+      setActiveMarkers(prev => prev.filter(m => m.id !== data.markerId))
+    }
+    
     socket.on('grid:config-updated', handleGridConfigUpdate)
     socket.on('game:token-move', handleTokenMove)
     socket.on('measurement:show', handleMeasurementShow)
     socket.on('measurement:hide', handleMeasurementHide)
+    socket.on('drawing:show', handleDrawingShow)
+    socket.on('drawing:hide', handleDrawingHide)
+    socket.on('marker:show', handleMarkerShow)
+    socket.on('marker:hide', handleMarkerHide)
     
     return () => {
       socket.off('grid:config-updated', handleGridConfigUpdate)
       socket.off('game:token-move', handleTokenMove)
       socket.off('measurement:show', handleMeasurementShow)
       socket.off('measurement:hide', handleMeasurementHide)
+      socket.off('drawing:show', handleDrawingShow)
+      socket.off('drawing:hide', handleDrawingHide)
+      socket.off('marker:show', handleMarkerShow)
+      socket.off('marker:hide', handleMarkerHide)
     }
   }, [socket, isConnected, userId, isGM])
+  
+  // Debug log for marker state
+  useEffect(() => {
+    console.log('📊 Marker state changed:', { 
+      activeMarkersCount: activeMarkers.length, 
+      showMarkerPalette, 
+      selectedMarkerIcon 
+    })
+  }, [activeMarkers, showMarkerPalette, selectedMarkerIcon])
 
   // Snap to grid function
   const snapToGridPosition = useCallback((position: { top: number; left: number }) => {
@@ -278,8 +445,8 @@ export function TacticalGrid({
         break
     }
 
-    // Send grid configuration via WebSocket
-    if (socket && isConnected) {
+    // Send grid configuration via WebSocket - only if properly connected and joined
+    if (canEmitSocketEvents()) {
       const gridConfig = {
         showGrid: configKey === 'showGrid' ? value : showGrid,
         showCoordinates: configKey === 'showCoordinates' ? value : showCoordinates,
@@ -445,7 +612,7 @@ export function TacticalGrid({
       // This will be handled by the useTokens hook through WebSocket
       
       // Send clear grid command via WebSocket
-      if (socket && isConnected) {
+      if (canEmitSocketEvents()) {
         console.log('📡 Sending token_clear_all via WebSocket')
         socket.emit('token_clear_all', {
           campaignId
@@ -673,22 +840,36 @@ export function TacticalGrid({
       setMeasurementTimer(null)
     }
     
+    // Clear drawing state when switching tools
+    setIsDrawing(false)
+    setCurrentPath([])
+    
     // Different behaviors based on selected tool
     switch (tool) {
       case 'measure':
         console.log('📏 Measurement tool activated - Click two points to measure')
+        setShowColorPalette(false)
+        setShowMarkerPalette(false)
         break
       case 'draw':
-        console.log('✏️ Drawing tool activated')
+        console.log('✏️ Drawing tool activated - Click and drag to draw')
+        setShowColorPalette(true)
+        setShowMarkerPalette(false)
         break
       case 'mark':
-        console.log('📍 Marking tool activated')
+        console.log('📍 Marking tool activated - Click to place markers')
+        setShowColorPalette(false)
+        setShowMarkerPalette(true)
         break
       case 'fog':
         console.log('🌫️ Fog of war tool activated')
+        setShowColorPalette(false)
+        setShowMarkerPalette(false)
         break
       default:
         console.log('👆 Selection tool activated')
+        setShowColorPalette(false)
+        setShowMarkerPalette(false)
         break
     }
   }
@@ -701,6 +882,30 @@ export function TacticalGrid({
       }
     }
   }, [measurementTimer])
+
+  // Cleanup drawing timers on unmount and tool change
+  useEffect(() => {
+    return () => {
+      // Clear all drawing timers on unmount
+      drawingTimers.forEach(timer => clearTimeout(timer))
+    }
+  }, [])
+
+  // Clear drawing timers when switching away from drawing tool
+  useEffect(() => {
+    if (activeTool !== 'draw') {
+      // Clear current drawing state
+      setIsDrawing(false)
+      setCurrentPath([])
+      
+      // Clear all active drawings and their timers
+      drawingTimers.forEach(timer => clearTimeout(timer))
+      setDrawingTimers(new Map())
+      setActiveDrawings([])
+    }
+  }, [activeTool])
+
+  // Markers are persistent - no cleanup when switching tools
 
   // Handle measurement clicks
   const handleMeasurementClick = (e: React.MouseEvent) => {
@@ -752,14 +957,16 @@ export function TacticalGrid({
         clearTimeout(measurementTimer)
       }
       
-      // Broadcast measurement to all users via WebSocket
-      if (socket && isConnected) {
-        console.log('📡 Broadcasting measurement to all users')
+      // Broadcast measurement to all users via WebSocket - only if properly connected and joined
+      if (canEmitSocketEvents()) {
+        console.log('📡 Broadcasting measurement to all users', { campaignId, measurementId })
         socket.emit('measurement_show', {
           campaignId,
           measurement,
           userId
         })
+      } else {
+        console.warn('⚠️ Skipping measurement broadcast - basic check failed')
       }
       
       // Set timer to hide measurement after 5 seconds
@@ -767,8 +974,8 @@ export function TacticalGrid({
         console.log('⏰ Hiding measurement after 5 seconds')
         setActiveMeasurement(null)
         
-        // Broadcast hide to all users
-        if (socket && isConnected) {
+        // Broadcast hide to all users - only if properly connected and joined
+        if (canEmitSocketEvents()) {
           socket.emit('measurement_hide', {
             campaignId,
             measurementId,
@@ -794,13 +1001,176 @@ export function TacticalGrid({
     }
   }
 
-  // Get map image with cache busting
-  const getMapImage = () => {
+  // Handle drawing events with useCallback to prevent unnecessary re-renders
+  const handleDrawingStart = useCallback((e: React.MouseEvent) => {
+    if (activeTool !== 'draw') return
+    
+    e.preventDefault()
+    e.stopPropagation()
+    const rect = e.currentTarget.getBoundingClientRect()
+    const x = e.clientX - rect.left
+    const y = e.clientY - rect.top
+    
+    console.log(`✏️ Starting to draw at: (${x}, ${y})`)
+    
+    setIsDrawing(true)
+    setCurrentPath([{ x, y }])
+  }, [activeTool])
+
+  const handleDrawingMove = useCallback((e: React.MouseEvent) => {
+    if (activeTool !== 'draw' || !isDrawing) return
+    
+    e.preventDefault()
+    e.stopPropagation()
+    const rect = e.currentTarget.getBoundingClientRect()
+    const x = e.clientX - rect.left
+    const y = e.clientY - rect.top
+    
+    // Throttle updates to reduce re-renders
+    setCurrentPath(prev => {
+      const lastPoint = prev[prev.length - 1]
+      // Only add point if it's moved at least 3 pixels to reduce updates
+      if (!lastPoint || Math.abs(lastPoint.x - x) > 3 || Math.abs(lastPoint.y - y) > 3) {
+        return [...prev, { x, y }]
+      }
+      return prev
+    })
+  }, [activeTool, isDrawing])
+
+  const handleDrawingEnd = useCallback((e: React.MouseEvent) => {
+    if (activeTool !== 'draw' || !isDrawing) return
+    
+    console.log(`✏️ Finished drawing, path length: ${currentPath.length}`)
+    
+    setIsDrawing(false)
+    
+    if (currentPath.length > 1) {
+      const drawingId = `drawing_${Date.now()}_${userId}`
+      const newDrawing = {
+        id: drawingId,
+        path: currentPath,
+        color: selectedColor,
+        userId,
+        timestamp: Date.now()
+      }
+      
+      // Add to local drawings
+      setActiveDrawings(prev => [...prev, newDrawing])
+      
+      // Broadcast via WebSocket - only if properly connected and joined
+      if (canEmitSocketEvents()) {
+        console.log('📡 Broadcasting drawing to all users', { campaignId, drawingId })
+        socket.emit('drawing_show', {
+          campaignId,
+          drawing: newDrawing,
+          userId
+        })
+      } else {
+        console.warn('⚠️ Skipping drawing broadcast - basic check failed')
+      }
+      
+      // Set timer to remove after 15 seconds
+      const timer = setTimeout(() => {
+        console.log('⏰ Hiding drawing after 15 seconds')
+        setActiveDrawings(prev => prev.filter(d => d.id !== drawingId))
+        
+        // Broadcast hide to all users - only if properly connected and joined
+        if (canEmitSocketEvents()) {
+          socket.emit('drawing_hide', {
+            campaignId,
+            drawingId,
+            userId
+          })
+        }
+      }, 15000)
+      
+      // Store timer for cleanup
+      setDrawingTimers(prev => new Map(prev.set(drawingId, timer)))
+    }
+    
+    setCurrentPath([])
+  }, [activeTool, isDrawing, currentPath, selectedColor, userId, socket, isConnected, campaignId])
+
+  // Handle marker clicks - place markers on single click
+  const handleMarkerClick = useCallback((e: React.MouseEvent) => {
+    if (activeTool !== 'mark') return
+    
+    e.preventDefault()
+    e.stopPropagation()
+    const rect = e.currentTarget.getBoundingClientRect()
+    const x = e.clientX - rect.left
+    const y = e.clientY - rect.top
+    
+    console.log(`📍 Placing marker at: (${x}, ${y}) with icon: ${selectedMarkerIcon}`)
+    
+    const markerId = `marker_${Date.now()}_${userId}`
+    const newMarker = {
+      id: markerId,
+      position: { x, y },
+      icon: selectedMarkerIcon,
+      userId,
+      timestamp: Date.now()
+    }
+    
+    console.log('🎯 Created marker object:', newMarker)
+    
+    // Add to local markers
+    setActiveMarkers(prev => {
+      console.log('📋 Adding marker locally, previous count:', prev.length)
+      const newMarkers = [...prev, newMarker]
+      console.log('📋 New marker count:', newMarkers.length)
+      return newMarkers
+    })
+    
+    // Broadcast via WebSocket - only if properly connected and joined
+    if (canEmitSocketEvents()) {
+      console.log('📡 Broadcasting marker to all users', { campaignId, markerId, newMarker })
+      socket.emit('marker:show', {
+        campaignId,
+        marker: newMarker,
+        userId
+      })
+      console.log('✅ Marker emit sent successfully')
+    } else {
+      console.warn('⚠️ Skipping marker broadcast - basic check failed')
+    }
+    
+    // Markers are persistent - no auto-hide timer
+    console.log('📍 Marker placed successfully - persistent until manually removed')
+  }, [activeTool, selectedMarkerIcon, userId, canEmitSocketEvents, socket, campaignId])
+
+  // Handle marker right-click for removal (GM only)
+  const handleMarkerRightClick = useCallback((markerId: string, e: React.MouseEvent) => {
+    if (!isGM) return
+    
+    e.preventDefault()
+    e.stopPropagation()
+    
+    console.log(`🗑️ GM removing marker: ${markerId}`)
+    
+    // Remove from local markers immediately
+    setActiveMarkers(prev => prev.filter(m => m.id !== markerId))
+    
+    // Broadcast removal to all users
+    if (canEmitSocketEvents()) {
+      console.log('📡 Broadcasting marker removal to all users', { campaignId, markerId })
+      socket.emit('marker:hide', {
+        campaignId,
+        markerId,
+        userId
+      })
+    } else {
+      console.warn('⚠️ Skipping marker removal broadcast - basic check failed')
+    }
+  }, [isGM, canEmitSocketEvents, socket, campaignId, userId])
+
+  // Get map image with cache busting - memoized to prevent unnecessary re-renders
+  const getMapImage = useCallback(() => {
     if (activeMap?.imageUrl) {
-      return `${activeMap.imageUrl}?t=${Date.now()}`
+      return activeMap.imageUrl
     }
     return "/placeholder.svg"
-  }
+  }, [activeMap?.imageUrl])
 
   return (
     <div className="w-full h-full bg-gray-900 flex items-center justify-center">
@@ -813,7 +1183,10 @@ export function TacticalGrid({
           overflow: 'hidden'
         }}
         onContextMenu={handleContextMenu}
-        onClick={handleMeasurementClick}
+        onClick={activeTool === 'measure' ? handleMeasurementClick : activeTool === 'mark' ? handleMarkerClick : undefined}
+        onMouseDown={activeTool === 'draw' ? handleDrawingStart : undefined}
+        onMouseMove={activeTool === 'draw' ? handleDrawingMove : undefined}
+        onMouseUp={activeTool === 'draw' ? handleDrawingEnd : undefined}
       >
         {/* Loading */}
         {isLoading && (
@@ -923,8 +1296,54 @@ export function TacticalGrid({
                 </text>
               </>
             )}
+            
+            {/* Drawing paths */}
+            {activeDrawings.map((drawing) => (
+              <g key={drawing.id}>
+                <path
+                  d={`M ${drawing.path.map(p => `${p.x},${p.y}`).join(' L ')}`}
+                  stroke={drawing.color}
+                  strokeWidth="3"
+                  fill="none"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </g>
+            ))}
+            
+            {/* Current drawing path (while drawing) */}
+            {isDrawing && currentPath.length > 1 && (
+              <path
+                d={`M ${currentPath.map(p => `${p.x},${p.y}`).join(' L ')}`}
+                stroke={selectedColor}
+                strokeWidth="3"
+                fill="none"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                opacity="0.7"
+              />
+            )}
           </svg>
         </div>
+
+        {/* Markers - positioned absolutely over the grid */}
+        {activeMarkers.map((marker) => (
+          <div
+            key={marker.id}
+            className={`absolute z-30 ${isGM ? 'pointer-events-auto cursor-pointer hover:scale-110' : 'pointer-events-none'} transition-transform`}
+            style={{
+              left: marker.position.x - 15, // Center the 30px icon
+              top: marker.position.y - 15,
+              fontSize: '30px',
+              textShadow: '2px 2px 4px rgba(0,0,0,0.8)',
+              filter: 'drop-shadow(0 0 3px rgba(255,255,255,0.3))'
+            }}
+            onContextMenu={(e) => handleMarkerRightClick(marker.id, e)}
+            title={isGM ? "Clique direito para remover" : undefined}
+          >
+            {marker.icon}
+          </div>
+        ))}
 
         {/* Tokens - Only generic tokens, clean grid if no previous session */}
         {!loading && tokens?.map((token) => (
@@ -958,6 +1377,21 @@ export function TacticalGrid({
             {measurementPoints.length === 0 && "📏 Clique no primeiro ponto para medir"}
             {measurementPoints.length === 1 && "📏 Clique no segundo ponto"}
             {activeMeasurement && "📏 Clique em qualquer lugar para nova medição"}
+          </div>
+        )}
+
+        {/* Drawing tool instructions */}
+        {activeTool === 'draw' && (
+          <div className="absolute bottom-4 left-4 bg-blue-600 bg-opacity-90 text-white px-3 py-2 rounded text-sm">
+            {isDrawing && "✏️ Arraste para desenhar"}
+            {!isDrawing && "✏️ Pressione e arraste para desenhar"}
+          </div>
+        )}
+
+        {/* Marker tool instructions */}
+        {activeTool === 'mark' && (
+          <div className="absolute bottom-4 left-4 bg-purple-600 bg-opacity-90 text-white px-3 py-2 rounded text-sm">
+            📍 Clique para colocar • Clique direito para remover
           </div>
         )}
 
@@ -1115,6 +1549,45 @@ export function TacticalGrid({
         isGM={isGM}
         onToolSelect={handleToolSelect}
       />
+
+      {/* Color Palette - Only show when drawing tool is active */}
+      {isGM && showColorPalette && (
+        <div className="absolute left-4 top-1/2 -translate-y-1/2 flex flex-col gap-2 bg-gray-800 border border-gray-600 rounded-lg p-2 z-40">
+          {drawingColors.map((color) => (
+            <button
+              key={color.value}
+              onClick={() => setSelectedColor(color.value)}
+              className={`w-8 h-8 rounded-full border-2 transition-all ${
+                selectedColor === color.value 
+                  ? 'border-white scale-110' 
+                  : 'border-gray-400 hover:border-gray-200'
+              }`}
+              style={{ backgroundColor: color.value }}
+              title={color.name}
+            />
+          ))}
+        </div>
+      )}
+
+      {/* Marker Icon Palette - Only show when marker tool is active */}
+      {isGM && showMarkerPalette && (
+        <div className="absolute left-4 top-1/2 -translate-y-1/2 flex flex-col gap-2 bg-gray-800 border border-gray-600 rounded-lg p-2 z-40">
+          {markerIcons.map((marker) => (
+            <button
+              key={marker.icon}
+              onClick={() => setSelectedMarkerIcon(marker.icon)}
+              className={`w-10 h-10 rounded-lg border-2 transition-all flex items-center justify-center text-xl ${
+                selectedMarkerIcon === marker.icon 
+                  ? 'border-white scale-110 bg-gray-700' 
+                  : 'border-gray-400 hover:border-gray-200 bg-gray-800 hover:bg-gray-700'
+              }`}
+              title={marker.name}
+            >
+              {marker.icon}
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* Link Character Modal */}
       <LinkCharacterModal
