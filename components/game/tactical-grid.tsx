@@ -1532,39 +1532,6 @@ export function TacticalGrid({
     }
   }, [activeTool, isGM, fogAreas, getGridCellFromPoint, gridSize, canEmitSocketEvents, socket, campaignId, userId])
 
-  // Helper function to optimize fog areas by merging adjacent cells of the same type
-  const optimizeFogAreas = useCallback((areas: typeof fogAreas) => {
-    // Group fragments by type and adjacent positions
-    const optimized: typeof fogAreas = []
-    const processed = new Set<string>()
-    
-    for (const area of areas) {
-      if (processed.has(area.id)) continue
-      
-      // If it's not a single cell fragment, keep as is
-      if (area.width !== gridSize || area.height !== gridSize || !area.id.includes('_fragment_')) {
-        optimized.push(area)
-        processed.add(area.id)
-        continue
-      }
-      
-      // Try to merge with adjacent cells of the same type
-      const mergedArea = tryMergeAdjacentCells(area, areas, processed)
-      if (mergedArea) {
-        optimized.push(mergedArea)
-      }
-    }
-    
-    return optimized
-  }, [gridSize])
-
-  // Helper function to try merging adjacent cells
-  const tryMergeAdjacentCells = useCallback((startCell: typeof fogAreas[0], allAreas: typeof fogAreas, processed: Set<string>) => {
-    // For now, keep it simple and don't merge to avoid complexity
-    // This could be enhanced later if needed
-    processed.add(startCell.id)
-    return startCell
-  }, [])
 
   // Helper function to create fog fragments when a cell is erased
   const createFogFragments = useCallback((originalFog: typeof fogAreas[0], erasedCellX: number, erasedCellY: number, gridSize: number) => {
