@@ -1532,6 +1532,40 @@ export function TacticalGrid({
     }
   }, [activeTool, isGM, fogAreas, getGridCellFromPoint, gridSize, canEmitSocketEvents, socket, campaignId, userId])
 
+  // Helper function to optimize fog areas by merging adjacent cells of the same type
+  const optimizeFogAreas = useCallback((areas: typeof fogAreas) => {
+    // Group fragments by type and adjacent positions
+    const optimized: typeof fogAreas = []
+    const processed = new Set<string>()
+    
+    for (const area of areas) {
+      if (processed.has(area.id)) continue
+      
+      // If it's not a single cell fragment, keep as is
+      if (area.width !== gridSize || area.height !== gridSize || !area.id.includes('_fragment_')) {
+        optimized.push(area)
+        processed.add(area.id)
+        continue
+      }
+      
+      // Try to merge with adjacent cells of the same type
+      const mergedArea = tryMergeAdjacentCells(area, areas, processed)
+      if (mergedArea) {
+        optimized.push(mergedArea)
+      }
+    }
+    
+    return optimized
+  }, [gridSize])
+
+  // Helper function to try merging adjacent cells
+  const tryMergeAdjacentCells = useCallback((startCell: typeof fogAreas[0], allAreas: typeof fogAreas, processed: Set<string>) => {
+    // For now, keep it simple and don't merge to avoid complexity
+    // This could be enhanced later if needed
+    processed.add(startCell.id)
+    return startCell
+  }, [])
+
   // Helper function to create fog fragments when a cell is erased
   const createFogFragments = useCallback((originalFog: typeof fogAreas[0], erasedCellX: number, erasedCellY: number, gridSize: number) => {
     const fragments: typeof fogAreas = []
@@ -1585,13 +1619,18 @@ export function TacticalGrid({
     }
 
     if (isGM) {
+      // Check if this is a single cell (fragment) vs larger area
+      const isSingleCell = fog.width === gridSize && fog.height === gridSize
+      
       // GM view: subtle overlay with dashed border
       return {
         ...baseStyles,
         backgroundColor: fog.type === 'magical' && fog.color 
           ? `${fog.color}30` // 30 = low opacity
           : 'rgba(0, 0, 0, 0.3)',
-        border: '2px dashed rgba(156, 163, 175, 0.8)', // gray-400
+        border: isSingleCell 
+          ? '1px solid rgba(156, 163, 175, 0.5)' // Subtle border for single cells
+          : '2px dashed rgba(156, 163, 175, 0.8)', // Original dashed border for larger areas
         backdropFilter: fog.type === 'thin' ? 'blur(2px)' : undefined
       }
     } else {
@@ -1892,10 +1931,16 @@ export function TacticalGrid({
           >
             {isGM && (
               <div className="absolute inset-0 flex items-center justify-center text-white text-xs font-bold opacity-70">
-                {fog.type === 'dense' ? '🌫️' : fog.type === 'thin' ? '🌤️' : '✨'}
-                <span className="ml-1">
-                  {fog.type.toUpperCase()}
+                {/* Adjust icon size based on cell size */}
+                <span style={{ fontSize: fog.width <= gridSize && fog.height <= gridSize ? '10px' : '12px' }}>
+                  {fog.type === 'dense' ? '🌫️' : fog.type === 'thin' ? '🌤️' : '✨'}
                 </span>
+                {/* Only show text label for larger areas (not individual cells) */}
+                {fog.width > gridSize || fog.height > gridSize ? (
+                  <span className="ml-1">
+                    {fog.type.toUpperCase()}
+                  </span>
+                ) : null}
               </div>
             )}
           </div>
