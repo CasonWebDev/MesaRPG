@@ -105,7 +105,7 @@ export function CreateCampaignDialog({ children }: CreateCampaignDialogProps) {
                 id="name"
                 value={formData.name}
                 onChange={(e) => handleInputChange("name", e.target.value)}
-                className="col-span-3"
+                className="col-span-3 text-foreground bg-background"
                 placeholder="Ex: A Ameaça do Dragão Vermelho"
                 required
                 autoComplete="off"
@@ -119,7 +119,7 @@ export function CreateCampaignDialog({ children }: CreateCampaignDialogProps) {
                 id="system"
                 value={formData.system}
                 onChange={(e) => handleInputChange("system", e.target.value)}
-                className="col-span-3"
+                className="col-span-3 text-foreground bg-background"
                 placeholder="Ex: D&D 5e, Pathfinder, Call of Cthulhu"
                 required
                 autoComplete="off"
@@ -133,7 +133,7 @@ export function CreateCampaignDialog({ children }: CreateCampaignDialogProps) {
                 id="description"
                 value={formData.description}
                 onChange={(e) => handleInputChange("description", e.target.value)}
-                className="col-span-3 resize-none"
+                className="col-span-3 resize-none text-foreground bg-background"
                 placeholder="Descrição opcional da campanha..."
                 rows={3}
               />

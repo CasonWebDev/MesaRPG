@@ -80,7 +80,7 @@ export default function LoginPage() {
   return (
     <main
       className="flex items-center justify-center min-h-screen bg-cover bg-center"
-      style={{ backgroundImage: "url('/placeholder.svg?width=1920&height=1080')" }}
+      style={{ backgroundImage: "url('/placeholder.png')" }}
     >
       <Card className="w-full max-w-sm bg-parchment/90 backdrop-blur-sm text-ink-text">
         <CardHeader className="text-center">

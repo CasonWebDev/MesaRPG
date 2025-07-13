@@ -6,7 +6,13 @@
     "build": "next build",
     "dev": "node server.js",
     "lint": "next lint",
-    "start": "NODE_ENV=production node server.js"
+    "start": "NODE_ENV=production node server.js",
+    "postinstall": "npx prisma generate",
+    "db:migrate": "npx prisma migrate deploy",
+    "db:studio": "npx prisma studio",
+    "db:reset": "npx prisma migrate reset",
+    "production:setup": "npm run db:migrate && npm run build",
+    "type-check": "tsc --noEmit"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
