@@ -467,6 +467,22 @@ export function TacticalGrid({
       // Hide fog area if it matches one of the active ones
       setFogAreas(prev => prev.filter(f => f.id !== data.fogId))
     }
+
+    const handleFogCellErase = (data: {
+      cellX: number
+      cellY: number
+      newFogAreas: typeof fogAreas
+      userId: string
+      campaignId: string
+    }) => {
+      console.log('📨 Received fog cell erase from user:', data.userId, 'at cell:', data.cellX, data.cellY)
+      
+      // Only apply if this update is from someone else (avoid feedback loop)
+      if (data.userId !== userId) {
+        console.log('🧹 Applying fog cell erase from other user')
+        setFogAreas(data.newFogAreas)
+      }
+    }
     
     socket.on('grid:config-updated', handleGridConfigUpdate)
     socket.on('game:token-move', handleTokenMove)
@@ -478,6 +494,7 @@ export function TacticalGrid({
     socket.on('marker:hide', handleMarkerHide)
     socket.on('fog:show', handleFogShow)
     socket.on('fog:hide', handleFogHide)
+    socket.on('fog:cell-erase', handleFogCellErase)
     
     return () => {
       socket.off('grid:config-updated', handleGridConfigUpdate)
@@ -490,6 +507,7 @@ export function TacticalGrid({
       socket.off('marker:hide', handleMarkerHide)
       socket.off('fog:show', handleFogShow)
       socket.off('fog:hide', handleFogHide)
+      socket.off('fog:cell-erase', handleFogCellErase)
     }
   }, [socket, isConnected, userId, isGM])
   
@@ -1265,6 +1283,19 @@ export function TacticalGrid({
     }
   }, [isGM, canEmitSocketEvents, socket, campaignId, userId])
 
+  // Helper functions for grid snapping
+  const snapToGrid = useCallback((x: number, y: number) => {
+    const snappedX = Math.floor(x / gridSize) * gridSize
+    const snappedY = Math.floor(y / gridSize) * gridSize
+    return { x: snappedX, y: snappedY }
+  }, [gridSize])
+
+  const getGridCellFromPoint = useCallback((x: number, y: number) => {
+    const cellX = Math.floor(x / gridSize)
+    const cellY = Math.floor(y / gridSize)
+    return { cellX, cellY, x: cellX * gridSize, y: cellY * gridSize }
+  }, [gridSize])
+
   // Handle fog creation events - GM only
   const handleFogStart = useCallback((e: React.MouseEvent) => {
     if (activeTool !== 'fog' || !isGM) return
@@ -1275,12 +1306,15 @@ export function TacticalGrid({
     const x = e.clientX - rect.left
     const y = e.clientY - rect.top
     
-    console.log(`🌫️ Starting fog creation at: (${x}, ${y})`)
+    // Snap to grid
+    const snapped = snapToGrid(x, y)
+    
+    console.log(`🌫️ Starting fog creation at: (${x}, ${y}) -> snapped to (${snapped.x}, ${snapped.y})`)
     
     setIsCreatingFog(true)
-    setFogStartPoint({ x, y })
-    setCurrentFogArea({ x, y, width: 0, height: 0 })
-  }, [activeTool, isGM])
+    setFogStartPoint(snapped)
+    setCurrentFogArea({ x: snapped.x, y: snapped.y, width: 0, height: 0 })
+  }, [activeTool, isGM, snapToGrid])
 
   const handleFogMove = useCallback((e: React.MouseEvent) => {
     if (activeTool !== 'fog' || !isCreatingFog || !fogStartPoint) return
@@ -1291,19 +1325,26 @@ export function TacticalGrid({
     const x = e.clientX - rect.left
     const y = e.clientY - rect.top
     
-    // Calculate rectangle
-    const minX = Math.min(fogStartPoint.x, x)
-    const minY = Math.min(fogStartPoint.y, y)
-    const maxX = Math.max(fogStartPoint.x, x)
-    const maxY = Math.max(fogStartPoint.y, y)
+    // Snap to grid
+    const snapped = snapToGrid(x, y)
+    
+    // Calculate rectangle aligned to grid
+    const minX = Math.min(fogStartPoint.x, snapped.x)
+    const minY = Math.min(fogStartPoint.y, snapped.y)
+    const maxX = Math.max(fogStartPoint.x, snapped.x)
+    const maxY = Math.max(fogStartPoint.y, snapped.y)
+    
+    // Ensure width and height are multiples of grid size
+    const width = maxX - minX + gridSize
+    const height = maxY - minY + gridSize
     
     setCurrentFogArea({
       x: minX,
       y: minY,
-      width: maxX - minX,
-      height: maxY - minY
+      width: width,
+      height: height
     })
-  }, [activeTool, isCreatingFog, fogStartPoint])
+  }, [activeTool, isCreatingFog, fogStartPoint, snapToGrid, gridSize])
 
   const handleFogEnd = useCallback((e: React.MouseEvent) => {
     if (activeTool !== 'fog' || !isCreatingFog || !currentFogArea || !fogStartPoint) return
@@ -1432,7 +1473,7 @@ export function TacticalGrid({
     return isPointInFog(marker.position.x, marker.position.y)
   }, [isGM, isPointInFog])
 
-  // Handle eraser click on fog areas (GM only)
+  // Handle eraser click to remove single grid cells from fog areas (GM only)
   const handleEraserClick = useCallback((e: React.MouseEvent) => {
     if (activeTool !== 'eraser' || !isGM) return
     
@@ -1443,37 +1484,92 @@ export function TacticalGrid({
     const x = e.clientX - rect.left
     const y = e.clientY - rect.top
     
-    console.log(`🧹 Eraser click at:`, { x, y })
+    // Get the grid cell being clicked
+    const { cellX, cellY, x: cellStartX, y: cellStartY } = getGridCellFromPoint(x, y)
     
-    // Find fog area at this point
-    const fogToRemove = fogAreas.find(fog => 
-      x >= fog.x && 
-      x <= fog.x + fog.width && 
-      y >= fog.y && 
-      y <= fog.y + fog.height
+    console.log(`🧹 Eraser click at cell (${cellX}, ${cellY}) -> (${cellStartX}, ${cellStartY})`)
+    
+    // Find fog areas that contain this cell
+    const fogsToModify = fogAreas.filter(fog => 
+      cellStartX >= fog.x && 
+      cellStartX < fog.x + fog.width && 
+      cellStartY >= fog.y && 
+      cellStartY < fog.y + fog.height
     )
     
-    if (fogToRemove) {
-      console.log(`🗑️ Erasing fog area: ${fogToRemove.id}`)
+    if (fogsToModify.length > 0) {
+      let newFogAreas = [...fogAreas]
+      let modified = false
       
-      // Remove from local fog areas immediately
-      const newFogAreas = fogAreas.filter(f => f.id !== fogToRemove.id)
-      setFogAreas(newFogAreas)
+      fogsToModify.forEach(fog => {
+        // Remove this fog area and create new ones excluding the erased cell
+        newFogAreas = newFogAreas.filter(f => f.id !== fog.id)
+        
+        // Split the fog area to exclude the erased cell
+        const fragmentedAreas = createFogFragments(fog, cellStartX, cellStartY, gridSize)
+        newFogAreas = [...newFogAreas, ...fragmentedAreas]
+        modified = true
+      })
       
-      // Broadcast removal to all users
-      if (canEmitSocketEvents()) {
-        console.log('📡 Broadcasting fog removal via eraser to all users', { campaignId, fogId: fogToRemove.id })
-        socket?.emit('fog:hide', {
-          campaignId,
-          fogId: fogToRemove.id,
-          userId
+      if (modified) {
+        setFogAreas(newFogAreas)
+        
+        // Broadcast the complete new fog state
+        if (canEmitSocketEvents()) {
+          console.log('📡 Broadcasting fog cell erasure to all users')
+          socket?.emit('fog:cell-erase', {
+            campaignId,
+            cellX,
+            cellY,
+            newFogAreas,
+            userId
+          })
+        }
+        
+        // Persist updated fog areas to server
+        persistFogAreas(newFogAreas)
+      }
+    }
+  }, [activeTool, isGM, fogAreas, getGridCellFromPoint, gridSize, canEmitSocketEvents, socket, campaignId, userId])
+
+  // Helper function to create fog fragments when a cell is erased
+  const createFogFragments = useCallback((originalFog: typeof fogAreas[0], erasedCellX: number, erasedCellY: number, gridSize: number) => {
+    const fragments: typeof fogAreas = []
+    
+    // Calculate the grid cells that make up the original fog area
+    const startCellX = originalFog.x / gridSize
+    const startCellY = originalFog.y / gridSize
+    const endCellX = (originalFog.x + originalFog.width) / gridSize
+    const endCellY = (originalFog.y + originalFog.height) / gridSize
+    
+    const erasedGridX = erasedCellX / gridSize
+    const erasedGridY = erasedCellY / gridSize
+    
+    // Create fragments for each remaining cell
+    for (let cellY = startCellY; cellY < endCellY; cellY++) {
+      for (let cellX = startCellX; cellX < endCellX; cellX++) {
+        // Skip the erased cell
+        if (cellX === erasedGridX && cellY === erasedGridY) {
+          continue
+        }
+        
+        // Create a fragment for this cell
+        fragments.push({
+          id: `${originalFog.id}_fragment_${cellX}_${cellY}_${Date.now()}`,
+          x: cellX * gridSize,
+          y: cellY * gridSize,
+          width: gridSize,
+          height: gridSize,
+          type: originalFog.type,
+          color: originalFog.color,
+          userId: originalFog.userId,
+          timestamp: Date.now()
         })
       }
-      
-      // Persist updated fog areas to server
-      persistFogAreas(newFogAreas)
     }
-  }, [activeTool, isGM, fogAreas, canEmitSocketEvents, socket, campaignId, userId])
+    
+    return fragments
+  }, [])
 
   // Helper function to get fog area visual styles
   const getFogAreaStyles = useCallback((fog: typeof fogAreas[0]) => {
@@ -1782,7 +1878,7 @@ export function TacticalGrid({
         {/* Eraser tool instructions */}
         {activeTool === 'eraser' && isGM && (
           <div className="absolute bottom-4 left-4 bg-red-600 bg-opacity-90 text-white px-3 py-2 rounded text-sm">
-            🧹 Clique em uma área de névoa para remover
+            🧹 Clique em uma célula com névoa para removê-la • Clique direito remove área inteira
           </div>
         )}
 
