@@ -1284,7 +1284,7 @@ export function TacticalGrid({
   }, [isGM, canEmitSocketEvents, socket, campaignId, userId])
 
   // Helper functions for grid snapping
-  const snapToGrid = useCallback((x: number, y: number) => {
+  const snapPositionToGrid = useCallback((x: number, y: number) => {
     const snappedX = Math.floor(x / gridSize) * gridSize
     const snappedY = Math.floor(y / gridSize) * gridSize
     return { x: snappedX, y: snappedY }
@@ -1307,14 +1307,14 @@ export function TacticalGrid({
     const y = e.clientY - rect.top
     
     // Snap to grid
-    const snapped = snapToGrid(x, y)
+    const snapped = snapPositionToGrid(x, y)
     
     console.log(`🌫️ Starting fog creation at: (${x}, ${y}) -> snapped to (${snapped.x}, ${snapped.y})`)
     
     setIsCreatingFog(true)
     setFogStartPoint(snapped)
     setCurrentFogArea({ x: snapped.x, y: snapped.y, width: 0, height: 0 })
-  }, [activeTool, isGM, snapToGrid])
+  }, [activeTool, isGM, snapPositionToGrid])
 
   const handleFogMove = useCallback((e: React.MouseEvent) => {
     if (activeTool !== 'fog' || !isCreatingFog || !fogStartPoint) return
@@ -1326,7 +1326,7 @@ export function TacticalGrid({
     const y = e.clientY - rect.top
     
     // Snap to grid
-    const snapped = snapToGrid(x, y)
+    const snapped = snapPositionToGrid(x, y)
     
     // Calculate rectangle aligned to grid
     const minX = Math.min(fogStartPoint.x, snapped.x)
@@ -1344,7 +1344,7 @@ export function TacticalGrid({
       width: width,
       height: height
     })
-  }, [activeTool, isCreatingFog, fogStartPoint, snapToGrid, gridSize])
+  }, [activeTool, isCreatingFog, fogStartPoint, snapPositionToGrid, gridSize])
 
   const handleFogEnd = useCallback((e: React.MouseEvent) => {
     if (activeTool !== 'fog' || !isCreatingFog || !currentFogArea || !fogStartPoint) return
