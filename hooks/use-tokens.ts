@@ -36,7 +36,7 @@ export function useTokens({
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  const { socket, tokenMoves, tokenCreations, tokenUpdates, tokenRefreshes, tokensCleared, tokensDeleted, clearTokenMoves, clearTokenCreations, clearTokenUpdates, clearTokenRefreshes, clearTokensCleared, clearTokensDeleted, isConnected } = useSocket(campaignId)
+  const { socket, tokenMoves, tokenCreations, tokenUpdates, tokenRefreshes, tokensCleared, tokensDeleted, characterUpdates, clearTokenMoves, clearTokenCreations, clearTokenUpdates, clearTokenRefreshes, clearTokensCleared, clearTokensDeleted, clearCharacterUpdates, isConnected } = useSocket(campaignId)
 
   // Carregar tokens do servidor
   const loadTokens = useCallback(async () => {
@@ -239,6 +239,34 @@ export function useTokens({
       clearTokensDeleted()
     }
   }, [tokensDeleted, clearTokensDeleted])
+
+  // Process character updates from WebSocket
+  useEffect(() => {
+    if (characterUpdates.length > 0) {
+      characterUpdates.forEach(characterUpdate => {
+        console.log('👤 Processing character update from WebSocket:', characterUpdate)
+        
+        // Update tokens linked to this character
+        setTokens(prevTokens => 
+          prevTokens.map(token => {
+            if (token.characterId === characterUpdate.characterId) {
+              console.log('🔄 Updating token data for character:', characterUpdate.characterId)
+              return {
+                ...token,
+                name: characterUpdate.name || token.name,
+                alt: characterUpdate.name || token.alt,
+                src: characterUpdate.avatar || token.src
+              }
+            }
+            return token
+          })
+        )
+      })
+      
+      // Clear processed character updates
+      clearCharacterUpdates()
+    }
+  }, [characterUpdates, clearCharacterUpdates])
 
   // Seleção de tokens
   const selectToken = useCallback((tokenId: string) => {

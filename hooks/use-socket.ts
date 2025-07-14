@@ -56,6 +56,14 @@ export interface GameStateUpdate {
   userId: string
 }
 
+export interface CharacterUpdate {
+  characterId: string
+  campaignId: string
+  name?: string
+  avatar?: string
+  userId: string
+}
+
 export interface PlayerUpdate {
   userId: string
   userName: string
@@ -77,6 +85,7 @@ export function useSocket(campaignId?: string) {
   const [tokenRefreshes, setTokenRefreshes] = useState<TokenRefresh[]>([])
   const [tokensCleared, setTokensCleared] = useState<TokensClear[]>([])
   const [tokensDeleted, setTokensDeleted] = useState<TokenDelete[]>([])
+  const [characterUpdates, setCharacterUpdates] = useState<CharacterUpdate[]>([])
   const [joinedCampaign, setJoinedCampaign] = useState<string | null>(null)
   
   // Debug log
@@ -216,6 +225,11 @@ export function useSocket(campaignId?: string) {
           setTokensDeleted(prev => [...prev, tokenDelete])
         }
 
+        const handleCharacterUpdate = (characterUpdate: CharacterUpdate) => {
+          console.log('👤 Character updated:', characterUpdate)
+          setCharacterUpdates(prev => [...prev, characterUpdate])
+        }
+
         const handleError = (error: string) => {
           console.error('❌ Socket error:', error)
         }
@@ -238,6 +252,7 @@ export function useSocket(campaignId?: string) {
         socketInstance.on('game:token-refresh', handleTokenRefresh)
         socketInstance.on('game:tokens-cleared', handleTokensClear)
         socketInstance.on('game:token-deleted', handleTokenDelete)
+        socketInstance.on('character:updated', handleCharacterUpdate)
         socketInstance.on('campaign:joined', handleCampaignJoined)
         socketInstance.on('error', handleError)
 
@@ -258,6 +273,7 @@ export function useSocket(campaignId?: string) {
           socketInstance.off('game:token-refresh', handleTokenRefresh)
           socketInstance.off('game:tokens-cleared', handleTokensClear)
           socketInstance.off('game:token-deleted', handleTokenDelete)
+          socketInstance.off('character:updated', handleCharacterUpdate)
           socketInstance.off('campaign:joined', handleCampaignJoined)
           socketInstance.off('error', handleError)
         }
@@ -379,6 +395,7 @@ export function useSocket(campaignId?: string) {
     tokenRefreshes,
     tokensCleared,
     tokensDeleted,
+    characterUpdates,
     sendMessage,
     moveToken,
     createToken,
@@ -391,6 +408,7 @@ export function useSocket(campaignId?: string) {
     clearTokenUpdates: () => setTokenUpdates([]),
     clearTokenRefreshes: () => setTokenRefreshes([]),
     clearTokensCleared: () => setTokensCleared([]),
-    clearTokensDeleted: () => setTokensDeleted([])
+    clearTokensDeleted: () => setTokensDeleted([]),
+    clearCharacterUpdates: () => setCharacterUpdates([])
   }
 }

@@ -201,6 +201,72 @@ export async function PUT(
       }
     })
 
+    // If name or avatar changed, sync linked tokens
+    const hasNameOrAvatarChange = name || (data && (data.avatar || data.name))
+    if (hasNameOrAvatarChange) {
+      try {
+        console.log('🔄 Character updated, syncing linked tokens:', characterId)
+        
+        // Get current game state to update linked tokens
+        const gameState = await prisma.gameState.findUnique({
+          where: { campaignId }
+        })
+
+        if (gameState) {
+          const tokens = gameState.tokens ? JSON.parse(gameState.tokens) : []
+          let tokensUpdated = false
+
+          // Update all tokens linked to this character
+          const updatedTokens = tokens.map((token: any) => {
+            if (token.characterId === characterId) {
+              console.log('🎯 Updating token for character:', characterId)
+              tokensUpdated = true
+              return {
+                ...token,
+                name: name || token.name,
+                alt: name || token.alt,
+                src: (data?.avatar) || token.src
+              }
+            }
+            return token
+          })
+
+          // Save updated tokens if any changes were made
+          if (tokensUpdated) {
+            await prisma.gameState.update({
+              where: { campaignId },
+              data: {
+                tokens: JSON.stringify(updatedTokens),
+                lastActivity: new Date()
+              }
+            })
+
+            console.log('✅ Tokens updated in game state for character:', characterId)
+
+            // Import socket bridge dynamically to emit character update event
+            try {
+              const { io } = await import('@/lib/socket-bridge')
+              if (io) {
+                console.log('📡 Broadcasting character update to campaign:', campaignId)
+                io.to(campaignId).emit('character:updated', {
+                  characterId,
+                  campaignId,
+                  name: name || updatedCharacter.name,
+                  avatar: data?.avatar,
+                  updatedTokensCount: updatedTokens.filter((t: any) => t.characterId === characterId).length
+                })
+              }
+            } catch (socketError) {
+              console.log('⚠️ Socket.IO not available for character update broadcast:', socketError.message)
+            }
+          }
+        }
+      } catch (syncError) {
+        console.error('❌ Error syncing character to tokens:', syncError)
+        // Don't fail the character update if token sync fails
+      }
+    }
+
     return NextResponse.json({ 
       character: updatedCharacter,
       message: 'Personagem atualizado com sucesso'
