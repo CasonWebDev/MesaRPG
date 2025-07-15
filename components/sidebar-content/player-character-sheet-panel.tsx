@@ -6,18 +6,17 @@ import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { FilePlus2, BookUser, Shield } from "lucide-react"
-import { SheetTemplate } from "@/types/sheet-template"
 import { useCharacters } from "@/hooks/use-characters"
 import { toast } from "sonner"
+import { getRPGSystem } from "@/lib/rpg-systems"
 
 interface PlayerCharacterSheetPanelProps {
   campaignId: string
   playerCharacterId?: string
+  rpgSystem?: string
 }
 
-export function PlayerCharacterSheetPanel({ campaignId, playerCharacterId }: PlayerCharacterSheetPanelProps) {
-  const [template, setTemplate] = useState<SheetTemplate | null>(null)
-  const [canCreateCharacter, setCanCreateCharacter] = useState(false)
+export function PlayerCharacterSheetPanel({ campaignId, playerCharacterId, rpgSystem = 'dnd5e' }: PlayerCharacterSheetPanelProps) {
   const [isLoading, setIsLoading] = useState(true)
   const router = useRouter()
   
@@ -31,42 +30,15 @@ export function PlayerCharacterSheetPanel({ campaignId, playerCharacterId }: Pla
   const character = characters.find(char => char.type === 'PC' && char.userId)
   const hasCharacter = !!character
 
-  // Carregar template e verificar se pode criar personagem
-  useEffect(() => {
-    const loadTemplateData = async () => {
-      try {
-        const response = await fetch(`/api/campaigns/${campaignId}/sheet-templates`)
-        if (response.ok) {
-          const data = await response.json()
-          const playerTemplate = data.templates.find((t: SheetTemplate) => t.type === 'PC' && t.isDefault)
-          
-          if (playerTemplate) {
-            setTemplate(playerTemplate)
-            setCanCreateCharacter(data.canCreateCharacter)
-          }
-        }
-      } catch (error) {
-        console.error('Erro ao carregar template:', error)
-      } finally {
-        setIsLoading(false)
-      }
-    }
+  // Obter sistema RPG
+  const rpgSystemInstance = getRPGSystem(rpgSystem)
 
-    loadTemplateData()
-  }, [campaignId])
+  useEffect(() => {
+    setIsLoading(false)
+  }, [])
 
   const handleCreateClick = () => {
-    if (!template) {
-      toast.error('Nenhum template de personagem encontrado')
-      return
-    }
-    
-    if (!canCreateCharacter) {
-      toast.error('O mestre precisa criar um template de personagem antes que você possa criar um personagem')
-      return
-    }
-    
-    router.push(`/campaign/${campaignId}/sheet/new?type=PC&role=Jogador`)
+    window.open(`/campaign/${campaignId}/sheet/new?type=PC&role=Jogador&system=dnd5e`, '_blank', 'noopener,noreferrer')
   }
 
   if (hasCharacter && character) {
@@ -76,18 +48,8 @@ export function PlayerCharacterSheetPanel({ campaignId, playerCharacterId }: Pla
     // Extrair nome do personagem
     const characterName = character.name || 'Personagem'
     
-    // Buscar campo de imagem no template
-    const templateFields = Array.isArray(character.template?.fields) 
-      ? character.template.fields 
-      : (typeof character.template?.fields === 'string' ? JSON.parse(character.template.fields) : [])
-    
-    const imageField = templateFields.find((field: any) => field.type === 'image')
-    const avatarUrl = imageField ? characterData[imageField.name] : null
-    
-    // Pegar os primeiros 4 campos (excluindo imagem)
-    const firstFourFields = templateFields
-      .filter((field: any) => field.type !== 'image')
-      .slice(0, 4)
+    // Usar sistema RPG para obter dados do personagem
+    const { name, level, race, class: characterClass, avatar } = rpgSystemInstance.getCharacterSummary(characterData)
     
     return (
       <div className="p-3 space-y-3">
@@ -97,47 +59,34 @@ export function PlayerCharacterSheetPanel({ campaignId, playerCharacterId }: Pla
         {/* Header com Avatar */}
         <div className="flex items-center gap-3">
           <Avatar className="h-12 w-12">
-            {avatarUrl ? (
-              <AvatarImage src={avatarUrl} alt={characterName} />
+            {avatar ? (
+              <AvatarImage src={avatar} alt={characterName} />
             ) : (
               <AvatarFallback className="bg-primary/10">
                 <Shield className="h-6 w-6 text-primary" />
               </AvatarFallback>
             )}
           </Avatar>
+          <div className="flex-1">
+            <h4 className="font-medium text-sm">{name}</h4>
+            <p className="text-xs text-muted-foreground">{race} {characterClass}</p>
+            {level && <p className="text-xs text-muted-foreground">Nível {level}</p>}
+          </div>
         </div>
         
-        {/* Mini resumo dos primeiros 4 campos */}
+        {/* Mini resumo dos atributos principais */}
         <div className="space-y-2">
-          {firstFourFields.map((field: any) => {
-            const value = characterData[field.name]
-            if (!value || value === '' || value === 0) return null
-            
-            let displayValue = value
-            
-            // Formatação especial para diferentes tipos de campo
-            if (field.type === 'boolean') {
-              displayValue = value ? 'Sim' : 'Não'
-            } else if (field.type === 'attributes' && typeof value === 'object') {
-              displayValue = Object.entries(value)
-                .map(([key, val]) => `${key}: ${val}`)
-                .join(', ')
-            } else if (typeof value === 'string' && value.length > 30) {
-              displayValue = value.substring(0, 30) + '...'
-            }
-            
-            return (
-              <div key={field.id} className="flex justify-between items-center">
-                <span className="text-xs text-muted-foreground font-medium">{field.name}:</span>
-                <span className="text-xs text-right flex-1 ml-2 truncate">{displayValue}</span>
-              </div>
-            )
-          })}
+          {characterData.attributes && Object.entries(characterData.attributes).map(([key, value]) => (
+            <div key={key} className="flex justify-between items-center">
+              <span className="text-xs text-muted-foreground font-medium">{key.toUpperCase()}:</span>
+              <span className="text-xs font-medium">{value}</span>
+            </div>
+          ))}
         </div>
         
         {/* Botão para abrir ficha completa */}
         <div className="mt-4">
-          <Link href={`/campaign/${campaignId}/sheet/${character.id}?role=player`} className="w-full">
+          <Link href={`/campaign/${campaignId}/sheet/${character.id}?role=player`} className="w-full" target="_blank" rel="noopener noreferrer">
             <Button size="sm" className="w-full">
               <BookUser className="mr-2 h-3 w-3" />
               Ver Ficha Completa
@@ -160,18 +109,15 @@ export function PlayerCharacterSheetPanel({ campaignId, playerCharacterId }: Pla
     <>
       <div className="p-4 text-center space-y-3">
         <p className="text-sm text-muted-foreground">
-          {!canCreateCharacter 
-            ? 'O mestre precisa criar um template de personagem antes que você possa criar um personagem.'
-            : 'Você ainda não criou um personagem para esta campanha.'
-          }
+          Você ainda não criou um personagem para esta campanha.
         </p>
         <Button 
           className="w-full" 
-          disabled={!canCreateCharacter || isLoading}
+          disabled={isLoading}
           onClick={handleCreateClick}
         >
           <FilePlus2 className="mr-2 h-4 w-4" />
-          Criar Personagem
+          Criar Personagem D&D 5e
         </Button>
       </div>
     </>

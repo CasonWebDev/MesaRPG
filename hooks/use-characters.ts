@@ -5,7 +5,7 @@ import { toast } from 'sonner'
 export interface Character {
   id: string
   campaignId: string
-  userId: string
+  userId: string | null
   templateId: string
   name: string
   type: CharacterType
@@ -16,7 +16,7 @@ export interface Character {
     id: string
     name: string | null
     email: string
-  }
+  } | null
   campaign: any
   template: any
 }
@@ -156,9 +156,12 @@ export function useCharacters({ campaignId, type, createdBy }: UseCharactersProp
   const getPCs = () => filterByType('PC')
   const getPlayerCharacters = () => {
     return characters.filter(char => 
-      char.type === 'PC' && 
-      char.userId && 
-      char.userId !== char.campaign?.ownerId
+      char.type === 'PC' && (
+        // Personagens com userId que não seja o GM
+        (char.userId && char.userId !== char.campaign?.ownerId) ||
+        // Cards vazios criados pelo GM (sem userId) - só aparece para o GM
+        (!char.userId && isGM)
+      )
     )
   }
 
@@ -194,98 +197,3 @@ export function useCharacters({ campaignId, type, createdBy }: UseCharactersProp
   }
 }
 
-// Hook específico para templates de characters
-export function useCharacterTemplates(campaignId: string, type?: CharacterType) {
-  const [templates, setTemplates] = useState<any[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-
-  const fetchTemplates = async () => {
-    try {
-      setLoading(true)
-      setError(null)
-      
-      const params = new URLSearchParams()
-      if (type) params.append('type', type)
-      
-      const response = await fetch(`/api/campaigns/${campaignId}/sheet-templates?${params}`)
-      
-      if (!response.ok) {
-        throw new Error('Erro ao carregar templates')
-      }
-      
-      const data = await response.json()
-      setTemplates(data.templates || [])
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erro desconhecido')
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const getTemplateForType = useCallback((characterType: CharacterType) => {
-    return templates.find(template => 
-      template.type === characterType && template.isDefault
-    )
-  }, [templates])
-
-  const getDefaultFields = useCallback((characterType: CharacterType) => {
-    const template = getTemplateForType(characterType)
-    if (!template) return []
-    
-    const fields = typeof template.fields === 'string' 
-      ? JSON.parse(template.fields) 
-      : template.fields
-    
-    // Retornar objeto com valores padrão baseados no template
-    const defaultData: Record<string, any> = {}
-    fields.forEach((field: any) => {
-      if (field.defaultValue !== undefined) {
-        defaultData[field.name] = field.defaultValue
-      } else {
-        switch (field.type) {
-          case 'text':
-          case 'textarea':
-          case 'image':
-            defaultData[field.name] = ''
-            break
-          case 'number':
-            defaultData[field.name] = 0
-            break
-          case 'boolean':
-            defaultData[field.name] = false
-            break
-          case 'select':
-            defaultData[field.name] = field.options?.[0] || ''
-            break
-          case 'attributes':
-            if (field.attributes && field.groupName) {
-              const attributesData: Record<string, number> = {}
-              field.attributes.forEach((attr: any) => {
-                attributesData[attr.name] = attr.defaultValue || 0
-              })
-              defaultData[field.groupName] = attributesData
-            }
-            break
-          default:
-            defaultData[field.name] = ''
-        }
-      }
-    })
-    
-    return defaultData
-  }, [getTemplateForType])
-
-  useEffect(() => {
-    fetchTemplates()
-  }, [campaignId, type])
-
-  return {
-    templates,
-    loading,
-    error,
-    getTemplateForType,
-    getDefaultFields,
-    refetch: fetchTemplates
-  }
-}

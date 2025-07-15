@@ -92,6 +92,7 @@ export default async function GamePage({
       userRole={userRole}
       playerCharacterId={playerCharacterId}
       currentUserId={user.id}
+      rpgSystem={campaign.rpgSystem || 'generic'}
     />
   )
 }

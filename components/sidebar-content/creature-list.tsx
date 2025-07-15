@@ -11,6 +11,7 @@ import { ContentListItem } from "./content-list-item"
 import { DeleteCharacterModal } from "../modals/delete-character-modal"
 import { useCharacters } from "@/hooks/use-characters"
 import { toast } from "sonner"
+import { getRPGSystem } from "@/lib/rpg-systems"
 
 interface CreatureListProps {
   campaignId: string
@@ -38,9 +39,8 @@ export function CreatureList({ campaignId }: CreatureListProps) {
     : creatures.filter(char => char.type === 'CREATURE')
 
   const handleCreateCreature = () => {
-    router.push(`/campaign/${campaignId}/sheet/new?type=CREATURE&role=Mestre`)
+    window.open(`/campaign/${campaignId}/sheet/new?type=CREATURE&role=gm&system=dnd5e`, '_blank', 'noopener,noreferrer')
   }
-
 
   const handleDelete = async () => {
     if (!deletingCharacter) return
@@ -67,7 +67,7 @@ export function CreatureList({ campaignId }: CreatureListProps) {
   return (
     <div className="space-y-2 p-1">
       <Button size="sm" className="w-full" onClick={handleCreateCreature}>
-        <PlusCircle className="mr-2 h-4 w-4" /> Adicionar Criatura
+        <PlusCircle className="mr-2 h-4 w-4" /> Criar Criatura D&D 5e
       </Button>
 
       {creatures.length > 3 && (
@@ -95,12 +95,14 @@ export function CreatureList({ campaignId }: CreatureListProps) {
         <div className="space-y-2">
           <TooltipProvider delayDuration={0}>
             {filteredCreatures.map((creature) => {
-              // Extrair descrição dos dados da criatura
-              const creatureData = creature.data || {}
-              const description = creatureData['História/Descrição'] || 
-                                creatureData['Tipo'] || 
-                                creatureData['Tamanho'] || 
-                                'Criatura sem descrição'
+              // Usar sistema RPG para obter resumo da criatura
+              const creatureData = typeof creature.data === 'string' ? JSON.parse(creature.data) : creature.data
+              const rpgSystem = getRPGSystem('dnd5e')
+              const { name, level, race, class: creatureClass } = rpgSystem.getCharacterSummary(creatureData)
+              
+              const description = race && creatureClass 
+                ? `${race} ${creatureClass} ${level ? `- Nível ${level}` : ''}`
+                : 'Criatura D&D 5e'
 
               return (
                 <ContentListItem 
@@ -111,13 +113,13 @@ export function CreatureList({ campaignId }: CreatureListProps) {
                 >
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <Link href={`/campaign/${campaignId}/sheet/${creature.id}?type=creature&role=Mestre`}>
+                      <Link href={`/campaign/${campaignId}/sheet/${creature.id}?role=gm`} target="_blank" rel="noopener noreferrer">
                         <Button variant="ghost" size="icon" className="h-7 w-7">
                           <Eye className="h-4 w-4" />
                         </Button>
                       </Link>
                     </TooltipTrigger>
-                    <TooltipContent>Visualizar Ficha</TooltipContent>
+                    <TooltipContent>Editar Ficha</TooltipContent>
                   </Tooltip>
                   <Tooltip>
                     <TooltipTrigger asChild>
@@ -140,8 +142,6 @@ export function CreatureList({ campaignId }: CreatureListProps) {
       )}
 
       {/* Modais */}
-
-
       {deletingCharacter && (
         <DeleteCharacterModal
           isOpen={!!deletingCharacter}

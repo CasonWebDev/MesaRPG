@@ -90,38 +90,35 @@ export function LinkCharacterModal({
 
   const getCharacterAvatar = (character: Character) => {
     try {
-      // Check if character has template fields to find the image field
-      const template = (character as any).template
-      if (!template?.fields) {
-        // No template or fields, use type-specific placeholder
-        return getTypePlaceholder(character.type)
-      }
-      
-      const templateFields = Array.isArray(template.fields) 
-        ? template.fields 
-        : (typeof template.fields === 'string' ? JSON.parse(template.fields) : [])
-      
-      // Find the image field in the template
-      const imageField = templateFields.find((field: any) => field.type === 'image')
-      if (!imageField) {
-        // No image field in template, use type-specific placeholder
-        return getTypePlaceholder(character.type)
-      }
-      
-      // Parse character data and get the avatar from the image field
+      // Parse character data
       const characterData = typeof character.data === 'string' ? JSON.parse(character.data) : character.data
-      const savedAvatar = characterData[imageField.name]
       
-      // If character has a saved avatar in the sheet, use it
-      if (savedAvatar) {
-        return savedAvatar
+      // Para personagens D&D 5e, o avatar está diretamente no campo 'avatar'
+      if (characterData?.avatar && characterData.avatar.trim()) {
+        return characterData.avatar
       }
       
-      // If no avatar is saved, use type-specific placeholder
+      // Fallback para sistema de templates (outros sistemas RPG)
+      const template = (character as any).template
+      if (template?.fields) {
+        const templateFields = Array.isArray(template.fields) 
+          ? template.fields 
+          : (typeof template.fields === 'string' ? JSON.parse(template.fields) : [])
+        
+        // Find the image field in the template
+        const imageField = templateFields.find((field: any) => field.type === 'image')
+        if (imageField) {
+          const savedAvatar = characterData[imageField.name]
+          if (savedAvatar && savedAvatar.trim()) {
+            return savedAvatar
+          }
+        }
+      }
+      
+      // Usar placeholder baseado no tipo
       return getTypePlaceholder(character.type)
     } catch (error) {
       console.error('Error getting character avatar:', error)
-      // In case of error parsing data, use type-specific placeholder
       return getTypePlaceholder(character.type)
     }
   }

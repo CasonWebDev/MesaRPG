@@ -7,7 +7,7 @@ import { z } from "zod"
 const createCampaignSchema = z.object({
   name: z.string().min(1, "Nome é obrigatório").max(100, "Nome muito longo"),
   description: z.string().optional(),
-  system: z.string().min(1, "Sistema é obrigatório").max(50, "Sistema muito longo"),
+  rpgSystem: z.string().min(1, "Sistema RPG é obrigatório").default("dnd5e"),
 })
 
 export async function POST(request: NextRequest) {
@@ -36,7 +36,8 @@ export async function POST(request: NextRequest) {
       data: {
         name: validatedData.name,
         description: validatedData.description,
-        system: validatedData.system,
+        system: "D&D 5ª Edição",
+        rpgSystem: validatedData.rpgSystem,
         ownerId: user.id,
       },
       select: {
@@ -44,6 +45,7 @@ export async function POST(request: NextRequest) {
         name: true,
         description: true,
         system: true,
+        rpgSystem: true,
         createdAt: true,
       }
     })

@@ -181,6 +181,50 @@ Criar uma plataforma funcional de RPG online que:
   - Remoção de duplicatas e arquivos temporários
   - Documentação atualizada e consistente
 
+### **Fase 11: Sistema D&D 5e Completo**
+- ✅ **Fichas de Personagem D&D 5e**
+  - Sistema completo de fichas com 6 páginas
+  - Atributos, perícias, combate, magias, equipamentos
+  - Cálculos automáticos de modificadores
+  - Interface responsiva e intuitiva
+- ✅ **Sistema de Dados Integrado**
+  - Rolagem direta das fichas para o chat
+  - Suporte a vantagem/desvantagem
+  - Detecção automática de críticos
+  - Modificadores dinâmicos
+- ✅ **Sistema de Combate**
+  - Ataques com armas (d20 → damage)
+  - Rolagem de dano com críticos
+  - Sistema de magias completo
+  - Integração com chat em tempo real
+- ✅ **Sistema de Recursos**
+  - Tracker de HP, AC, velocidade
+  - Slots de magia por nível
+  - Moedas D&D 5e (PC, PP, PE, PO, PL)
+  - Inventário de equipamentos
+- ✅ **Arquitetura Modular**
+  - Sistema plugável para múltiplos RPGs
+  - Base extensível para outros sistemas
+  - Separação clara de responsabilidades
+
+### **Fase 12: Sistema de Transferência de Personagens**
+- ✅ **Workflow de GM Otimizado**
+  - Criação de cards vazios de personagem
+  - Vinculação posterior a jogadores
+  - Interface de transferência completa
+- ✅ **API de Transferência**
+  - Endpoint dedicado para transferências
+  - Validações de segurança e negócio
+  - Suporte a personagens não vinculados
+- ✅ **Modal de Transferência**
+  - Seleção de jogadores disponíveis
+  - Validação de conflitos
+  - Feedback visual e notificações
+- ✅ **Sistema de Permissões**
+  - Apenas GM pode transferir personagens
+  - Validação de membros da campanha
+  - Prevenção de duplicatas
+
 ## 🏗️ Arquitetura Técnica
 
 ### **Stack Principal**
@@ -265,6 +309,9 @@ Campaign
 #### **Tokens (Básico)**
 - `GET /api/campaigns/[id]/tokens` - Lista básica de tokens
 - `GET /api/campaigns/[id]/auto-tokens` - Endpoint de compatibilidade
+
+#### **Transferência de Personagens**
+- `POST /api/campaigns/[id]/characters/[characterId]/transfer` - Transferir personagem
 
 #### **Gerenciamento de Jogadores**
 - `GET /api/campaigns/[id]/players` - Lista de membros
@@ -544,7 +591,7 @@ NEXTAUTH_URL="http://localhost:3000"
 
 ## 📊 Status Atual
 
-**Progresso**: 10/13 fases concluídas (77%)  
+**Progresso**: 12/15 fases concluídas (80%)  
 **Backend**: Sistema completo com 30+ APIs  
 **Frontend**: Interface totalmente integrada e funcional  
 **Real-time**: Chat + WebSocket + Notificações  
@@ -582,6 +629,10 @@ O projeto está **totalmente funcional** para uso básico de RPG:
 - 🔔 **Notificações** (mapas, handouts, tempo real)
 - 🌐 **WebSocket Robusto** (singleton, auto-reconnect)
 - 🧹 **Código Limpo** (organizado, sem órfãos, documentado)
+- 📃 **Fichas D&D 5e Completas** (6 páginas, cálculos automáticos)
+- 🎲 **Sistema de Dados Integrado** (rolagem para chat, vantagem/desvantagem)
+- ⚔️ **Combate Completo** (ataques, dano, magias, críticos)
+- 🔄 **Transferência de Personagens** (GM cria cards vazios → vincula jogadores)
 
 ### **🔄 Fluxo Completo Disponível:**
 1. **Registro/Login** → **Dashboard** → **Criar Campanha**

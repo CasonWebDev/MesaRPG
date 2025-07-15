@@ -11,9 +11,10 @@ interface GmContentViewProps {
   campaignId: string
   sharedHandoutIds: string[]
   onShareHandout: (id: string) => void
+  rpgSystem?: string
 }
 
-export function GmContentView({ campaignId, sharedHandoutIds, onShareHandout }: GmContentViewProps) {
+export function GmContentView({ campaignId, sharedHandoutIds, onShareHandout, rpgSystem = 'dnd5e' }: GmContentViewProps) {
   return (
     <Accordion type="multiple" className="w-full" defaultValue={["mapas"]}>
       <AccordionItem value="mapas">
@@ -56,7 +57,7 @@ export function GmContentView({ campaignId, sharedHandoutIds, onShareHandout }: 
           <FileText className="mr-2 h-4 w-4" /> Fichas de Jogador
         </AccordionTrigger>
         <AccordionContent>
-          <PlayerSheetList campaignId={campaignId} />
+          <PlayerSheetList campaignId={campaignId} rpgSystem={rpgSystem} />
         </AccordionContent>
       </AccordionItem>
     </Accordion>

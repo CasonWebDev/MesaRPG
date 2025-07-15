@@ -94,7 +94,7 @@ export async function PUT(
     }
 
     const campaignId = params.id
-    const { name, description, settings } = await request.json()
+    const { name, description, settings, rpgSystem } = await request.json()
 
     const campaign = await prisma.campaign.findUnique({
       where: { id: campaignId }
@@ -114,7 +114,8 @@ export async function PUT(
       data: {
         name,
         description,
-        settings: settings ? JSON.stringify(settings) : undefined
+        settings: settings ? JSON.stringify(settings) : undefined,
+        rpgSystem: rpgSystem || undefined
       },
       include: {
         owner: {

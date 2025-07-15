@@ -918,30 +918,34 @@ export function TacticalGrid({
 
       console.log('📋 Character data loaded:', character)
 
-      // Função para obter avatar do personagem (mesma lógica do modal)
+      // Função para obter avatar do personagem
       const getCharacterAvatar = (char: any) => {
         try {
-          const template = char.template
-          if (!template?.fields) {
-            return getTypePlaceholder(char.type)
-          }
-          
-          const templateFields = Array.isArray(template.fields) 
-            ? template.fields 
-            : (typeof template.fields === 'string' ? JSON.parse(template.fields) : [])
-          
-          const imageField = templateFields.find((field: any) => field.type === 'image')
-          if (!imageField) {
-            return getTypePlaceholder(char.type)
-          }
-          
+          // Para personagens D&D 5e, o avatar está diretamente no campo 'data'
           const charData = typeof char.data === 'string' ? JSON.parse(char.data) : char.data
-          const savedAvatar = charData[imageField.name]
           
-          if (savedAvatar) {
-            return savedAvatar
+          // Verificar se existe avatar no campo 'avatar' do personagem D&D
+          if (charData?.avatar && charData.avatar.trim()) {
+            return charData.avatar
           }
           
+          // Fallback para sistema de templates (outros sistemas RPG)
+          const template = char.template
+          if (template?.fields) {
+            const templateFields = Array.isArray(template.fields) 
+              ? template.fields 
+              : (typeof template.fields === 'string' ? JSON.parse(template.fields) : [])
+            
+            const imageField = templateFields.find((field: any) => field.type === 'image')
+            if (imageField) {
+              const savedAvatar = charData[imageField.name]
+              if (savedAvatar && savedAvatar.trim()) {
+                return savedAvatar
+              }
+            }
+          }
+          
+          // Usar placeholder baseado no tipo
           return getTypePlaceholder(char.type)
         } catch (error) {
           console.error('Error getting character avatar:', error)
