@@ -36,9 +36,10 @@
 - **Anexos**: Suporte a múltiplos tipos de arquivo
 
 ### **⚙️ Configurações da Campanha**
-- **Gerenciamento de Jogadores**: Sistema de convites e permissões
-- **Editor de Templates**: Interface drag & drop para criação de fichas
-- **Configurações Gerais**: Personalização completa da campanha
+- **Gerenciamento de Jogadores**: Sistema de convites com links únicos e expiração
+- **Editor de Templates**: Interface drag & drop para criação de fichas dinâmicas
+- **Configurações Gerais**: Personalização completa (nome, descrição, sistema RPG)
+- **Sistema de Convites**: Links únicos com expiração de 24 horas
 
 ---
 
@@ -97,9 +98,10 @@ Campaign
 
 ### **✅ Gerenciamento de Campanhas**
 - [x] Dashboard dinâmico com campanhas reais
-- [x] Criação de campanhas com sistemas customizáveis
+- [x] Criação de campanhas com sistemas customizáveis (D&D 5e, Pathfinder, etc.)
 - [x] Controle de acesso (GM/Jogador)
-- [x] Sistema de convites com expiração
+- [x] Sistema de convites com links únicos e expiração de 24h
+- [x] Página de configurações completa (General/Players)
 
 ### **✅ Interface de Jogo**
 - [x] Página principal com layout responsivo
@@ -193,15 +195,16 @@ npm start
 10. **📄 Compartilhar Handouts** → Distribua conteúdo para jogadores
 
 ### **👑 Funcionalidades do Mestre (GM)**
-- ✅ Criar e editar campanhas
-- ✅ Gerenciar jogadores e convites
-- ✅ Criar templates de fichas personalizados
-- ✅ Gerenciar NPCs e Criaturas
-- ✅ Ativar mapas em tempo real
-- ✅ Congelar mapas para preparação
-- ✅ Compartilhar handouts seletivamente
-- ✅ Ver fichas de todos os jogadores
-- ✅ Deletar personagens de jogadores
+- ✅ Criar e editar campanhas com múltiplos sistemas RPG
+- ✅ Gerenciar jogadores e criar convites com links únicos
+- ✅ Criar templates de fichas personalizados com campos dinâmicos
+- ✅ Gerenciar NPCs e Criaturas com mini resumos
+- ✅ Ativar mapas em tempo real com notificações
+- ✅ Congelar mapas para preparação (sistema de freeze)
+- ✅ Compartilhar handouts seletivamente com notificações
+- ✅ Ver fichas de todos os jogadores em tempo real
+- ✅ Deletar personagens de jogadores quando necessário
+- ✅ Configurar campanha via interface completa (Settings)
 
 ### **🎭 Funcionalidades do Jogador**
 - ✅ Participar de campanhas via convite
@@ -295,6 +298,8 @@ TypeScript:        100% tipado
 API Endpoints:     30+ totalmente funcionais
 WebSocket Events:  12 eventos principais
 Database:          SQLite (pronto para PostgreSQL)
+RPG Systems:       D&D 5e, Pathfinder, Call of Cthulhu, Savage Worlds
+Completion:        13/15 fases (87% completo)
 ```
 
 ---
