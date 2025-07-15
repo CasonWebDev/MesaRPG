@@ -5,7 +5,7 @@ import Link from "next/link"
 import { UnifiedSidebar } from "@/components/game/unified-sidebar"
 import { TacticalGrid } from "@/components/game/tactical-grid"
 import { Button } from "@/components/ui/button"
-import { ArrowLeft } from "lucide-react"
+import { ArrowLeft, Settings } from "lucide-react"
 import { useSocket } from "@/hooks/use-socket"
 import { useMapNotifications } from "@/hooks/use-map-notifications"
 import { HandoutNotification } from "@/components/ui/handout-notification"
@@ -74,7 +74,14 @@ export function GameClient({
         </div>
         <h1 className="text-xl font-heading text-primary truncate px-4 text-center">{campaignName}</h1>
         <div className="flex items-center gap-2 justify-end min-w-[150px]">
-          {/* Configurações removidas - apenas D&D 5e */}
+          {userRole === "Mestre" && (
+            <Link href={`/campaign/${campaignId}/settings`}>
+              <Button variant="ghost" size="sm">
+                <Settings className="h-4 w-4 mr-2" />
+                Configurações
+              </Button>
+            </Link>
+          )}
         </div>
       </header>
       
