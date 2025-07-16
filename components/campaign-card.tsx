@@ -12,7 +12,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { MoreVertical, Edit, Trash2 } from "lucide-react"
+import { MoreVertical, Edit, Trash2, Settings } from "lucide-react"
 import { EditCampaignDialog } from "./edit-campaign-dialog"
 import { DeleteCampaignDialog } from "./delete-campaign-dialog"
 
@@ -55,6 +55,13 @@ export function CampaignCard({ campaign, onCampaignUpdated, onCampaignDeleted }:
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
+                  <DropdownMenuItem asChild>
+                    <Link href={`/campaign/${campaign.id}/settings`} className="cursor-pointer">
+                      <Settings className="mr-2 h-4 w-4" />
+                      Configurações
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
                   <DropdownMenuItem 
                     onClick={() => setIsEditDialogOpen(true)}
                     className="cursor-pointer"

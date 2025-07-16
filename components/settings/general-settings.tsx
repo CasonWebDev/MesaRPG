@@ -5,149 +5,133 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { toast } from "sonner"
-import { Loader2 } from "lucide-react"
+import { Loader2, Save, Wand2 } from "lucide-react"
+import { getAvailableSystems } from "@/lib/rpg-systems"
 
-interface CampaignData {
+interface Campaign {
   id: string
   name: string
   description: string | null
   system: string
-  playerLimit: number | null
+  rpgSystem?: string
 }
 
 interface GeneralSettingsProps {
-  campaign: CampaignData
+  campaign: Campaign
 }
-
 
 export function GeneralSettings({ campaign }: GeneralSettingsProps) {
   const [isLoading, setIsLoading] = useState(false)
   const [formData, setFormData] = useState({
     name: campaign.name,
     description: campaign.description || "",
-    system: campaign.system,
-    playerLimit: campaign.playerLimit || 8,
+    system: campaign.rpgSystem || campaign.system || "dnd5e"
   })
-
-  const handleInputChange = (field: string, value: string | number) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: value
-    }))
-  }
+  const availableSystems = getAvailableSystems()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
 
     try {
-      const response = await fetch(`/api/campaigns/${campaign.id}/update`, {
-        method: "PUT",
+      const response = await fetch(`/api/campaigns/${campaign.id}`, {
+        method: 'PUT',
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
-        credentials: "include",
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          name: formData.name,
+          description: formData.description,
+          rpgSystem: formData.system
+        }),
       })
 
-      const data = await response.json()
-
-      if (response.ok) {
-        toast.success("Configurações atualizadas com sucesso!")
-      } else {
-        toast.error(data.error || "Erro ao atualizar configurações")
+      if (!response.ok) {
+        throw new Error('Erro ao atualizar campanha')
       }
+
+      toast.success('Configurações atualizadas com sucesso!')
     } catch (error) {
-      console.error("Erro ao atualizar:", error)
-      toast.error("Erro ao atualizar configurações")
+      toast.error(error instanceof Error ? error.message : 'Erro ao atualizar configurações')
     } finally {
       setIsLoading(false)
     }
   }
 
-  const hasChanges = 
-    formData.name !== campaign.name ||
-    formData.description !== (campaign.description || "") ||
-    formData.system !== campaign.system ||
-    formData.playerLimit !== (campaign.playerLimit || 8)
+  const getSystemIcon = (systemId: string) => {
+    switch (systemId) {
+      case 'dnd5e':
+        return <Wand2 className="h-4 w-4" />
+      default:
+        return <Wand2 className="h-4 w-4" />
+    }
+  }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      <div className="grid gap-6 md:grid-cols-2">
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="space-y-2">
-          <Label htmlFor="campaign-name">Nome da Campanha *</Label>
+          <Label htmlFor="name">Nome da Campanha</Label>
           <Input
-            id="campaign-name"
+            id="name"
             value={formData.name}
-            onChange={(e) => handleInputChange("name", e.target.value)}
-            placeholder="Nome da sua campanha"
-            className="bg-white dark:bg-gray-900"
+            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+            placeholder="Nome da campanha"
             required
-            maxLength={100}
           />
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="campaign-system">Sistema de RPG *</Label>
-          <Input
-            id="campaign-system"
+          <Label htmlFor="system">Sistema de RPG</Label>
+          <Select
             value={formData.system}
-            onChange={(e) => handleInputChange("system", e.target.value)}
-            placeholder="Ex: D&D 5e, Pathfinder, Tormenta20..."
-            className="bg-white dark:bg-gray-900"
-            required
-            maxLength={50}
-          />
+            onValueChange={(value) => setFormData({ ...formData, system: value })}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Selecione um sistema" />
+            </SelectTrigger>
+            <SelectContent>
+              {availableSystems.map((system) => (
+                <SelectItem key={system.id} value={system.id}>
+                  <div className="flex items-center space-x-2">
+                    {getSystemIcon(system.id)}
+                    <span>{system.name}</span>
+                  </div>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <p className="text-xs text-muted-foreground">
+            {availableSystems.find(s => s.id === formData.system)?.description}
+          </p>
         </div>
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="campaign-description">Descrição</Label>
+        <Label htmlFor="description">Descrição</Label>
         <Textarea
-          id="campaign-description"
+          id="description"
           value={formData.description}
-          onChange={(e) => handleInputChange("description", e.target.value)}
-          placeholder="Descreva sua campanha, enredo, ambientação..."
-          className="bg-white dark:bg-gray-900 min-h-[100px]"
-          maxLength={1000}
+          onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+          placeholder="Descrição da campanha (opcional)"
+          rows={4}
         />
-        <p className="text-xs text-muted-foreground">
-          {formData.description.length}/1000 caracteres
-        </p>
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="player-limit">Limite de Jogadores</Label>
-        <div className="w-32">
-          <Input
-            id="player-limit"
-            type="number"
-            min="1"
-            max="20"
-            value={formData.playerLimit}
-            onChange={(e) => handleInputChange("playerLimit", parseInt(e.target.value) || 1)}
-            className="bg-white dark:bg-gray-900"
-          />
-        </div>
-        <p className="text-xs text-muted-foreground">
-          Número máximo de jogadores permitidos na campanha (1-20)
-        </p>
       </div>
 
       <div className="flex justify-end">
-        <Button 
-          type="submit" 
-          disabled={!hasChanges || isLoading}
-          className="min-w-[140px]"
-        >
+        <Button type="submit" disabled={isLoading}>
           {isLoading ? (
             <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
               Salvando...
             </>
           ) : (
-            "Salvar Alterações"
+            <>
+              <Save className="h-4 w-4 mr-2" />
+              Salvar Configurações
+            </>
           )}
         </Button>
       </div>

@@ -1,49 +1,39 @@
-import { getServerSession } from "next-auth/next"
+import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { redirect } from "next/navigation"
-import { CampaignSettingsClient } from "./settings-client"
+import { SettingsClient } from "./settings-client"
 
-export const dynamic = 'force-dynamic'
-
-interface CampaignSettingsPageProps {
-  params: {
-    id: string
-  }
-}
-
-export default async function CampaignSettingsPage({ params }: CampaignSettingsPageProps) {
+export default async function CampaignSettingsPage({
+  params
+}: {
+  params: Promise<{ id: string }>
+}) {
   const session = await getServerSession(authOptions)
-  const { id } = await params
-
+  
   if (!session?.user?.email) {
-    redirect("/login")
+    redirect('/login')
   }
 
-  // Buscar usuário atual
+  const resolvedParams = await params
+
+  // Buscar usuário
   const user = await prisma.user.findUnique({
-    where: { email: session.user.email },
-    select: { id: true }
+    where: { email: session.user.email }
   })
 
   if (!user) {
-    redirect("/login")
+    redirect('/login')
   }
 
-  // Buscar campanha e verificar se o usuário é o GM
+  // Buscar campanha e verificar se usuário é o owner
   const campaign = await prisma.campaign.findFirst({
     where: {
-      id: id,
+      id: resolvedParams.id,
       ownerId: user.id
     },
     include: {
-      owner: {
-        select: {
-          id: true,
-          name: true,
-          email: true
-        }
-      },
+      owner: true,
       members: {
         include: {
           user: {
@@ -54,45 +44,25 @@ export default async function CampaignSettingsPage({ params }: CampaignSettingsP
             }
           }
         }
-      },
-      invites: {
-        where: {
-          usedAt: null,
-          OR: [
-            { expiresAt: null },
-            { expiresAt: { gt: new Date() } }
-          ]
-        },
-        include: {
-          createdBy: {
-            select: {
-              name: true
-            }
-          }
-        },
-        orderBy: {
-          createdAt: "desc"
-        }
       }
     }
   })
 
   if (!campaign) {
-    redirect("/dashboard")
-  }
-
-  // Verificar se o usuário é realmente o GM
-  if (campaign.ownerId !== user.id) {
-    redirect("/dashboard")
+    redirect('/dashboard')
   }
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="container mx-auto py-8">
-        <CampaignSettingsClient campaign={{
-          ...campaign,
-          createdAt: campaign.createdAt.toISOString()
-        }} />
+      <div className="container mx-auto py-6">
+        <div className="mb-6">
+          <h1 className="text-3xl font-bold">Configurações da Campanha</h1>
+          <p className="text-muted-foreground">
+            Gerencie as configurações e jogadores da campanha "{campaign.name}"
+          </p>
+        </div>
+        
+        <SettingsClient campaign={campaign} />
       </div>
     </div>
   )

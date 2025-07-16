@@ -1,38 +1,85 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
-# dependencies
+# Dependencies
 /node_modules
-
-# next.js
-/.next/
-/out/
-
-# production
-/build
-
-# debug
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# env files
+# Next.js
+/.next/
+/out/
+/build
+/dist/
+
+# Environment variables
 .env*
 
-# vercel
-.vercel
+# Database
+prisma/dev.db
+prisma/dev.db-journal
+*.db
+*.db-journal
 
-# typescript
+# TypeScript
 *.tsbuildinfo
 next-env.d.ts
 /lib/generated/prisma
 
-# build artifacts
-/dist/
-
-# logs
+# Logs
 *.log
 server.log
+dev.log
 
-# lock files (keep only package-lock.json)
+# Build outputs
+/build
+/dist/
+
+# Vercel
+.vercel
+
+# Lock files (keep only package-lock.json)
 pnpm-lock.yaml
+
+# OS specific
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Temporary files
+*.tmp
+*.temp
+tmp/
+temp/
+
+# Archive folder (cleaned up files)
+.archive/
+
+# Uploads (development)
+public/uploads/
+
+# Test files
+coverage/
+.nyc_output/
+jest/
+*.spec.ts
+*.spec.tsx
+*.test.ts
+*.test.tsx
+
+# Misc
+.cache/
+.parcel-cache/
+.eslintcache

@@ -147,12 +147,12 @@ export function ImageFieldRenderer({ field, value, onChange }: ImageFieldRendere
         
         {/* Compression Info */}
         {compressionInfo && (
-          <div className="mt-2 p-2 bg-green-50 border border-green-200 rounded-md">
+          <div className="mt-2 p-2 bg-green-500/20 border border-green-500/30 rounded-md">
             <div className="flex items-center gap-2 text-green-700 text-xs">
               <AlertTriangle className="h-3 w-3" />
               <span className="font-medium">Imagem otimizada:</span>
             </div>
-            <div className="text-xs text-green-600 mt-1">
+            <div className="text-xs text-green-700 mt-1">
               {formatBytes(compressionInfo.originalSize)} → {formatBytes(compressionInfo.compressedSize)} 
               <span className="font-medium"> ({compressionInfo.compressionRatio}% menor)</span>
             </div>
@@ -161,9 +161,9 @@ export function ImageFieldRenderer({ field, value, onChange }: ImageFieldRendere
         
         {/* Processing indicator */}
         {isProcessing && (
-          <div className="mt-2 p-2 bg-blue-50 border border-blue-200 rounded-md">
+          <div className="mt-2 p-2 bg-blue-500/20 border border-blue-500/30 rounded-md">
             <div className="flex items-center gap-2 text-blue-700 text-xs">
-              <div className="animate-spin h-3 w-3 border border-blue-600 border-t-transparent rounded-full"></div>
+              <div className="animate-spin h-3 w-3 border border-blue-700 border-t-transparent rounded-full"></div>
               <span>Comprimindo e otimizando imagem...</span>
             </div>
           </div>

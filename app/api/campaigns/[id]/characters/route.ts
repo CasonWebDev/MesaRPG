@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth/next'
+import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
-import { z } from 'zod'
 import { CharacterType } from '@prisma/client'
+import { z } from 'zod'
 
 const CreateCharacterSchema = z.object({
   name: z.string().min(1, 'Nome é obrigatório'),
@@ -25,9 +25,8 @@ export async function GET(
     const resolvedParams = await params
     const campaignId = resolvedParams.id
     const { searchParams } = new URL(request.url)
-    const userId = searchParams.get('userId')
-    const type = searchParams.get('type') as CharacterType | null
-    const createdBy = searchParams.get('createdBy') // 'gm' para NPCs/Criaturas, 'player' para PCs
+    const type = searchParams.get('type') as CharacterType
+    const createdBy = searchParams.get('createdBy') as 'gm' | 'player'
 
     // Buscar usuário
     const user = await prisma.user.findUnique({
@@ -37,7 +36,8 @@ export async function GET(
           where: { id: campaignId }
         },
         campaignMemberships: {
-          where: { campaignId }
+          where: { campaignId },
+          include: { campaign: true }
         }
       }
     })
@@ -54,41 +54,22 @@ export async function GET(
       return NextResponse.json({ error: 'Acesso negado à campanha' }, { status: 403 })
     }
 
-    // Construir where clause
-    const whereClause: any = { campaignId }
-
-    // Se userId específico for fornecido
-    if (userId) {
-      whereClause.userId = userId
+    // Construir filtros
+    const filters: any = {
+      campaignId,
+      ...(type && { type })
     }
 
-    // Filtrar por tipo
-    if (type) {
-      whereClause.type = type
-    }
-
-    // Filtrar por criador (GM vs Player)
+    // Filtrar por criador se especificado
     if (createdBy === 'gm' && isGM) {
-      // Buscar NPCs/Criaturas criados pelo GM
-      whereClause.type = { in: ['NPC', 'CREATURE'] }
-      // Buscar apenas os criados pelo GM atual
-      const gmUser = await prisma.user.findUnique({
-        where: { email: session.user.email }
-      })
-      whereClause.userId = gmUser?.id
+      filters.userId = user.id
     } else if (createdBy === 'player') {
-      // Buscar PCs de jogadores
-      whereClause.type = 'PC'
+      filters.userId = { not: user.id }
     }
 
-    // Se não é GM e não especificou userId, buscar apenas seus próprios personagens
-    if (!isGM && !userId) {
-      whereClause.userId = user.id
-    }
-
-    // Buscar characters
+    // Buscar personagens
     const characters = await prisma.character.findMany({
-      where: whereClause,
+      where: filters,
       include: {
         user: {
           select: {
@@ -97,8 +78,7 @@ export async function GET(
             email: true
           }
         },
-        campaign: true,
-        template: true
+        campaign: true
       },
       orderBy: {
         createdAt: 'desc'
@@ -145,7 +125,7 @@ export async function POST(
       }, { status: 400 })
     }
 
-    const { name, type, data, templateId } = validationResult.data
+    const { name, type, data } = validationResult.data
 
     // Buscar usuário
     const user = await prisma.user.findUnique({
@@ -180,8 +160,8 @@ export async function POST(
       }, { status: 403 })
     }
 
-    // Para PCs, verificar se usuário já tem personagem nesta campanha
-    if (type === 'PC') {
+    // Para PCs criados por jogadores, verificar se usuário já tem personagem nesta campanha
+    if (type === 'PC' && !isGM) {
       const existingCharacter = await prisma.character.findFirst({
         where: {
           campaignId,
@@ -197,58 +177,45 @@ export async function POST(
       }
     }
 
-    // Buscar template padrão se não especificado
-    let finalTemplateId = templateId
-    if (!finalTemplateId) {
-      const defaultTemplate = await prisma.sheetTemplate.findFirst({
-        where: {
-          campaignId,
-          type: type,
-          isDefault: true
+    // Verificar se não existe um personagem criado muito recentemente (proteção contra duplicatas)
+    const targetUserId = isGM && type === 'PC' && name === 'Novo Personagem' ? null : user.id
+    const recentCharacter = await prisma.character.findFirst({
+      where: {
+        campaignId,
+        userId: targetUserId,
+        type: type as CharacterType,
+        name: name,
+        createdAt: {
+          gte: new Date(Date.now() - 5000) // 5 segundos atrás
         }
-      })
-
-      if (!defaultTemplate) {
-        return NextResponse.json({ 
-          error: `Nenhum template de ${type === 'PC' ? 'personagem' : type === 'NPC' ? 'NPC' : 'criatura'} encontrado para esta campanha` 
-        }, { status: 400 })
       }
-
-      finalTemplateId = defaultTemplate.id
-    }
-
-    // Validar template existe e é do tipo correto
-    const template = await prisma.sheetTemplate.findUnique({
-      where: { id: finalTemplateId }
     })
 
-    if (!template || template.campaignId !== campaignId || template.type !== type) {
+    if (recentCharacter) {
+      console.log('⚠️ Tentativa de criar personagem duplicado bloqueada:', {
+        userId: user.id,
+        campaignId,
+        type,
+        name
+      })
       return NextResponse.json({ 
-        error: 'Template inválido ou não disponível' 
-      }, { status: 400 })
+        character: {
+          ...recentCharacter,
+          data: typeof recentCharacter.data === 'string' ? JSON.parse(recentCharacter.data) : recentCharacter.data
+        },
+        message: 'Personagem já existe' 
+      })
     }
 
-    // Validar dados contra template
-    const templateFields = typeof template.fields === 'string' ? JSON.parse(template.fields) : template.fields
-    const requiredFields = templateFields.filter((field: any) => field.required)
-    
-    for (const field of requiredFields) {
-      if (!data[field.name] || data[field.name] === '') {
-        return NextResponse.json({ 
-          error: `Campo obrigatório não preenchido: ${field.name}` 
-        }, { status: 400 })
-      }
-    }
-
-    // Criar personagem
+    // Criar personagem (sem validação de template - usa D&D 5e)
     const character = await prisma.character.create({
       data: {
         name,
         type: type as CharacterType,
         data: JSON.stringify(data),
         campaignId,
-        userId: user.id,
-        templateId: finalTemplateId
+        userId: targetUserId, // GM pode criar PCs sem userId
+        templateId: null // Não usa mais templates
       },
       include: {
         user: {
@@ -258,28 +225,23 @@ export async function POST(
             email: true
           }
         },
-        campaign: true,
-        template: true
+        campaign: true
       }
     })
 
+    // Parse dos dados JSON para resposta
+    const characterWithParsedData = {
+      ...character,
+      data: typeof character.data === 'string' ? JSON.parse(character.data) : character.data
+    }
+
     return NextResponse.json({ 
-      character,
+      character: characterWithParsedData,
       message: 'Personagem criado com sucesso' 
-    }, { status: 201 })
+    })
 
   } catch (error) {
     console.error('Erro ao criar personagem:', error)
-    
-    // Log mais detalhado do erro
-    if (error instanceof Error) {
-      console.error('Error message:', error.message)
-      console.error('Error stack:', error.stack)
-    }
-    
-    return NextResponse.json({ 
-      error: 'Erro interno do servidor',
-      details: error instanceof Error ? error.message : 'Erro desconhecido'
-    }, { status: 500 })
+    return NextResponse.json({ error: 'Erro interno do servidor' }, { status: 500 })
   }
 }

@@ -6,7 +6,7 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite"
   url      = env("DATABASE_URL")
 }
 
@@ -38,6 +38,7 @@ model Campaign {
   name        String
   description String?
   system      String   @default("Generic")
+  rpgSystem   String   @default("generic")
   ownerId     String
   isActive    Boolean  @default(true)
   playerLimit Int?     @default(8)
@@ -208,6 +209,7 @@ model CampaignInvite {
   id         String   @id @default(cuid())
   campaignId String
   token      String   @unique
+  email      String?
   createdById String
   usedById   String?
   expiresAt  DateTime?

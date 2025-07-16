@@ -18,6 +18,7 @@ interface GameClientProps {
   userRole: UserRole
   playerCharacterId?: string
   currentUserId: string
+  rpgSystem?: string
 }
 
 export function GameClient({ 
@@ -25,7 +26,8 @@ export function GameClient({
   campaignName, 
   userRole, 
   playerCharacterId,
-  currentUserId
+  currentUserId,
+  rpgSystem = 'dnd5e'
 }: GameClientProps) {
   const [sharedHandoutIds, setSharedHandoutIds] = useState<string[]>([])
   const [realPlayerCharacterId, setRealPlayerCharacterId] = useState<string | undefined>(playerCharacterId)
@@ -61,7 +63,7 @@ export function GameClient({
 
   return (
     <div className="h-screen w-screen bg-background text-foreground flex flex-col overflow-hidden">
-      <header className="bg-secondary/50 p-2 shadow-md flex items-center justify-between z-30 flex-shrink-0">
+      <header className="bg-card border-b border-border p-2 shadow-sm flex items-center justify-between z-30 flex-shrink-0">
         <div className="flex items-center gap-2">
           <Link href="/dashboard">
             <Button variant="ghost" size="sm">
@@ -74,8 +76,8 @@ export function GameClient({
         <div className="flex items-center gap-2 justify-end min-w-[150px]">
           {userRole === "Mestre" && (
             <Link href={`/campaign/${campaignId}/settings`}>
-              <Button variant="outline" size="sm">
-                <Settings className="mr-2 h-4 w-4" />
+              <Button variant="ghost" size="sm">
+                <Settings className="h-4 w-4 mr-2" />
                 Configurações
               </Button>
             </Link>
@@ -96,11 +98,12 @@ export function GameClient({
             currentUserId={currentUserId}
             connectedPlayers={connectedPlayers}
             isConnected={isConnected}
+            rpgSystem={rpgSystem}
           />
         </div>
         
         {/* Fixed Map Container */}
-        <div className="flex-1 relative bg-stone-900 overflow-hidden">
+        <div className="flex-1 relative bg-game-grid overflow-hidden">
           <TacticalGrid
             campaignId={campaignId}
             userRole={userRole}

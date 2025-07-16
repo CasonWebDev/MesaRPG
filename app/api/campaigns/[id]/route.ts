@@ -94,7 +94,7 @@ export async function PUT(
     }
 
     const campaignId = params.id
-    const { name, description, settings } = await request.json()
+    const { name, description, settings, rpgSystem } = await request.json()
 
     const campaign = await prisma.campaign.findUnique({
       where: { id: campaignId }
@@ -109,12 +109,32 @@ export async function PUT(
       return NextResponse.json({ error: 'Acesso negado' }, { status: 403 })
     }
 
+    // Mapear rpgSystem para system (nome legível)
+    const getSystemName = (rpgSystemId: string) => {
+      switch (rpgSystemId) {
+        case 'dnd5e':
+          return 'D&D 5ª Edição'
+        case 'pathfinder':
+          return 'Pathfinder'
+        case 'call-of-cthulhu':
+          return 'Call of Cthulhu'
+        case 'savage-worlds':
+          return 'Savage Worlds'
+        case 'generic':
+          return 'Sistema Genérico'
+        default:
+          return 'Sistema Genérico'
+      }
+    }
+
     const updatedCampaign = await prisma.campaign.update({
       where: { id: campaignId },
       data: {
         name,
         description,
-        settings: settings ? JSON.stringify(settings) : undefined
+        settings: settings ? JSON.stringify(settings) : undefined,
+        rpgSystem: rpgSystem || undefined,
+        system: rpgSystem ? getSystemName(rpgSystem) : undefined
       },
       include: {
         owner: {

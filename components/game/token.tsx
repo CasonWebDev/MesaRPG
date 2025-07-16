@@ -216,7 +216,7 @@ export function Token({
       {contextMenu.visible && (
         <div
           ref={contextMenuRef}
-          className="fixed bg-white border border-gray-300 rounded-md shadow-lg py-1 z-50"
+          className="fixed bg-background border border-border rounded-md shadow-lg py-1 z-50"
           style={{
             left: contextMenu.x,
             top: contextMenu.y,
@@ -227,8 +227,8 @@ export function Token({
             disabled={isLinkedToCharacter}
             className={`block w-full text-left px-4 py-2 text-sm ${
               isLinkedToCharacter 
-                ? 'text-gray-400 bg-gray-50 cursor-not-allowed' 
-                : 'text-gray-700 hover:bg-gray-100'
+                ? 'text-muted-foreground bg-muted/30 cursor-not-allowed' 
+                : 'text-foreground hover:bg-muted/50'
             }`}
             title={isLinkedToCharacter ? 'Este token já está vinculado a um personagem' : 'Vincular a Ficha de Personagem'}
           >
@@ -236,37 +236,37 @@ export function Token({
           </button>
           
           {/* Divisor */}
-          <div className="border-t border-gray-200 my-1"></div>
+          <div className="border-t border-border my-1"></div>
           
           {/* Size Options */}
-          <div className="px-4 py-1 text-xs text-gray-500 font-medium">Tamanho do Token</div>
+          <div className="px-4 py-1 text-xs text-muted-foreground font-medium">Tamanho do Token</div>
           <button
             onClick={() => handleSizeChange('small')}
-            className={`block w-full text-left px-4 py-2 text-sm hover:bg-gray-100 ${
-              currentSizeType === 'small' ? 'bg-blue-50 text-blue-700' : 'text-gray-700'
+            className={`block w-full text-left px-4 py-2 text-sm hover:bg-muted/50 ${
+              currentSizeType === 'small' ? 'bg-blue-50 text-blue-700' : 'text-foreground'
             }`}
           >
             Token Pequeno (20px)
           </button>
           <button
             onClick={() => handleSizeChange('medium')}
-            className={`block w-full text-left px-4 py-2 text-sm hover:bg-gray-100 ${
-              currentSizeType === 'medium' ? 'bg-blue-50 text-blue-700' : 'text-gray-700'
+            className={`block w-full text-left px-4 py-2 text-sm hover:bg-muted/50 ${
+              currentSizeType === 'medium' ? 'bg-blue-50 text-blue-700' : 'text-foreground'
             }`}
           >
             Token Médio (40px)
           </button>
           <button
             onClick={() => handleSizeChange('large')}
-            className={`block w-full text-left px-4 py-2 text-sm hover:bg-gray-100 ${
-              currentSizeType === 'large' ? 'bg-blue-50 text-blue-700' : 'text-gray-700'
+            className={`block w-full text-left px-4 py-2 text-sm hover:bg-muted/50 ${
+              currentSizeType === 'large' ? 'bg-blue-50 text-blue-700' : 'text-foreground'
             }`}
           >
             Token Grande (60px)
           </button>
           
           {/* Divisor */}
-          <div className="border-t border-gray-200 my-1"></div>
+          <div className="border-t border-border my-1"></div>
           
           <button
             onClick={handleDeleteToken}

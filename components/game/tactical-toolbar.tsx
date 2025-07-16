@@ -65,7 +65,7 @@ export function TacticalToolbar({ isGM, onToolSelect }: TacticalToolbarProps) {
 
   return (
     <div className="fixed right-4 top-1/2 transform -translate-y-1/2 z-40">
-      <div className="bg-gray-800 border border-gray-600 rounded-lg shadow-lg p-2">
+      <div className="bg-secondary border border-border rounded-lg shadow-lg p-2">
         {/* Botões das ferramentas */}
         <div className="space-y-2">
           {tools.map((tool) => {
@@ -80,7 +80,7 @@ export function TacticalToolbar({ isGM, onToolSelect }: TacticalToolbarProps) {
                   w-12 h-12 flex items-center justify-center rounded-lg transition-all duration-200
                   ${isActive 
                     ? 'bg-blue-600 text-white shadow-lg transform scale-105' 
-                    : 'bg-gray-700 text-gray-300 hover:bg-gray-600 hover:text-white'
+                    : 'bg-secondary/80 text-muted-foreground hover:bg-secondary/60 hover:text-foreground'
                   }
                 `}
                 title={tool.description}

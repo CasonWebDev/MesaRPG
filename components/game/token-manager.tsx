@@ -97,7 +97,7 @@ export function TokenManager({
       case 'PC': return 'border-green-500'
       case 'NPC': return 'border-blue-500'
       case 'CREATURE': return 'border-red-500'
-      default: return 'border-gray-500'
+      default: return 'border-muted-foreground'
     }
   }
 
@@ -178,7 +178,7 @@ export function TokenManager({
             <div>
               <Label className="text-sm font-medium">Tipo de Personagem</Label>
               <Select value={filter} onValueChange={(value: any) => setFilter(value)}>
-                <SelectTrigger className="bg-stone-50/50">
+                <SelectTrigger className="bg-background/50">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -194,7 +194,7 @@ export function TokenManager({
           {/* Lista de Personagens */}
           <div>
             <Label className="text-sm font-medium">Selecionar Personagem</Label>
-            <ScrollArea className="h-[200px] mt-2 border rounded-md bg-stone-50/30">
+            <ScrollArea className="h-[200px] mt-2 border rounded-md bg-background/30">
               {loading ? (
                 <div className="flex items-center justify-center p-8">
                   <Loader2 className="h-6 w-6 animate-spin" />
@@ -219,7 +219,7 @@ export function TokenManager({
                       className={`flex items-center gap-3 p-3 rounded-md cursor-pointer transition-colors ${
                         selectedCharacter?.id === character.id
                           ? 'bg-primary/20 border-2 border-primary'
-                          : 'bg-white/50 hover:bg-white/80 border border-stone-200'
+                          : 'bg-white/50 hover:bg-white/80 border border-border'
                       }`}
                       onClick={() => setSelectedCharacter(character)}
                     >
@@ -260,14 +260,14 @@ export function TokenManager({
                   value={tokenName}
                   onChange={(e) => setTokenName(e.target.value)}
                   placeholder="Nome que aparecerá no token"
-                  className="bg-stone-50/50"
+                  className="bg-background/50"
                 />
               </div>
 
               <div>
                 <Label htmlFor="border-color">Cor da Borda</Label>
                 <Select value={borderColor} onValueChange={setBorderColor}>
-                  <SelectTrigger className="bg-stone-50/50">
+                  <SelectTrigger className="bg-background/50">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -277,7 +277,7 @@ export function TokenManager({
                     <SelectItem value="border-yellow-500">Amarelo</SelectItem>
                     <SelectItem value="border-purple-500">Roxo</SelectItem>
                     <SelectItem value="border-orange-500">Laranja</SelectItem>
-                    <SelectItem value="border-gray-500">Cinza</SelectItem>
+                    <SelectItem value="border-muted-foreground">Cinza</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -297,7 +297,7 @@ export function TokenManager({
               )}
 
               {/* Preview do Token */}
-              <div className="bg-stone-100 p-4 rounded-md">
+              <div className="bg-muted/50 p-4 rounded-md">
                 <Label className="text-sm font-medium">Preview</Label>
                 <div className="flex items-center gap-3 mt-2">
                   <div className={`w-10 h-10 rounded-full border-2 ${borderColor} overflow-hidden`}>

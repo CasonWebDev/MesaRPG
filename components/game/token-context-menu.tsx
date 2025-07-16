@@ -129,7 +129,7 @@ export function TokenContextMenu({
       case 'CREATURE':
         return { icon: <Skull className="h-4 w-4" />, label: 'Criatura', color: 'bg-red-500' }
       default:
-        return { icon: <User className="h-4 w-4" />, label: 'Token', color: 'bg-gray-500' }
+        return { icon: <User className="h-4 w-4" />, label: 'Token', color: 'bg-muted/80' }
     }
   }
 
@@ -139,11 +139,11 @@ export function TokenContextMenu({
     { value: 'border-blue-500', label: 'Azul', color: 'bg-blue-500' },
     { value: 'border-green-500', label: 'Verde', color: 'bg-green-500' },
     { value: 'border-red-500', label: 'Vermelho', color: 'bg-red-500' },
-    { value: 'border-yellow-500', label: 'Amarelo', color: 'bg-yellow-500' },
+    { value: 'border-primary', label: 'Vermelho', color: 'bg-primary' },
     { value: 'border-purple-500', label: 'Roxo', color: 'bg-purple-500' },
     { value: 'border-orange-500', label: 'Laranja', color: 'bg-orange-500' },
     { value: 'border-pink-500', label: 'Rosa', color: 'bg-pink-500' },
-    { value: 'border-gray-500', label: 'Cinza', color: 'bg-gray-500' }
+    { value: 'border-muted-foreground', label: 'Cinza', color: 'bg-muted/80' }
   ]
 
   return (
@@ -167,7 +167,7 @@ export function TokenContextMenu({
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
                   <span className="font-medium truncate">{token.name || token.alt}</span>
-                  {isOwner && <Crown className="h-4 w-4 text-yellow-500" />}
+                  {isOwner && <Crown className="h-4 w-4 text-primary" />}
                 </div>
                 <div className="flex items-center gap-2 text-xs text-muted-foreground">
                   {typeInfo.icon}
@@ -262,7 +262,7 @@ export function TokenContextMenu({
                 </ContextMenuSubTrigger>
                 <ContextMenuSubContent className="w-48">
                   <ContextMenuItem onClick={() => onChangeOwnership(token.id, 'gm')}>
-                    <Crown className="mr-2 h-4 w-4 text-yellow-500" />
+                    <Crown className="mr-2 h-4 w-4 text-primary" />
                     Mestre (GM)
                   </ContextMenuItem>
                   {availableUsers.map((user) => (
@@ -339,7 +339,7 @@ export function TokenContextMenu({
                 value={editedToken.borderColor || token.borderColor} 
                 onValueChange={(value) => setEditedToken(prev => ({ ...prev, borderColor: value }))}
               >
-                <SelectTrigger className="bg-stone-50/50">
+                <SelectTrigger className="bg-background/50">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -368,7 +368,7 @@ export function TokenContextMenu({
                         ...prev, 
                         canPlayerMove: e.target.checked 
                       }))}
-                      className="rounded border-gray-300"
+                      className="rounded border-border"
                     />
                     <span className="text-sm">Permitir que jogadores movam este token</span>
                   </label>

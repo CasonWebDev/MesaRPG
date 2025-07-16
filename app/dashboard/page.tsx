@@ -72,7 +72,7 @@ export default async function DashboardPage() {
   ]
   return (
     <div className="min-h-screen bg-background">
-      <header className="bg-secondary/50 p-4 shadow-md">
+      <header className="bg-card border-b border-border p-4 shadow-sm">
         <div className="container mx-auto flex justify-between items-center">
           <h1 className="text-3xl font-heading text-primary">MesaRPG</h1>
           <div className="flex items-center gap-4">
@@ -82,7 +82,7 @@ export default async function DashboardPage() {
         </div>
       </header>
       <main className="container mx-auto py-8">
-        <h2 className="text-2xl font-heading mb-6">Suas Campanhas</h2>
+        <h2 className="text-2xl font-heading mb-6 text-foreground">Suas Campanhas</h2>
         {campaigns.length === 0 ? (
           <div className="text-center py-12">
             <p className="text-muted-foreground text-lg mb-4">Você ainda não participa de nenhuma campanha.</p>

@@ -168,11 +168,11 @@ export function ChatPanel({ campaignId, currentUserId }: ChatPanelProps) {
     
     switch (message.type) {
       case 'DICE_ROLL':
-        return "italic text-amber-400"
+        return "italic text-primary"
       case 'SYSTEM':
-        return "italic text-gray-400"
+        return "italic text-muted-foreground"
       case 'OOC':
-        return "text-gray-300"
+        return "text-muted-foreground/80"
       default:
         return "text-foreground"
     }
@@ -194,7 +194,7 @@ export function ChatPanel({ campaignId, currentUserId }: ChatPanelProps) {
       "font-bold text-blue-400",
       "font-bold text-purple-400", 
       "font-bold text-green-400",
-      "font-bold text-yellow-400",
+      "font-bold text-primary",
       "font-bold text-red-400",
       "font-bold text-pink-400"
     ]
@@ -232,10 +232,10 @@ export function ChatPanel({ campaignId, currentUserId }: ChatPanelProps) {
   }
 
   return (
-    <div className="h-full flex flex-col bg-background/50 rounded-lg p-2">
+    <div className="h-full flex flex-col bg-game-chat rounded-lg p-2">
       <div className="flex-grow space-y-2 overflow-y-auto pr-2 max-h-96">
         {messages.length === 0 ? (
-          <div className="text-center text-gray-500 py-4">
+          <div className="text-center text-muted-foreground py-4">
             Nenhuma mensagem ainda. Comece a conversa!
           </div>
         ) : (
@@ -265,7 +265,7 @@ export function ChatPanel({ campaignId, currentUserId }: ChatPanelProps) {
             onKeyPress={handleKeyPress}
             placeholder="Digite sua mensagem ou /r 1d20+5 para rolar dados..."
             disabled={isLoading || !isConnected || !campaignId}
-            className={`bg-white text-black ${isOverLimit ? 'border-red-500' : ''}`}
+            className={`bg-game-chat-input text-foreground ${isOverLimit ? 'border-red-500' : ''}`}
             autoComplete="off"
           />
           <Button 
@@ -285,7 +285,7 @@ export function ChatPanel({ campaignId, currentUserId }: ChatPanelProps) {
                 {Math.abs(charactersRemaining)} caracteres em excesso
               </span>
             ) : (
-              <span className="text-gray-500">
+              <span className="text-muted-foreground">
                 {charactersRemaining} caracteres restantes
               </span>
             )}

@@ -18,6 +18,7 @@ export async function POST(
       )
     }
 
+    const body = await request.json()
     const campaignId = params.id
 
     // Verificar se o usuário é o GM da campanha
@@ -56,6 +57,7 @@ export async function POST(
       data: {
         campaignId,
         token,
+        email: body.email,
         createdById: user.id,
         // Convite expira em 7 dias
         expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
@@ -67,6 +69,7 @@ export async function POST(
 
     return NextResponse.json({
       success: true,
+      inviteUrl: inviteUrl,
       invite: {
         id: invite.id,
         token: invite.token,

@@ -79,13 +79,12 @@ export default function LoginPage() {
 
   return (
     <main
-      className="flex items-center justify-center min-h-screen bg-cover bg-center"
-      style={{ backgroundImage: "url('/placeholder.png')" }}
+      className="flex items-center justify-center min-h-screen bg-background"
     >
-      <Card className="w-full max-w-sm bg-parchment/90 backdrop-blur-sm text-ink-text">
+      <Card className="w-full max-w-sm bg-card/95 backdrop-blur-sm text-card-foreground shadow-xl">
         <CardHeader className="text-center">
-          <CardTitle className="text-4xl font-heading">MesaRPG</CardTitle>
-          <CardDescription className="text-ink-text/80">
+          <CardTitle className="text-4xl font-heading text-primary">MesaRPG</CardTitle>
+          <CardDescription className="text-muted-foreground">
             {inviteToken ? "Faça login para aceitar o convite" : "Sua aventura começa aqui."}
           </CardDescription>
         </CardHeader>
@@ -107,7 +106,7 @@ export default function LoginPage() {
                   onChange={(e) => setEmail(e.target.value)}
                   required
                   disabled={isLoading}
-                  className="bg-stone-50/50"
+                  className="bg-input"
                   autoComplete="email"
                 />
               </div>
@@ -121,7 +120,7 @@ export default function LoginPage() {
                   onChange={(e) => setPassword(e.target.value)}
                   required
                   disabled={isLoading}
-                  className="bg-stone-50/50"
+                  className="bg-input"
                   autoComplete="current-password"
                 />
               </div>
@@ -138,7 +137,7 @@ export default function LoginPage() {
             {isLoading ? "Entrando..." : "Entrar"}
           </Button>
           <div className="text-center text-sm">
-            <p className="text-ink-text/80">
+            <p className="text-muted-foreground">
               Não tem uma conta?{" "}
               <Link href="/register" className="font-bold text-primary hover:underline">
                 Cadastre-se

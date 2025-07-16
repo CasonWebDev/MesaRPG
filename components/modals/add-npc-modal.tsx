@@ -35,7 +35,7 @@ export function AddNpcModal({ isOpen, onClose }: AddNpcModalProps) {
           <Textarea
             id={field.id}
             placeholder={`Detalhes sobre ${field.name}...`}
-            className="col-span-3 bg-stone-50/50"
+            className="col-span-3 bg-background/50"
           />
         )
       case "Sim/Não":
@@ -47,7 +47,7 @@ export function AddNpcModal({ isOpen, onClose }: AddNpcModalProps) {
       case "Imagem":
         return (
           <div className="col-span-3">
-            <Button asChild variant="outline" className="w-full cursor-pointer bg-stone-50/50 hover:bg-stone-50/80">
+            <Button asChild variant="outline" className="w-full cursor-pointer bg-background/50 hover:bg-background/80">
               <label>
                 <Upload className="mr-2 h-4 w-4" />
                 <span>Carregar Avatar</span>
@@ -58,7 +58,7 @@ export function AddNpcModal({ isOpen, onClose }: AddNpcModalProps) {
         )
       case "Texto Curto":
       default:
-        return <Input id={field.id} placeholder={field.name} className="col-span-3 bg-stone-50/50" />
+        return <Input id={field.id} placeholder={field.name} className="col-span-3 bg-background/50" />
     }
   }
 

@@ -2,6 +2,7 @@
 
 import { SessionProvider } from "next-auth/react"
 import { Toaster } from "@/components/ui/sonner"
+import { ThemeProvider } from "./theme-provider"
 import type { Session } from "next-auth"
 
 interface ClientProvidersProps {
@@ -15,8 +16,10 @@ export function ClientProviders({
 }: ClientProvidersProps) {
   return (
     <SessionProvider session={session}>
-      {children}
-      <Toaster />
+      <ThemeProvider>
+        {children}
+        <Toaster />
+      </ThemeProvider>
     </SessionProvider>
   )
 }

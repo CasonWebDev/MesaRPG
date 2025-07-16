@@ -15,7 +15,7 @@ export function ContentListItem({ title, description, imageUrl, isActive = false
   return (
     <div
       className={cn(
-        "p-2 rounded-md bg-stone-900/30 border border-transparent hover:bg-stone-900/50 transition-colors",
+        "p-2 rounded-md bg-muted/30 border border-transparent hover:bg-muted/50 transition-colors",
         isActive && "border-primary bg-primary/10",
       )}
     >

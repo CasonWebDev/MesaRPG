@@ -34,7 +34,7 @@ export default async function RootLayout({
   
   return (
     <html lang="pt-BR" suppressHydrationWarning>
-      <body className={cn("antialiased", fontHeading.variable, fontBody.variable)}>
+      <body className={cn("antialiased bg-background text-foreground", fontHeading.variable, fontBody.variable)}>
         <ClientProviders session={session}>
           {children}
         </ClientProviders>

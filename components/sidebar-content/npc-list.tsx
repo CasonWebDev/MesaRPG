@@ -11,6 +11,15 @@ import { ContentListItem } from "./content-list-item"
 import { DeleteCharacterModal } from "../modals/delete-character-modal"
 import { useCharacters } from "@/hooks/use-characters"
 import { toast } from "sonner"
+import { getRPGSystem } from "@/lib/rpg-systems"
+
+function getCharacterName(character: any) {
+  const characterData = typeof character.data === 'string' ? JSON.parse(character.data) : character.data
+  const rpgSystem = getRPGSystem('dnd5e')
+  const { name } = rpgSystem.getCharacterSummary(characterData)
+  
+  return name || character.name || 'NPC'
+}
 
 interface NpcListProps {
   campaignId: string
@@ -38,9 +47,8 @@ export function NpcList({ campaignId }: NpcListProps) {
     : npcs.filter(char => char.type === 'NPC')
 
   const handleCreateNPC = () => {
-    router.push(`/campaign/${campaignId}/sheet/new?type=NPC&role=Mestre`)
+    window.open(`/campaign/${campaignId}/sheet/new?type=NPC&role=gm&system=dnd5e`, '_blank', 'noopener,noreferrer')
   }
-
 
   const handleDelete = async () => {
     if (!deletingCharacter) return
@@ -67,7 +75,7 @@ export function NpcList({ campaignId }: NpcListProps) {
   return (
     <div className="space-y-2 p-1">
       <Button size="sm" className="w-full" onClick={handleCreateNPC}>
-        <PlusCircle className="mr-2 h-4 w-4" /> Adicionar NPC
+        <PlusCircle className="mr-2 h-4 w-4" /> Criar NPC D&D 5e
       </Button>
 
       {npcs.length > 3 && (
@@ -95,29 +103,31 @@ export function NpcList({ campaignId }: NpcListProps) {
         <div className="space-y-2">
           <TooltipProvider delayDuration={0}>
             {filteredNPCs.map((npc) => {
-              // Extrair descrição dos dados do NPC
-              const npcData = npc.data || {}
-              const description = npcData['Descrição/História'] || 
-                                npcData['História/Sintetizado'] || 
-                                npcData['Tipo'] || 
-                                'NPC sem descrição'
+              // Usar sistema RPG para obter resumo do NPC
+              const npcData = typeof npc.data === 'string' ? JSON.parse(npc.data) : npc.data
+              const rpgSystem = getRPGSystem('dnd5e')
+              const { name, level, race, class: npcClass } = rpgSystem.getCharacterSummary(npcData)
+              
+              const description = race && npcClass 
+                ? `${race} ${npcClass} ${level ? `- Nível ${level}` : ''}`
+                : 'NPC D&D 5e'
 
               return (
                 <ContentListItem 
                   key={npc.id} 
-                  title={npc.name} 
+                  title={getCharacterName(npc)} 
                   description={description}
                   showImage={false}
                 >
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <Link href={`/campaign/${campaignId}/sheet/${npc.id}?type=npc&role=Mestre`}>
+                      <Link href={`/campaign/${campaignId}/sheet/${npc.id}?role=gm`} target="_blank" rel="noopener noreferrer">
                         <Button variant="ghost" size="icon" className="h-7 w-7">
                           <Eye className="h-4 w-4" />
                         </Button>
                       </Link>
                     </TooltipTrigger>
-                    <TooltipContent>Visualizar Ficha</TooltipContent>
+                    <TooltipContent>Editar Ficha</TooltipContent>
                   </Tooltip>
                   <Tooltip>
                     <TooltipTrigger asChild>
@@ -140,8 +150,6 @@ export function NpcList({ campaignId }: NpcListProps) {
       )}
 
       {/* Modais */}
-
-
       {deletingCharacter && (
         <DeleteCharacterModal
           isOpen={!!deletingCharacter}

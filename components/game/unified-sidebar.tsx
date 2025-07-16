@@ -19,6 +19,7 @@ interface UnifiedSidebarProps {
   currentUserId?: string // ID do usuário logado
   connectedPlayers: PlayerUpdate[]
   isConnected: boolean
+  rpgSystem?: string
 }
 
 export function UnifiedSidebar({
@@ -30,9 +31,10 @@ export function UnifiedSidebar({
   currentUserId,
   connectedPlayers,
   isConnected,
+  rpgSystem = 'dnd5e',
 }: UnifiedSidebarProps) {
   return (
-    <div className="h-full flex flex-col bg-secondary/30 p-2">
+    <div className="h-full flex flex-col bg-card p-2">
       <Tabs defaultValue="comunicacao" className="flex flex-col flex-grow min-h-0">
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="comunicacao">
@@ -80,12 +82,14 @@ export function UnifiedSidebar({
               campaignId={campaignId}
               onShareHandout={onShareHandout}
               sharedHandoutIds={sharedHandoutIds}
+              rpgSystem={rpgSystem}
             />
           ) : (
             <PlayerContentView
               campaignId={campaignId}
               playerCharacterId={playerCharacterId}
               sharedHandoutIds={sharedHandoutIds}
+              rpgSystem={rpgSystem}
             />
           )}
         </TabsContent>

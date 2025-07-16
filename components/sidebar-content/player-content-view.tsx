@@ -7,9 +7,10 @@ interface PlayerContentViewProps {
   campaignId: string
   playerCharacterId?: string
   sharedHandoutIds: string[]
+  rpgSystem?: string
 }
 
-export function PlayerContentView({ campaignId, playerCharacterId, sharedHandoutIds }: PlayerContentViewProps) {
+export function PlayerContentView({ campaignId, playerCharacterId, sharedHandoutIds, rpgSystem = 'dnd5e' }: PlayerContentViewProps) {
   return (
     <Accordion type="multiple" className="w-full" defaultValue={["my-sheet"]}>
       <AccordionItem value="my-sheet">
@@ -17,7 +18,7 @@ export function PlayerContentView({ campaignId, playerCharacterId, sharedHandout
           <FileText className="mr-2 h-4 w-4" /> Minha Ficha
         </AccordionTrigger>
         <AccordionContent>
-          <PlayerCharacterSheetPanel campaignId={campaignId} playerCharacterId={playerCharacterId} />
+          <PlayerCharacterSheetPanel campaignId={campaignId} playerCharacterId={playerCharacterId} rpgSystem={rpgSystem} />
         </AccordionContent>
       </AccordionItem>
       <AccordionItem value="handouts">

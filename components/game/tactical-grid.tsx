@@ -722,7 +722,7 @@ export function TacticalGrid({
         alt: 'Token Genérico',
         name: 'Token Genérico',
         position,
-        borderColor: 'border-gray-500',
+        borderColor: 'border-muted-foreground',
         canPlayerMove: true,
         ownerId: userId,
         characterId: undefined,
@@ -918,30 +918,34 @@ export function TacticalGrid({
 
       console.log('📋 Character data loaded:', character)
 
-      // Função para obter avatar do personagem (mesma lógica do modal)
+      // Função para obter avatar do personagem
       const getCharacterAvatar = (char: any) => {
         try {
-          const template = char.template
-          if (!template?.fields) {
-            return getTypePlaceholder(char.type)
-          }
-          
-          const templateFields = Array.isArray(template.fields) 
-            ? template.fields 
-            : (typeof template.fields === 'string' ? JSON.parse(template.fields) : [])
-          
-          const imageField = templateFields.find((field: any) => field.type === 'image')
-          if (!imageField) {
-            return getTypePlaceholder(char.type)
-          }
-          
+          // Para personagens D&D 5e, o avatar está diretamente no campo 'data'
           const charData = typeof char.data === 'string' ? JSON.parse(char.data) : char.data
-          const savedAvatar = charData[imageField.name]
           
-          if (savedAvatar) {
-            return savedAvatar
+          // Verificar se existe avatar no campo 'avatar' do personagem D&D
+          if (charData?.avatar && charData.avatar.trim()) {
+            return charData.avatar
           }
           
+          // Fallback para sistema de templates (outros sistemas RPG)
+          const template = char.template
+          if (template?.fields) {
+            const templateFields = Array.isArray(template.fields) 
+              ? template.fields 
+              : (typeof template.fields === 'string' ? JSON.parse(template.fields) : [])
+            
+            const imageField = templateFields.find((field: any) => field.type === 'image')
+            if (imageField) {
+              const savedAvatar = charData[imageField.name]
+              if (savedAvatar && savedAvatar.trim()) {
+                return savedAvatar
+              }
+            }
+          }
+          
+          // Usar placeholder baseado no tipo
           return getTypePlaceholder(char.type)
         } catch (error) {
           console.error('Error getting character avatar:', error)
@@ -966,9 +970,23 @@ export function TacticalGrid({
       const characterAvatar = getCharacterAvatar(character)
 
       // Atualizar o token com os dados do personagem
+      // Obter nome correto do personagem (D&D 5e usa data.name)
+      const getCharacterName = (char: any) => {
+        try {
+          const charData = typeof char.data === 'string' ? JSON.parse(char.data) : char.data
+          return charData?.name || char.name || 'Personagem'
+        } catch (error) {
+          console.error('Error getting character name:', error)
+          return char.name || 'Personagem'
+        }
+      }
+      
+      const characterName = getCharacterName(character)
+      console.log('📋 Character name resolved:', characterName)
+      
       const tokenUpdates = {
-        name: character.name,
-        alt: character.name,
+        name: characterName,
+        alt: characterName,
         src: characterAvatar,
         characterId: characterId,
         characterType: character.type as 'PC' | 'NPC' | 'CREATURE'
@@ -1887,10 +1905,10 @@ export function TacticalGrid({
   }, [activeMap?.imageUrl])
 
   return (
-    <div className="w-full h-full bg-gray-900 flex items-center justify-center">
+    <div className="w-full h-full bg-game-grid flex items-center justify-center">
       {/* Simple container */}
       <div 
-        className="relative bg-gray-800 border border-gray-600"
+        className="relative bg-game-grid-cell border border-game-grid-border"
         style={{
           width: '800px',
           height: '600px',
@@ -1904,15 +1922,15 @@ export function TacticalGrid({
       >
         {/* Loading */}
         {mapLoading && (
-          <div className="absolute inset-0 flex items-center justify-center bg-gray-800">
-            <div className="text-white">Carregando...</div>
+          <div className="absolute inset-0 flex items-center justify-center bg-game-grid-cell">
+            <div className="text-foreground">Carregando...</div>
           </div>
         )}
 
         {/* Error */}
         {mapError && (
-          <div className="absolute inset-0 flex items-center justify-center bg-gray-800">
-            <div className="text-red-400">Erro: {mapError}</div>
+          <div className="absolute inset-0 flex items-center justify-center bg-game-grid-cell">
+            <div className="text-destructive">Erro: {mapError}</div>
           </div>
         )}
 
@@ -2121,7 +2139,7 @@ export function TacticalGrid({
 
         {/* Fog tool instructions */}
         {activeTool === 'fog' && isGM && (
-          <div className="absolute bottom-4 left-4 bg-gray-600 bg-opacity-90 text-white px-3 py-2 rounded text-sm">
+          <div className="absolute bottom-4 left-4 bg-muted/90 text-foreground px-3 py-2 rounded text-sm">
             {isCreatingFog && "🌫️ Arraste para definir área de névoa"}
             {!isCreatingFog && "🌫️ Arraste para criar névoa • Clique direito para remover"}
           </div>
@@ -2163,7 +2181,7 @@ export function TacticalGrid({
         {/* Current fog area being created */}
         {isCreatingFog && currentFogArea && currentFogArea.width > 0 && currentFogArea.height > 0 && (
           <div
-            className="absolute z-20 border-2 border-gray-300 border-dashed pointer-events-none"
+            className="absolute z-20 border-2 border-muted/60 border-dashed pointer-events-none"
             style={{
               left: currentFogArea.x,
               top: currentFogArea.y,
@@ -2213,7 +2231,7 @@ export function TacticalGrid({
               {showGrid && <span className="text-green-400">●</span>}
               {showCoordinates && <span className="text-blue-400">A1</span>}
               <span>Células: {gridSize}px</span>
-              {snapToGrid && <span className="text-yellow-400">⊞</span>}
+              {snapToGrid && <span className="text-primary">⊞</span>}
             </div>
           </div>
         )}
@@ -2222,7 +2240,7 @@ export function TacticalGrid({
         {contextMenu.visible && (
           <div
             ref={contextMenuRef}
-            className="fixed bg-white border border-gray-300 rounded-md shadow-lg py-1 z-50"
+            className="fixed bg-background border border-border rounded-md shadow-lg py-1 z-50"
             style={{
               left: contextMenu.x,
               top: contextMenu.y,
@@ -2231,7 +2249,7 @@ export function TacticalGrid({
             {/* Token Actions */}
             <button
               onClick={handleCreateGenericToken}
-              className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+              className="block w-full text-left px-4 py-2 text-sm text-foreground hover:bg-muted/50"
             >
               Adicionar token genérico
             </button>
@@ -2247,35 +2265,35 @@ export function TacticalGrid({
             {/* Grid Configuration Section - Only for GM */}
             {isGM && (
               <>
-                <div className="border-t border-gray-200 my-1"></div>
-                <div className="px-4 py-1 text-xs text-gray-500 font-medium">Configurações do Grid (Mestre)</div>
+                <div className="border-t border-border my-1"></div>
+                <div className="px-4 py-1 text-xs text-muted-foreground font-medium">Configurações do Grid (Mestre)</div>
                 
                 <button
                   onClick={() => handleGridConfigChange('showGrid', !showGrid)}
-                  className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                  className="block w-full text-left px-4 py-2 text-sm text-foreground hover:bg-muted/50"
                 >
                   {showGrid ? '✓ ' : ''}Mostrar Grade
                 </button>
                 
                 <button
                   onClick={() => handleGridConfigChange('showCoordinates', !showCoordinates)}
-                  className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                  className="block w-full text-left px-4 py-2 text-sm text-foreground hover:bg-muted/50"
                 >
                   {showCoordinates ? '✓ ' : ''}Mostrar Coordenadas
                 </button>
                 
                 <button
                   onClick={() => handleGridConfigChange('snapToGrid', !snapToGrid)}
-                  className={`block w-full text-left px-4 py-2 text-sm hover:bg-gray-100 ${
-                    snapToGrid ? 'text-blue-700 bg-blue-50' : 'text-gray-700'
+                  className={`block w-full text-left px-4 py-2 text-sm hover:bg-muted/50 ${
+                    snapToGrid ? 'text-blue-700 bg-blue-50' : 'text-foreground'
                   }`}
                 >
                   {snapToGrid ? '✓ ' : ''}Ajustar à Grade
                 </button>
 
                 {/* Grid Size Section */}
-                <div className="border-t border-gray-200 my-1"></div>
-                <div className="px-4 py-1 text-xs text-gray-500 font-medium">Tamanho das Células</div>
+                <div className="border-t border-border my-1"></div>
+                <div className="px-4 py-1 text-xs text-muted-foreground font-medium">Tamanho das Células</div>
                 
                 {[
                   { size: 20, label: 'Pequeno (20px)', key: 'small' },
@@ -2288,8 +2306,8 @@ export function TacticalGrid({
                       handleGridConfigChange('gridSize', size)
                       setContextMenu(prev => ({ ...prev, visible: false }))
                     }}
-                    className={`block w-full text-left px-4 py-2 text-sm hover:bg-gray-100 ${
-                      gridSize === size ? 'bg-blue-50 text-blue-700' : 'text-gray-700'
+                    className={`block w-full text-left px-4 py-2 text-sm hover:bg-muted/50 ${
+                      gridSize === size ? 'bg-blue-50 text-blue-700' : 'text-foreground'
                     }`}
                   >
                     {gridSize === size ? '● ' : '○ '}{label}
@@ -2299,8 +2317,8 @@ export function TacticalGrid({
                 {/* Measurement Section - Only when grid is active */}
                 {showGrid && (
                   <>
-                    <div className="border-t border-gray-200 my-1"></div>
-                    <div className="px-4 py-1 text-xs text-gray-500 font-medium">Valor da Célula</div>
+                    <div className="border-t border-border my-1"></div>
+                    <div className="px-4 py-1 text-xs text-muted-foreground font-medium">Valor da Célula</div>
                     
                     <div className="px-4 py-2">
                       {/* Preset values */}
@@ -2314,7 +2332,7 @@ export function TacticalGrid({
                             className={`px-2 py-1 text-xs rounded border ${
                               cellValueInMeters === preset 
                                 ? 'bg-blue-100 border-blue-300 text-blue-700' 
-                                : 'bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100'
+                                : 'bg-muted/30 border-border text-muted-foreground hover:bg-muted/50'
                             }`}
                           >
                             {preset}m
@@ -2330,22 +2348,22 @@ export function TacticalGrid({
             {/* Grid Status for Players - Read Only */}
             {!isGM && (showGrid || showCoordinates) && (
               <>
-                <div className="border-t border-gray-200 my-1"></div>
-                <div className="px-4 py-1 text-xs text-gray-500 font-medium">Configurações do Grid</div>
+                <div className="border-t border-border my-1"></div>
+                <div className="px-4 py-1 text-xs text-muted-foreground font-medium">Configurações do Grid</div>
                 
-                <div className="px-4 py-2 text-sm text-gray-600">
+                <div className="px-4 py-2 text-sm text-muted-foreground">
                   <div className="flex items-center gap-2">
                     {showGrid && <span className="text-green-400">●</span>}
                     {showCoordinates && <span className="text-blue-400">A1</span>}
                     <span>Células: {gridSize}px</span>
-                    {snapToGrid && <span className="text-yellow-400">⊞</span>}
+                    {snapToGrid && <span className="text-primary">⊞</span>}
                   </div>
                   {showGrid && (
-                    <div className="text-xs text-gray-600 mt-1">
+                    <div className="text-xs text-muted-foreground mt-1">
                       Valor: {cellValueInMeters}m por célula
                     </div>
                   )}
-                  <div className="text-xs text-gray-500 mt-1">
+                  <div className="text-xs text-muted-foreground mt-1">
                     (Configurado pelo Mestre)
                   </div>
                 </div>
@@ -2363,7 +2381,7 @@ export function TacticalGrid({
 
       {/* Color Palette - Only show when drawing tool is active */}
       {isGM && showColorPalette && (
-        <div className="absolute left-4 top-1/2 -translate-y-1/2 flex flex-col gap-2 bg-gray-800 border border-gray-600 rounded-lg p-2 z-40">
+        <div className="absolute left-4 top-1/2 -translate-y-1/2 flex flex-col gap-2 bg-card border border-border rounded-lg p-2 z-40">
           {drawingColors.map((color) => (
             <button
               key={color.value}
@@ -2371,7 +2389,7 @@ export function TacticalGrid({
               className={`w-8 h-8 rounded-full border-2 transition-all ${
                 selectedColor === color.value 
                   ? 'border-white scale-110' 
-                  : 'border-gray-400 hover:border-gray-200'
+                  : 'border-muted-foreground hover:border-border'
               }`}
               style={{ backgroundColor: color.value }}
               title={color.name}
@@ -2382,15 +2400,15 @@ export function TacticalGrid({
 
       {/* Marker Icon Palette - Only show when marker tool is active */}
       {isGM && showMarkerPalette && (
-        <div className="absolute left-4 top-1/2 -translate-y-1/2 flex flex-col gap-2 bg-gray-800 border border-gray-600 rounded-lg p-2 z-40">
+        <div className="absolute left-4 top-1/2 -translate-y-1/2 flex flex-col gap-2 bg-card border border-border rounded-lg p-2 z-40">
           {markerIcons.map((marker) => (
             <button
               key={marker.icon}
               onClick={() => setSelectedMarkerIcon(marker.icon)}
               className={`w-10 h-10 rounded-lg border-2 transition-all flex items-center justify-center text-xl ${
                 selectedMarkerIcon === marker.icon 
-                  ? 'border-white scale-110 bg-gray-700' 
-                  : 'border-gray-400 hover:border-gray-200 bg-gray-800 hover:bg-gray-700'
+                  ? 'border-white scale-110 bg-secondary/80' 
+                  : 'border-muted-foreground hover:border-border bg-secondary hover:bg-secondary/80'
               }`}
               title={marker.name}
             >
@@ -2402,15 +2420,15 @@ export function TacticalGrid({
 
       {/* Fog Type Palette - Only show when fog tool is active */}
       {isGM && showFogTypePalette && activeTool === 'fog' && (
-        <div className="absolute left-4 top-1/2 -translate-y-1/2 flex flex-col gap-2 bg-gray-800 border border-gray-600 rounded-lg p-3 z-40">
+        <div className="absolute left-4 top-1/2 -translate-y-1/2 flex flex-col gap-2 bg-card border border-border rounded-lg p-3 z-40">
           {fogTypes.map((fogType) => (
             <button
               key={fogType.id}
               onClick={() => setSelectedFogType(fogType.id)}
               className={`w-12 h-12 rounded-lg border-2 transition-all flex flex-col items-center justify-center text-lg ${
                 selectedFogType === fogType.id 
-                  ? 'border-white scale-110 bg-gray-700' 
-                  : 'border-gray-400 hover:border-gray-200 bg-gray-800 hover:bg-gray-700'
+                  ? 'border-white scale-110 bg-secondary/80' 
+                  : 'border-muted-foreground hover:border-border bg-secondary hover:bg-secondary/80'
               }`}
               title={`${fogType.name} - ${fogType.description}`}
             >
@@ -2419,7 +2437,7 @@ export function TacticalGrid({
           ))}
 
           {/* Fog mode separator */}
-          <div className="border-t border-gray-600 my-2"></div>
+          <div className="border-t border-border my-2"></div>
 
           {/* Fog Mode Toggle - Create vs Erase */}
           <button
@@ -2427,7 +2445,7 @@ export function TacticalGrid({
             className={`w-12 h-12 rounded-lg border-2 transition-all flex flex-col items-center justify-center text-lg ${
               fogMode === 'erase'
                 ? 'border-red-400 scale-110 bg-red-900/50 text-red-200' 
-                : 'border-gray-400 hover:border-red-300 bg-gray-800 hover:bg-red-900/30 text-gray-300'
+                : 'border-muted-foreground hover:border-red-300 bg-secondary hover:bg-red-900/30 text-muted-foreground'
             }`}
             title={fogMode === 'create' ? 'Mudar para modo borracha' : 'Mudar para modo criação'}
           >
@@ -2437,7 +2455,7 @@ export function TacticalGrid({
           {/* Magical fog colors - only show when magical fog is selected */}
           {selectedFogType === 'magical' && (
             <>
-              <div className="border-t border-gray-600 mt-2 pt-2">
+              <div className="border-t border-border mt-2 pt-2">
                 <div className="text-white text-xs font-bold mb-2 text-center">Cores Mágicas</div>
                 <div className="flex flex-col gap-1">
                   {magicalFogColors.map((color) => (
@@ -2447,7 +2465,7 @@ export function TacticalGrid({
                       className={`w-12 h-8 rounded border-2 transition-all flex items-center justify-center text-sm ${
                         selectedFogColor === color.value 
                           ? 'border-white scale-105' 
-                          : 'border-gray-400 hover:border-gray-200'
+                          : 'border-muted-foreground hover:border-border'
                       }`}
                       style={{ backgroundColor: color.value }}
                       title={color.name}
@@ -2465,23 +2483,23 @@ export function TacticalGrid({
       {/* Map Frozen Overlay - blocks view for non-GM users when map is frozen */}
       {mapFrozen && !isGM && (
         <div className="absolute inset-0 bg-black/[0.99] backdrop-blur-sm z-50 flex items-center justify-center">
-          <div className="bg-white/95 rounded-xl shadow-2xl p-8 max-w-md mx-4 text-center border border-gray-200">
+          <div className="bg-background/95 rounded-xl shadow-2xl p-8 max-w-md mx-4 text-center border border-border">
             <div className="mb-6">
               <div className="bg-red-100 p-4 rounded-full w-20 h-20 mx-auto mb-4 flex items-center justify-center">
                 <svg className="h-10 w-10 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                 </svg>
               </div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">
+              <h2 className="text-2xl font-bold text-foreground mb-2">
                 Mapa em Preparação
               </h2>
-              <p className="text-gray-600">
+              <p className="text-muted-foreground">
                 O mestre está preparando o ambiente de jogo. O mapa ficará visível novamente quando ele liberar.
               </p>
             </div>
 
-            <div className="bg-gray-50 rounded-lg p-4">
-              <div className="text-sm text-gray-500">
+            <div className="bg-muted/30 rounded-lg p-4">
+              <div className="text-sm text-muted-foreground">
                 <p>🎭 Aguarde enquanto o mestre organiza a cena</p>
                 <p className="mt-1">⏳ Esta tela desaparecerá automaticamente</p>
               </div>

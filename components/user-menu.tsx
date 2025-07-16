@@ -12,6 +12,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { EditProfileDialog } from "./edit-profile-dialog"
+import { ThemeToggle } from "./ui/theme-toggle"
 
 interface UserMenuProps {
   user: {
@@ -32,6 +33,8 @@ export function UserMenu({ user }: UserMenuProps) {
       <span className="text-sm text-muted-foreground hidden md:block">
         Olá, {user.name}
       </span>
+      
+      <ThemeToggle />
       
       <DropdownMenu>
         <DropdownMenuTrigger asChild>

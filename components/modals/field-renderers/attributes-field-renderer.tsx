@@ -50,7 +50,7 @@ export function AttributesFieldRenderer({ field, value, onChange }: AttributesFi
                   placeholder={attr.defaultValue?.toString() || "0"}
                   min={0}
                   max={20}
-                  className="text-center bg-stone-50/50"
+                  className="text-center bg-background/50"
                 />
               </div>
             ))}
