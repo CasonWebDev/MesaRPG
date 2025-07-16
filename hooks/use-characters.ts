@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { CharacterType } from '@prisma/client'
 import { toast } from 'sonner'
+import { useSocket } from './use-socket'
 
 export interface Character {
   id: string
@@ -45,6 +46,9 @@ export function useCharacters({ campaignId, type, createdBy }: UseCharactersProp
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [isGM, setIsGM] = useState(false)
+  
+  // WebSocket for real-time updates
+  const { characterUpdates, clearCharacterUpdates } = useSocket(campaignId)
 
   const fetchCharacters = async () => {
     try {
@@ -176,6 +180,43 @@ export function useCharacters({ campaignId, type, createdBy }: UseCharactersProp
   useEffect(() => {
     fetchCharacters()
   }, [campaignId, type, createdBy])
+
+  // Process character updates from WebSocket
+  useEffect(() => {
+    if (characterUpdates.length > 0) {
+      characterUpdates.forEach(update => {
+        console.log('👤 Processing character update in useCharacters:', update)
+        
+        // Update character in the list
+        setCharacters(prev => 
+          prev.map(character => {
+            if (character.id === update.characterId) {
+              console.log('🔄 Updating character in list:', character.name, '->', update.name)
+              
+              // Parse current data
+              const currentData = typeof character.data === 'string' ? JSON.parse(character.data) : character.data
+              
+              // Update the data with new name if provided
+              const updatedData = {
+                ...currentData,
+                ...(update.name && { name: update.name }),
+                ...(update.avatar && { avatar: update.avatar })
+              }
+              
+              return {
+                ...character,
+                data: updatedData
+              }
+            }
+            return character
+          })
+        )
+      })
+      
+      // Clear processed updates
+      clearCharacterUpdates()
+    }
+  }, [characterUpdates, clearCharacterUpdates])
 
   return {
     characters,

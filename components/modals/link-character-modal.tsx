@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react'
 import { X } from 'lucide-react'
 import Image from 'next/image'
+import { getRPGSystem } from '@/lib/rpg-systems'
+import { useSocket } from '@/hooks/use-socket'
 
 interface Character {
   id: string
@@ -39,6 +41,9 @@ export function LinkCharacterModal({
   const [characters, setCharacters] = useState<Character[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  
+  // WebSocket for real-time updates
+  const { characterUpdates, clearCharacterUpdates } = useSocket(campaignId)
 
   // Load characters when modal opens
   useEffect(() => {
@@ -46,6 +51,43 @@ export function LinkCharacterModal({
       loadCharacters()
     }
   }, [isOpen, campaignId])
+
+  // Process character updates from WebSocket
+  useEffect(() => {
+    if (characterUpdates.length > 0) {
+      characterUpdates.forEach(update => {
+        console.log('👤 Processing character update in LinkCharacterModal:', update)
+        
+        // Update character in the modal list
+        setCharacters(prev => 
+          prev.map(character => {
+            if (character.id === update.characterId) {
+              console.log('🔄 Updating character in modal:', character.name, '->', update.name)
+              
+              // Parse current data
+              const currentData = typeof character.data === 'string' ? JSON.parse(character.data) : character.data
+              
+              // Update the data with new name if provided
+              const updatedData = {
+                ...currentData,
+                ...(update.name && { name: update.name }),
+                ...(update.avatar && { avatar: update.avatar })
+              }
+              
+              return {
+                ...character,
+                data: JSON.stringify(updatedData)
+              }
+            }
+            return character
+          })
+        )
+      })
+      
+      // Clear processed updates
+      clearCharacterUpdates()
+    }
+  }, [characterUpdates, clearCharacterUpdates])
 
   const loadCharacters = async () => {
     try {
@@ -85,6 +127,19 @@ export function LinkCharacterModal({
       console.error('❌ Erro ao carregar personagens:', err)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const getCharacterName = (character: Character) => {
+    try {
+      const characterData = typeof character.data === 'string' ? JSON.parse(character.data) : character.data
+      const rpgSystem = getRPGSystem('dnd5e')
+      const { name } = rpgSystem.getCharacterSummary(characterData)
+      
+      return name || character.name || 'Personagem'
+    } catch (error) {
+      console.error('Error getting character name:', error)
+      return character.name || 'Personagem'
     }
   }
 
@@ -243,7 +298,7 @@ export function LinkCharacterModal({
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center space-x-2">
                       <h3 className="font-medium text-gray-900 truncate">
-                        {character.name}
+                        {getCharacterName(character)}
                       </h3>
                       <span className={`px-2 py-1 text-xs font-medium rounded-full ${getCharacterTypeColor(character.type)}`}>
                         {getCharacterTypeLabel(character.type)}

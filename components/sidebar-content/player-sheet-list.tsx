@@ -26,6 +26,14 @@ function getCharacterSummary(character: any) {
   return `${race} ${characterClass} - Nível ${level}`
 }
 
+function getCharacterName(character: any) {
+  const characterData = typeof character.data === 'string' ? JSON.parse(character.data) : character.data
+  const rpgSystem = getRPGSystem('dnd5e')
+  const { name } = rpgSystem.getCharacterSummary(characterData)
+  
+  return name || character.name || 'Personagem'
+}
+
 interface PlayerSheetListProps {
   campaignId: string
   rpgSystem?: string
@@ -175,7 +183,7 @@ export function PlayerSheetList({ campaignId, rpgSystem = 'dnd5e' }: PlayerSheet
           return (
             <ContentListItem 
               key={character.id} 
-              title={character.name}
+              title={getCharacterName(character)}
               description={isUnassigned ? 
                 `⚠️ Não vinculado • ${summary}` : 
                 `Jogador: ${playerName} • ${summary}`

@@ -13,6 +13,14 @@ import { useCharacters } from "@/hooks/use-characters"
 import { toast } from "sonner"
 import { getRPGSystem } from "@/lib/rpg-systems"
 
+function getCharacterName(character: any) {
+  const characterData = typeof character.data === 'string' ? JSON.parse(character.data) : character.data
+  const rpgSystem = getRPGSystem('dnd5e')
+  const { name } = rpgSystem.getCharacterSummary(characterData)
+  
+  return name || character.name || 'NPC'
+}
+
 interface NpcListProps {
   campaignId: string
 }
@@ -107,7 +115,7 @@ export function NpcList({ campaignId }: NpcListProps) {
               return (
                 <ContentListItem 
                   key={npc.id} 
-                  title={npc.name} 
+                  title={getCharacterName(npc)} 
                   description={description}
                   showImage={false}
                 >

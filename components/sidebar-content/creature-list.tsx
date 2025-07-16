@@ -13,6 +13,14 @@ import { useCharacters } from "@/hooks/use-characters"
 import { toast } from "sonner"
 import { getRPGSystem } from "@/lib/rpg-systems"
 
+function getCharacterName(character: any) {
+  const characterData = typeof character.data === 'string' ? JSON.parse(character.data) : character.data
+  const rpgSystem = getRPGSystem('dnd5e')
+  const { name } = rpgSystem.getCharacterSummary(characterData)
+  
+  return name || character.name || 'Criatura'
+}
+
 interface CreatureListProps {
   campaignId: string
 }
@@ -107,7 +115,7 @@ export function CreatureList({ campaignId }: CreatureListProps) {
               return (
                 <ContentListItem 
                   key={creature.id} 
-                  title={creature.name} 
+                  title={getCharacterName(creature)} 
                   description={description}
                   showImage={false}
                 >

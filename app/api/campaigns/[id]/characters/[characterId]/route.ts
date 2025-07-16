@@ -202,7 +202,7 @@ export async function PUT(
     })
 
     // If name or avatar changed, sync linked tokens
-    const hasNameOrAvatarChange = name || (data && (data.avatar || data.name))
+    const hasNameOrAvatarChange = !!name || !!(data && (data.avatar || data.name))
     if (hasNameOrAvatarChange) {
       try {
         console.log('🔄 Character updated, syncing linked tokens:', characterId)
@@ -221,10 +221,14 @@ export async function PUT(
             if (token.characterId === characterId) {
               console.log('🎯 Updating token for character:', characterId)
               tokensUpdated = true
+              
+              // Determine the new name (top-level name or data.name for D&D 5e)
+              const newName = name || data?.name || token.name
+              
               return {
                 ...token,
-                name: name || token.name,
-                alt: name || token.alt,
+                name: newName,
+                alt: newName,
                 src: (data?.avatar) || token.src
               }
             }
@@ -245,16 +249,25 @@ export async function PUT(
 
             // Import socket bridge dynamically to emit character update event
             try {
-              const { io } = await import('@/lib/socket-bridge')
+              const { getSocketServer } = await import('@/lib/socket-bridge')
+              const io = getSocketServer()
               if (io) {
                 console.log('📡 Broadcasting character update to campaign:', campaignId)
+                
+                // Determine the new name (top-level name or data.name for D&D 5e)
+                const newName = name || data?.name || updatedCharacter.name
+                
                 io.to(campaignId).emit('character:updated', {
                   characterId,
                   campaignId,
-                  name: name || updatedCharacter.name,
+                  name: newName,
                   avatar: data?.avatar,
                   updatedTokensCount: updatedTokens.filter((t: any) => t.characterId === characterId).length
                 })
+                
+                console.log('✅ Character update event broadcasted successfully')
+              } else {
+                console.log('⚠️ Socket.IO server not available')
               }
             } catch (socketError) {
               console.log('⚠️ Socket.IO not available for character update broadcast:', socketError.message)
