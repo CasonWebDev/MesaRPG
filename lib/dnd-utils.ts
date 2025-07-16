@@ -480,10 +480,16 @@ export const SKILLS: { [key in SkillName]: Skill } = {
 }
 
 export function calculateAbilityModifier(score: number): number {
+  if (isNaN(score) || score === undefined || score === null) {
+    return 0
+  }
   return Math.floor((score - 10) / 2)
 }
 
 export function calculateProficiencyBonus(level: number): number {
+  if (isNaN(level) || level === undefined || level === null) {
+    return 2
+  }
   return 2 + Math.floor((level - 1) / 4)
 }
 

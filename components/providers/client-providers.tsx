@@ -15,7 +15,12 @@ export function ClientProviders({
   session 
 }: ClientProvidersProps) {
   return (
-    <SessionProvider session={session}>
+    <SessionProvider 
+      session={session}
+      basePath="/api/auth"
+      refetchInterval={300}
+      refetchOnWindowFocus={false}
+    >
       <ThemeProvider>
         {children}
         <Toaster />

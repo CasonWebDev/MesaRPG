@@ -2,7 +2,7 @@
 import { useState } from "react"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { X, ArrowUpWideNarrow, Bed, BedDouble } from "lucide-react"
+import { X, ArrowUpWideNarrow, Bed, BedDouble, Settings, Dice6 } from "lucide-react"
 import { SKILLS, ABILITIES_PT, CLASS_DATA } from "@/lib/dnd-utils"
 
 // Helper function to get ability name in Portuguese
@@ -44,6 +44,7 @@ import { nanoid } from "nanoid"
 import { Button } from "@/components/ui/button"
 import { Plus } from "lucide-react"
 import { LevelUpModal } from "./ui/level-up-modal"
+import { LevelChangeModal } from "./ui/level-change-modal"
 import { ConditionTracker } from "./ui/condition-tracker"
 import { ShortRestModal } from "./ui/short-rest-modal"
 import { LongRestModal } from "./ui/long-rest-modal"
@@ -57,12 +58,14 @@ const SkillInput = ({
   modifier,
   isProficient,
   onProficiencyToggle,
+  onRoll,
 }: {
   name: string
   ability: string
   modifier: number
   isProficient: boolean
   onProficiencyToggle: () => void
+  onRoll?: (result: { total: number; rolls: number[]; modifier: number; advantage: any; isCritical: boolean }) => void
 }) => (
   <div className="flex items-center gap-1.5">
     <Checkbox
@@ -72,11 +75,32 @@ const SkillInput = ({
       className="h-3.5 w-3.5 rounded-full"
     />
     <div className="flex h-6 w-8 items-center justify-center rounded-sm border border-foreground bg-muted text-sm font-bold shadow-inner">
-      {modifier >= 0 ? `+${modifier}` : modifier}
+      {isNaN(modifier) ? "+0" : modifier >= 0 ? `+${modifier}` : modifier}
     </div>
     <label htmlFor={`prof-${name}`} className="flex-grow border-b border-border text-left text-sm">
       <span className="text-xs text-muted-foreground">({ability?.slice(0, 3) || ""})</span> {name}
     </label>
+    {onRoll && (
+      <Button
+        size="sm"
+        variant="default"
+        className="h-6 w-6 p-0 ml-auto"
+        onClick={() => {
+          const roll = Math.floor(Math.random() * 20) + 1
+          const total = roll + modifier
+          onRoll({
+            total,
+            rolls: [roll],
+            modifier,
+            advantage: 'normal',
+            isCritical: roll === 20
+          })
+        }}
+        title={`Rolar ${name} (${modifier >= 0 ? '+' : ''}${modifier})`}
+      >
+        <Dice6 className="h-3 w-3" />
+      </Button>
+    )}
   </div>
 )
 
@@ -113,6 +137,7 @@ const FrontPage = ({
     () => character.class && !CLASS_DATA[character.class as keyof typeof CLASS_DATA],
   )
   const [isLevelUpModalOpen, setIsLevelUpModalOpen] = useState(false)
+  const [isLevelChangeModalOpen, setIsLevelChangeModalOpen] = useState(false)
   const [isShortRestModalOpen, setIsShortRestModalOpen] = useState(false)
   const [isLongRestModalOpen, setIsLongRestModalOpen] = useState(false)
   
@@ -176,6 +201,15 @@ const FrontPage = ({
         isOpen={isLevelUpModalOpen}
         onClose={() => setIsLevelUpModalOpen(false)}
         onLevelUp={onLevelUp}
+        conMod={calculatedStats.abilityModifiers.constituicao}
+      />
+      <LevelChangeModal
+        character={character}
+        isOpen={isLevelChangeModalOpen}
+        onClose={() => setIsLevelChangeModalOpen(false)}
+        onLevelChange={(newLevel, hpAdjustment) => {
+          onUpdate({ level: newLevel, maxHitPoints: character.maxHitPoints + hpAdjustment })
+        }}
         conMod={calculatedStats.abilityModifiers.constituicao}
       />
       <ShortRestModal
@@ -262,24 +296,35 @@ const FrontPage = ({
                   </Select>
                 )}
               </div>
-              <Input
-                type="number"
-                readOnly
-                placeholder="Nível"
-                className="w-12 h-8"
-                value={character.level}
-                min={1}
-                max={20}
-              />
+              <div className="flex items-center gap-1">
+                <Input
+                  type="number"
+                  readOnly
+                  placeholder="Nível"
+                  className="w-16 h-8 text-center"
+                  value={character.level}
+                  min={1}
+                  max={20}
+                />
+                <Button
+                  size="icon"
+                  variant="outline"
+                  className="h-8 w-8 bg-transparent"
+                  onClick={() => setIsLevelChangeModalOpen(true)}
+                  title="Configurar Nível"
+                >
+                  <Settings className="h-4 w-4" />
+                </Button>
+              </div>
               <Button
                 size="icon"
                 variant="outline"
                 className="h-8 w-8 bg-transparent"
                 onClick={() => setIsLevelUpModalOpen(true)}
                 disabled={character.level >= 20 || !character.class}
+                title="Gerenciar HP e Nível"
               >
                 <ArrowUpWideNarrow className="h-4 w-4" />
-                <span className="sr-only">Subir de Nível</span>
               </Button>
             </div>
             <Input
@@ -380,7 +425,7 @@ const FrontPage = ({
                   value={character.currentHitPoints || ""}
                   onChange={(e) => onUpdate({ currentHitPoints: Number.parseInt(e.target.value) || 0 })}
                 />
-                / <span className="font-bold">{character.maxHitPoints}</span>
+                / <span className="font-bold">{isNaN(character.maxHitPoints) ? 0 : character.maxHitPoints}</span>
               </div>
             </div>
           </BorderedBox>
@@ -486,6 +531,19 @@ const FrontPage = ({
                     modifier={modifier}
                     isProficient={character.savingThrowProficiencies.includes(ability)}
                     onProficiencyToggle={() => handleProficiencyToggle("savingThrow", ability)}
+                    onRoll={(result) => {
+                      if (chatIntegration) {
+                        chatIntegration.sendRollToChat({
+                          type: 'save',
+                          characterName: character.name || 'Personagem',
+                          label: `teste de resistência de ${getAbilityName(ability).toLowerCase()}`,
+                          total: result.total,
+                          breakdown: `Dados: ${result.rolls.join(', ')}${result.modifier !== 0 ? ` ${result.modifier >= 0 ? '+' : ''}${result.modifier}` : ''}`,
+                          isCritical: result.isCritical,
+                          advantage: result.advantage
+                        })
+                      }
+                    }}
                   />
                 )
               })}
@@ -507,6 +565,19 @@ const FrontPage = ({
                     modifier={modifier}
                     isProficient={character.skillProficiencies.includes(skillName)}
                     onProficiencyToggle={() => handleProficiencyToggle("skill", skillName)}
+                    onRoll={(result) => {
+                      if (chatIntegration) {
+                        chatIntegration.sendRollToChat({
+                          type: 'skill',
+                          characterName: character.name || 'Personagem',
+                          label: `teste de ${skillName.toLowerCase()}`,
+                          total: result.total,
+                          breakdown: `Dados: ${result.rolls.join(', ')}${result.modifier !== 0 ? ` ${result.modifier >= 0 ? '+' : ''}${result.modifier}` : ''}`,
+                          isCritical: result.isCritical,
+                          advantage: result.advantage
+                        })
+                      }
+                    }}
                   />
                 )
               })}
@@ -539,54 +610,18 @@ const FrontPage = ({
             </div>
           </BorderedBox>
           <BorderedBox className="p-2">
-            <h3 className="text-center font-bold text-sm mb-2">Rolagens Rápidas</h3>
-            <div className="space-y-2">
+            <h3 className="text-center font-bold text-sm mb-2">Iniciativa</h3>
+            <div className="flex justify-center">
               <DiceRoller
-                label="Teste de Atributo"
-                modifier={0}
+                label={`Iniciativa (${calculatedStats.initiative >= 0 ? '+' : ''}${calculatedStats.initiative})`}
+                modifier={calculatedStats.initiative}
                 onRoll={(result) => {
-                  console.log("Attribute roll:", result)
+                  console.log("Initiative roll:", result)
                   if (chatIntegration) {
                     chatIntegration.sendRollToChat({
                       type: 'ability',
                       characterName: character.name || 'Personagem',
-                      label: 'teste de atributo',
-                      total: result.total,
-                      breakdown: `Dados: ${result.rolls.join(', ')}${result.modifier !== 0 ? ` ${result.modifier >= 0 ? '+' : ''}${result.modifier}` : ''}`,
-                      isCritical: result.isCritical,
-                      advantage: result.advantage
-                    })
-                  }
-                }}
-              />
-              <DiceRoller
-                label="Teste de Resistência"
-                modifier={0}
-                onRoll={(result) => {
-                  console.log("Saving throw roll:", result)
-                  if (chatIntegration) {
-                    chatIntegration.sendRollToChat({
-                      type: 'save',
-                      characterName: character.name || 'Personagem',
-                      label: 'teste de resistência',
-                      total: result.total,
-                      breakdown: `Dados: ${result.rolls.join(', ')}${result.modifier !== 0 ? ` ${result.modifier >= 0 ? '+' : ''}${result.modifier}` : ''}`,
-                      isCritical: result.isCritical,
-                      advantage: result.advantage
-                    })
-                  }
-                }}
-              />
-              <DiceRoller
-                label="Teste de Perícia"
-                modifier={0}
-                onRoll={(result) => {
-                  console.log("Skill roll:", result)
-                  if (chatIntegration) {
-                    chatIntegration.sendRollToChat({
-                      type: 'skill',
-                      characterName: character.name || 'Personagem',
-                      label: 'teste de perícia',
+                      label: 'iniciativa',
                       total: result.total,
                       breakdown: `Dados: ${result.rolls.join(', ')}${result.modifier !== 0 ? ` ${result.modifier >= 0 ? '+' : ''}${result.modifier}` : ''}`,
                       isCritical: result.isCritical,

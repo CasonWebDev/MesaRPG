@@ -88,7 +88,7 @@ Sistema avançado de upload, organização e gestão de assets digitais com supo
 - Integração com outras funcionalidades
 - Validação de segurança
 
-### 🔌 [08. Referência de APIs](./08-api-reference.md)
+### 🔌 [08. Referência de APIs](./development/08-api-reference.md)
 Documentação completa de todas as 30+ APIs REST implementadas no sistema.
 
 **Tópicos principais:**
@@ -99,7 +99,7 @@ Documentação completa de todas as 30+ APIs REST implementadas no sistema.
 - APIs de mapas e handouts
 - Exemplos de uso
 
-### 🚀 [09. Configuração e Deploy](./09-setup-deployment.md)
+### 🚀 [09. Configuração e Deploy](./core/09-setup-deployment.md)
 Guia completo para configuração do ambiente de desenvolvimento, produção e deploy em diferentes plataformas.
 
 **Tópicos principais:**
@@ -108,6 +108,56 @@ Guia completo para configuração do ambiente de desenvolvimento, produção e d
 - Deploy em Vercel/Railway/VPS
 - Configuração de banco de dados
 - Docker e Docker Compose
+
+---
+
+## 📋 Documentação de Melhorias - Julho 2025
+
+### 🆕 [Resumo Executivo - Julho 2025](./executive-summary-july-2025.md)
+Resumo completo de todas as melhorias implementadas durante a sessão de desenvolvimento de julho de 2025.
+
+**Conteúdo:**
+- Principais conquistas
+- Métricas de impacto
+- Valor entregue
+- ROI das melhorias
+
+### 🐛 [Correções de Bugs - Julho 2025](./core/bug-fixes-july-2025.md)
+Documentação detalhada de todas as correções de bugs críticos implementadas.
+
+**Bugs Resolvidos:**
+- NaN Children Error (React)
+- NextAuth CLIENT_FETCH_ERROR
+- WebSocket "Not in this campaign"
+- Level Display Width Issue
+- Dice6 Import Error
+
+### 🎨 [Melhorias de UX/UI - Julho 2025](./features/12-ux-improvements.md)
+Documentação completa das melhorias de experiência do usuário implementadas.
+
+**Melhorias Implementadas:**
+- Sistema de rolagem contextual
+- Interface de spell slots aprimorada
+- Sistema de level up flexível
+- Correções visuais diversas
+
+### 🔧 [Melhorias Técnicas - Julho 2025](./development/technical-improvements-july-2025.md)
+Documentação das melhorias técnicas e arquiteturais implementadas.
+
+**Melhorias Técnicas:**
+- Sistema de autenticação robusto
+- WebSocket com auto-recovery
+- Validação defensiva
+- Build otimizado
+
+### 📊 [Features Implementadas - Julho 2025](./features/11-recent-improvements.md)
+Documentação detalhada de todas as features ajustadas e implementadas.
+
+**Features Documentadas:**
+- Sistema D&D 5e completo
+- Sistema de spell slots automático
+- Melhorias de interface
+- Correções de estabilidade
 
 ## 🏗️ Arquitetura Técnica
 

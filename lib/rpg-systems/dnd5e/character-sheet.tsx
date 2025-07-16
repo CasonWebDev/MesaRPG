@@ -6,7 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Upload, Download } from "lucide-react";
 import { Character as DnDCharacter } from '@/lib/dnd-types';
-import { initialCharacter, applySpellSlotsToCharacter, applyClassResourcesToCharacter, applyClassProficienciesToCharacter, applyHitDiceToCharacter } from '@/lib/dnd-utils';
+import { initialCharacter, applySpellSlotsToCharacter, applyClassResourcesToCharacter, applyClassProficienciesToCharacter, applyHitDiceToCharacter, CLASS_DATA } from '@/lib/dnd-utils';
 
 // Import the D&D 5e components directly
 import { FrontPage } from '@/components/dnd-character-sheet';
@@ -64,14 +64,14 @@ export function DnD5eCharacterSheet({
 
   // Dummy stats for basic functionality
   const calculatedStats = useMemo(() => {
-    const proficiencyBonus = Math.ceil(dndCharacter.level / 4) + 1;
+    const proficiencyBonus = Math.ceil((dndCharacter.level || 1) / 4) + 1;
     const abilityModifiers = {
-      forca: Math.floor((dndCharacter.abilities.forca - 10) / 2),
-      destreza: Math.floor((dndCharacter.abilities.destreza - 10) / 2),
-      constituicao: Math.floor((dndCharacter.abilities.constituicao - 10) / 2),
-      inteligencia: Math.floor((dndCharacter.abilities.inteligencia - 10) / 2),
-      sabedoria: Math.floor((dndCharacter.abilities.sabedoria - 10) / 2),
-      carisma: Math.floor((dndCharacter.abilities.carisma - 10) / 2)
+      forca: Math.floor(((dndCharacter.abilities?.forca || 10) - 10) / 2),
+      destreza: Math.floor(((dndCharacter.abilities?.destreza || 10) - 10) / 2),
+      constituicao: Math.floor(((dndCharacter.abilities?.constituicao || 10) - 10) / 2),
+      inteligencia: Math.floor(((dndCharacter.abilities?.inteligencia || 10) - 10) / 2),
+      sabedoria: Math.floor(((dndCharacter.abilities?.sabedoria || 10) - 10) / 2),
+      carisma: Math.floor(((dndCharacter.abilities?.carisma || 10) - 10) / 2)
     };
 
     // Calculate AC based on equipped armor and shield
@@ -250,36 +250,21 @@ function convertMesaRPGToDnD(characterData: any): DnDCharacter {
   
   let character: DnDCharacter;
   
-  // Se já tem dados D&D 5e, usar diretamente
-  if (data.abilities && data.class && data.level) {
-    character = {
-      ...initialCharacter,
-      ...data,
-      name: data.name || 'Novo Personagem',
-    };
-  } else {
-    // Converter dados genéricos para D&D 5e
-    character = {
-      ...initialCharacter,
-      name: data.name || 'Novo Personagem',
-      level: data.level || 1,
-      class: data.class || 'Guerreiro',
-      race: data.race || 'Humano',
-      maxHitPoints: data.maxHp || data.hp || 10,
-      currentHitPoints: data.currentHp || data.hp || 10,
-      armorClass: data.ac || data.armorClass || 10,
-      speed: data.speed || 30,
-      // Tentar mapear atributos se existirem
-      abilities: data.abilities || {
-        forca: 10,
-        destreza: 10,
-        constituicao: 10,
-        inteligencia: 10,
-        sabedoria: 10,
-        carisma: 10
-      }
-    };
-  }
+  // Construir o character de forma mais controlada
+  character = {
+    ...initialCharacter,
+    // Aplicar todos os dados vindos do input, preservando valores existentes
+    ...data,
+    // Garantir que campos críticos não sejam undefined
+    name: data.name || initialCharacter.name || 'Novo Personagem',
+    level: data.level !== undefined ? data.level : initialCharacter.level,
+    class: data.class || initialCharacter.class || 'Guerreiro',
+    race: data.race || initialCharacter.race || 'Humano',
+    maxHitPoints: data.maxHitPoints || data.maxHp || data.hp || initialCharacter.maxHitPoints,
+    currentHitPoints: data.currentHitPoints || data.currentHp || data.hp || initialCharacter.currentHitPoints,
+    armorClass: data.armorClass || data.ac || initialCharacter.armorClass,
+    abilities: data.abilities || initialCharacter.abilities,
+  };
   
   // Apply spell slots automatically based on class and level
   if (character.class && character.level) {

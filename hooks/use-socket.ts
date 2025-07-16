@@ -232,6 +232,12 @@ export function useSocket(campaignId?: string) {
 
         const handleError = (error: string) => {
           console.error('❌ Socket error:', error)
+          
+          // If the error is "Not in this campaign", try to rejoin
+          if (error === 'Not in this campaign' && socket && campaignId) {
+            console.log('🔄 Attempting to rejoin campaign due to error...')
+            socket.emit('campaign:join', campaignId)
+          }
         }
 
         const handleCampaignJoined = (campaignId: string) => {
@@ -324,7 +330,18 @@ export function useSocket(campaignId?: string) {
   }, [socket, campaignId, connected])
 
   const sendMessage = (message: string, type: 'CHAT' | 'DICE_ROLL' | 'SYSTEM' | 'OOC' = 'CHAT', metadata?: any) => {
-    if (!socket || !campaignId) return
+    if (!socket || !campaignId) {
+      console.warn('⚠️ Cannot send message - missing socket or campaignId')
+      return
+    }
+    
+    if (joinedCampaign !== campaignId) {
+      console.warn('⚠️ Cannot send message - not joined to campaign', { joinedCampaign, campaignId })
+      // Try to rejoin
+      console.log('🔄 Attempting to rejoin campaign before sending message...')
+      socket.emit('campaign:join', campaignId)
+      return
+    }
 
     socket.emit('chat:send', {
       campaignId,
@@ -335,7 +352,18 @@ export function useSocket(campaignId?: string) {
   }
 
   const moveToken = (tokenId: string, position: { top: number; left: number }) => {
-    if (!socket || !campaignId) return
+    if (!socket || !campaignId) {
+      console.warn('⚠️ Cannot move token - missing socket or campaignId')
+      return
+    }
+    
+    if (joinedCampaign !== campaignId) {
+      console.warn('⚠️ Cannot move token - not joined to campaign', { joinedCampaign, campaignId })
+      // Try to rejoin
+      console.log('🔄 Attempting to rejoin campaign before moving token...')
+      socket.emit('campaign:join', campaignId)
+      return
+    }
 
     socket.emit('token_move', {
       campaignId,

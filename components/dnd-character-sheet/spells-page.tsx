@@ -12,6 +12,8 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { ABILITIES_PT } from "@/lib/dnd-utils"
 import { SpellRoller } from "./ui/spell-roller"
 import { useChatIntegration } from "@/hooks/use-chat-integration"
+import { getSpellSlotsForClass } from "@/lib/dnd-utils"
+import { useEffect } from "react"
 
 const SpellsPage = ({
   character,
@@ -39,6 +41,36 @@ const SpellsPage = ({
     8: { name: '', prepared: false },
     9: { name: '', prepared: false }
   })
+
+  // Garantir que os spell slots estão atualizados com base na classe e nível
+  useEffect(() => {
+    if (!character.class || !character.level) return
+    
+    const correctSpellSlots = getSpellSlotsForClass(character.class, character.level)
+    const currentSpells = character.spells || {}
+    let needsUpdate = false
+    const updatedSpells = { ...currentSpells }
+    
+    // Verificar e corrigir slots para cada nível
+    for (let level = 1; level <= 9; level++) {
+      const currentLevel = updatedSpells[level] || { slotsExpended: 0, slotsTotal: 0, spells: [] }
+      const correctTotal = correctSpellSlots[level - 1] || 0
+      
+      if (currentLevel.slotsTotal !== correctTotal) {
+        updatedSpells[level] = {
+          ...currentLevel,
+          slotsTotal: correctTotal,
+          // Ajustar slots gastos se necessário
+          slotsExpended: Math.min(currentLevel.slotsExpended, correctTotal)
+        }
+        needsUpdate = true
+      }
+    }
+    
+    if (needsUpdate) {
+      onUpdate({ spells: updatedSpells })
+    }
+  }, [character.class, character.level, character.spells, onUpdate])
   
   // Integração com chat
   const chatIntegration = campaignId && userName ? 
@@ -107,6 +139,12 @@ const SpellsPage = ({
   }
 
   const handleSlotChange = (level: number, field: 'slotsTotal' | 'slotsExpended', value: number) => {
+    // Não permitir edição de slotsTotal - deve ser baseado na classe e nível
+    if (field === 'slotsTotal') {
+      console.warn('Slot totals should only be managed by class/level, not manually edited')
+      return
+    }
+    
     const currentSpells = character.spells || {};
     const currentLevel = currentSpells[level] || { slotsExpended: 0, slotsTotal: 0, spells: [] };
     
@@ -114,7 +152,7 @@ const SpellsPage = ({
       ...currentSpells,
       [level]: {
         ...currentLevel,
-        [field]: Math.max(0, value)
+        [field]: Math.max(0, Math.min(value, currentLevel.slotsTotal)) // Limitar aos slots totais
       }
     }
 
@@ -133,8 +171,27 @@ const SpellsPage = ({
     calculatedStats.proficiencyBonus + calculatedStats.abilityModifiers[character.spellcastingAbility] :
     calculatedStats.proficiencyBonus
 
+  // Verificar se a classe pode conjurar magias
+  const correctSpellSlots = getSpellSlotsForClass(character.class, character.level)
+  const canCastSpells = correctSpellSlots.some(slots => slots > 0)
+
   return (
     <div className="p-4 bg-game-sheet space-y-4">
+      {/* Warning for non-spellcasters */}
+      {!canCastSpells && (
+        <div className="bg-yellow-100 border border-yellow-300 rounded-lg p-4 text-center">
+          <h3 className="font-bold text-yellow-800 mb-2">⚠️ Classe Não Conjuradora</h3>
+          <p className="text-yellow-700 text-sm">
+            A classe <strong>{character.class}</strong> não possui spell slots por padrão.
+            {character.level >= 3 && (character.class === 'Guerreiro' || character.class === 'Ladino') && (
+              <span className="block mt-1">
+                💡 Considere uma subclasse conjuradora como <em>Cavaleiro Élfico</em> ou <em>Trapaceiro Arcano</em>
+              </span>
+            )}
+          </p>
+        </div>
+      )}
+      
       {/* Top Section - Spellcasting Info */}
       <div className="grid grid-cols-3 gap-4">
         {/* Spellcasting Class */}
@@ -187,8 +244,9 @@ const SpellsPage = ({
         <div className="grid grid-cols-9 gap-1">
           {[1, 2, 3, 4, 5, 6, 7, 8, 9].map(level => {
             const spellLevel = character.spells?.[level] || { slotsExpended: 0, slotsTotal: 0, spells: [] };
+            const hasSlots = spellLevel.slotsTotal > 0;
             return (
-              <div key={level} className="border rounded p-1">
+              <div key={level} className={`border rounded p-1 ${!hasSlots ? 'opacity-50 bg-muted' : ''}`}>
                 <div className="text-center font-bold text-xs mb-1">{level}°</div>
                 <div className="flex items-center justify-center gap-1">
                   <Input
@@ -198,15 +256,12 @@ const SpellsPage = ({
                     onChange={(e) => handleSlotChange(level, 'slotsExpended', parseInt(e.target.value) || 0)}
                     min={0}
                     max={spellLevel.slotsTotal}
+                    disabled={!hasSlots}
                   />
                   <span className="text-xs">/</span>
-                  <Input
-                    type="number"
-                    className="w-8 h-6 text-center text-xs border-0 p-0"
-                    value={spellLevel.slotsTotal}
-                    onChange={(e) => handleSlotChange(level, 'slotsTotal', parseInt(e.target.value) || 0)}
-                    min={0}
-                  />
+                  <div className="w-8 h-6 text-center text-xs border-0 p-0 flex items-center justify-center bg-muted rounded">
+                    {spellLevel.slotsTotal}
+                  </div>
                 </div>
                 <div className="flex justify-center gap-1 mt-1">
                   <Button
@@ -214,7 +269,7 @@ const SpellsPage = ({
                     variant="outline"
                     className="h-5 w-5 p-0"
                     onClick={() => handleSlotChange(level, 'slotsExpended', spellLevel.slotsExpended - 1)}
-                    disabled={spellLevel.slotsExpended <= 0}
+                    disabled={spellLevel.slotsExpended <= 0 || !hasSlots}
                   >
                     <Minus className="w-2 h-2" />
                   </Button>
@@ -223,7 +278,7 @@ const SpellsPage = ({
                     variant="outline"
                     className="h-5 w-5 p-0"
                     onClick={() => handleSlotChange(level, 'slotsExpended', spellLevel.slotsExpended + 1)}
-                    disabled={spellLevel.slotsExpended >= spellLevel.slotsTotal}
+                    disabled={spellLevel.slotsExpended >= spellLevel.slotsTotal || !hasSlots}
                   >
                     <Plus className="w-2 h-2" />
                   </Button>
@@ -234,6 +289,9 @@ const SpellsPage = ({
         </div>
         <div className="mt-2 text-xs text-center text-muted-foreground">
           <span>Gastos / Total</span>
+          <div className="text-xs text-primary mt-1">
+            ✨ Slots totais baseados na classe e nível
+          </div>
         </div>
       </BorderedBox>
 
