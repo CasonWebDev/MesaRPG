@@ -16,8 +16,8 @@ model User {
   name      String?
   password  String
   role      Role     @default(PLAYER)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   // Relacionamentos
   ownedCampaigns Campaign[] @relation("GameMaster")
@@ -39,12 +39,12 @@ model Campaign {
   description String?
   system      String   @default("Generic")
   rpgSystem   String   @default("generic")
-  ownerId     String
+  ownerId     String @map("owner_id")
   isActive    Boolean  @default(true)
   playerLimit Int?     @default(8)
   settings    String   @default("{}")
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
 
   // Relacionamentos
   owner           User             @relation("GameMaster", fields: [ownerId], references: [id], onDelete: Cascade)
@@ -64,10 +64,10 @@ model Campaign {
 
 model CampaignMember {
   id         String @id @default(cuid())
-  campaignId String
-  userId     String
+  campaignId String @map("campaign_id")
+  userId     String @map("user_id")
   role       Role   @default(PLAYER)
-  joinedAt   DateTime @default(now())
+  joinedAt   DateTime @default(now()) @map("joined_at")
 
   // Relacionamentos
   campaign Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
@@ -86,8 +86,8 @@ model Map {
   isActive    Boolean  @default(false)
   gridSize    Int      @default(20)
   settings    String   @default("{}")
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
 
   // Relacionamentos
   campaign Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
