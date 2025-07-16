@@ -5,6 +5,7 @@ import { DnD5eCharacterSheet } from './character-sheet';
 import { DnD5eMiniCard } from './mini-card';
 import { DnD5eCharacterCreator } from './character-creator';
 import { Character as DnDCharacter } from './types';
+import { createDefaultCharacter } from './default-character';
 
 export class DnD5eRPGSystem extends BaseRPGSystem {
   id = 'dnd5e';
@@ -93,6 +94,10 @@ export class DnD5eRPGSystem extends BaseRPGSystem {
       ac: safeData.armorClass || 10,
       keyStats
     };
+  }
+  
+  getDefaultCharacter(): DnDCharacter {
+    return createDefaultCharacter();
   }
   
   // Métodos auxiliares específicos do D&D 5e

@@ -66,21 +66,24 @@ export function PlayerSheetList({ campaignId, rpgSystem = 'dnd5e' }: PlayerSheet
     }
   }
 
-  const handleCreateEmptyCharacterCard = async () => {
+  const handleCreateCompleteCharacter = async () => {
     try {
-      // Criar apenas um card vazio de personagem
-      const emptyCharacterData = {
+      const system = getRPGSystem(rpgSystem || 'dnd5e')
+      const defaultCharacterData = system.getDefaultCharacter()
+      
+      const characterData = {
         name: "Novo Personagem",
         type: "PC",
-        data: {} // Dados vazios - jogador preenche depois
+        data: defaultCharacterData
       }
       
-      await createCharacter(emptyCharacterData)
-      toast.success('Card de personagem criado! Agora você pode vincular a um jogador.')
+      await createCharacter(characterData)
+      toast.success('Personagem criado com sucesso! Agora você pode transferir para um jogador.')
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Erro ao criar card de personagem')
+      toast.error(error instanceof Error ? error.message : 'Erro ao criar personagem')
     }
   }
+
 
   const handleTransferCharacter = async (characterId: string, newUserId: string) => {
     try {
@@ -137,18 +140,9 @@ export function PlayerSheetList({ campaignId, rpgSystem = 'dnd5e' }: PlayerSheet
         </div>
         <div className="space-y-2">
           <Button 
-            onClick={handleCreateEmptyCharacterCard}
+            onClick={handleCreateCompleteCharacter}
             className="w-full"
             size="sm"
-          >
-            <UserPlus className="h-4 w-4 mr-2" />
-            Criar Card para Jogador
-          </Button>
-          <Button 
-            onClick={() => setShowCreator(true)}
-            className="w-full"
-            size="sm"
-            variant="outline"
           >
             <Plus className="h-4 w-4 mr-2" />
             Criar Personagem Completo
@@ -160,23 +154,14 @@ export function PlayerSheetList({ campaignId, rpgSystem = 'dnd5e' }: PlayerSheet
 
   return (
     <div className="space-y-2 p-1">
-      <div className="grid grid-cols-2 gap-2">
+      <div className="mb-2">
         <Button 
-          onClick={handleCreateEmptyCharacterCard}
+          onClick={handleCreateCompleteCharacter}
           className="w-full"
           size="sm"
         >
-          <UserPlus className="h-4 w-4 mr-1" />
-          Card p/ Jogador
-        </Button>
-        <Button 
-          onClick={() => setShowCreator(true)}
-          className="w-full"
-          size="sm"
-          variant="outline"
-        >
-          <Plus className="h-4 w-4 mr-1" />
-          Completo
+          <Plus className="h-4 w-4 mr-2" />
+          Criar Personagem Completo
         </Button>
       </div>
       

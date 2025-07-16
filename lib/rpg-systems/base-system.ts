@@ -63,6 +63,17 @@ export abstract class BaseRPGSystem implements RPGSystem {
     };
   }
   
+  getDefaultCharacter(): any {
+    return {
+      name: '',
+      level: 1,
+      class: 'Básico',
+      race: 'Humano',
+      hp: 10,
+      ac: 10
+    };
+  }
+  
   // Configurações padrão
   supportsSpells = false;
   supportsLevels = false;
