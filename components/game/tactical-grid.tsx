@@ -970,9 +970,23 @@ export function TacticalGrid({
       const characterAvatar = getCharacterAvatar(character)
 
       // Atualizar o token com os dados do personagem
+      // Obter nome correto do personagem (D&D 5e usa data.name)
+      const getCharacterName = (char: any) => {
+        try {
+          const charData = typeof char.data === 'string' ? JSON.parse(char.data) : char.data
+          return charData?.name || char.name || 'Personagem'
+        } catch (error) {
+          console.error('Error getting character name:', error)
+          return char.name || 'Personagem'
+        }
+      }
+      
+      const characterName = getCharacterName(character)
+      console.log('📋 Character name resolved:', characterName)
+      
       const tokenUpdates = {
-        name: character.name,
-        alt: character.name,
+        name: characterName,
+        alt: characterName,
         src: characterAvatar,
         characterId: characterId,
         characterType: character.type as 'PC' | 'NPC' | 'CREATURE'
