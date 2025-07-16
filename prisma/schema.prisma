@@ -209,6 +209,7 @@ model CampaignInvite {
   id         String   @id @default(cuid())
   campaignId String
   token      String   @unique
+  email      String?
   createdById String
   usedById   String?
   expiresAt  DateTime?

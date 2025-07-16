@@ -117,62 +117,93 @@ export function PlayerManagement({ campaignId, members }: PlayerManagementProps)
             Convidar Jogadores
           </CardTitle>
           <CardDescription>
-            Crie um convite para adicionar novos jogadores à campanha
+            Crie um convite personalizado e seguro para adicionar novos jogadores à campanha
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex gap-2">
-            <div className="flex-1">
-              <Label htmlFor="email">Email do Jogador</Label>
+          <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+            <div className="flex items-start gap-2">
+              <LinkIcon className="h-4 w-4 text-blue-600 mt-0.5" />
+              <div className="text-sm">
+                <p className="font-medium text-blue-800">Como funciona:</p>
+                <p className="text-blue-700">
+                  Digite o email do jogador e clique em "Gerar Convite". 
+                  Será criado um link único e seguro que você poderá enviar para o jogador.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            <div>
+              <Label htmlFor="email" className="text-sm font-medium">
+                Email do Jogador *
+              </Label>
               <Input
                 id="email"
                 type="email"
                 value={inviteEmail}
                 onChange={(e) => setInviteEmail(e.target.value)}
-                placeholder="email@exemplo.com"
+                placeholder="Digite o email do jogador que você quer convidar"
                 disabled={isCreatingInvite}
+                className="mt-1"
               />
+              <p className="text-xs text-muted-foreground mt-1">
+                O convite será vinculado a este email para maior segurança
+              </p>
             </div>
-            <div className="flex items-end">
-              <Button 
-                onClick={handleCreateInvite} 
-                disabled={isCreatingInvite || !inviteEmail.trim()}
-              >
-                {isCreatingInvite ? (
-                  <>
-                    <Mail className="h-4 w-4 mr-2 animate-pulse" />
-                    Criando...
-                  </>
-                ) : (
-                  <>
-                    <Mail className="h-4 w-4 mr-2" />
-                    Criar Convite
-                  </>
-                )}
-              </Button>
-            </div>
+
+            <Button 
+              onClick={handleCreateInvite} 
+              disabled={isCreatingInvite || !inviteEmail.trim()}
+              className="w-full"
+              size="lg"
+            >
+              {isCreatingInvite ? (
+                <>
+                  <Mail className="h-4 w-4 mr-2 animate-pulse" />
+                  Gerando Convite...
+                </>
+              ) : (
+                <>
+                  <Mail className="h-4 w-4 mr-2" />
+                  Gerar Convite Personalizado
+                </>
+              )}
+            </Button>
           </div>
 
           {inviteUrl && (
-            <div className="p-4 bg-muted rounded-lg">
-              <Label>Link de Convite Criado</Label>
-              <div className="flex items-center gap-2 mt-2">
-                <Input
-                  value={inviteUrl}
-                  readOnly
-                  className="bg-background"
-                />
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={handleCopyInvite}
-                >
-                  <Copy className="h-4 w-4" />
-                </Button>
+            <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+              <div className="flex items-center gap-2 mb-2">
+                <LinkIcon className="h-4 w-4 text-green-600" />
+                <Label className="text-green-800 font-medium">
+                  Convite Criado com Sucesso!
+                </Label>
               </div>
-              <p className="text-sm text-muted-foreground mt-2">
-                Este link expira em 24 horas. Compartilhe com o jogador para que ele possa aceitar o convite.
-              </p>
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <Input
+                    value={inviteUrl}
+                    readOnly
+                    className="bg-white border-green-300"
+                  />
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={handleCopyInvite}
+                    className="border-green-300 text-green-700 hover:bg-green-100"
+                  >
+                    <Copy className="h-4 w-4" />
+                  </Button>
+                </div>
+                <div className="text-sm text-green-700">
+                  <p className="font-medium">✓ Link pronto para compartilhar</p>
+                  <p className="text-xs mt-1">
+                    • Expira em 7 dias • Funciona apenas para o email especificado • Uso único
+                  </p>
+                </div>
+              </div>
             </div>
           )}
         </CardContent>
