@@ -120,7 +120,6 @@ export default function SheetPage({
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          name: character?.name || 'Personagem',
           data: data
         }),
       })

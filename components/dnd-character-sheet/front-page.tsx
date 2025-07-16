@@ -4,6 +4,36 @@ import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { X, ArrowUpWideNarrow, Bed, BedDouble } from "lucide-react"
 import { SKILLS, ABILITIES_PT, CLASS_DATA } from "@/lib/dnd-utils"
+
+// Helper function to get ability name in Portuguese
+const getAbilityName = (ability: string): string => {
+  // Handle undefined/null/empty values
+  if (!ability || typeof ability !== 'string') {
+    return ""
+  }
+  
+  // First try the Portuguese mapping
+  if (ABILITIES_PT[ability as keyof typeof ABILITIES_PT]) {
+    return ABILITIES_PT[ability as keyof typeof ABILITIES_PT]
+  }
+  
+  // If not found, try English to Portuguese mapping
+  const englishToPt: { [key: string]: string } = {
+    strength: "Força",
+    dexterity: "Destreza", 
+    constitution: "Constituição",
+    intelligence: "Inteligência",
+    wisdom: "Sabedoria",
+    charisma: "Carisma"
+  }
+  
+  if (englishToPt[ability.toLowerCase()]) {
+    return englishToPt[ability.toLowerCase()]
+  }
+  
+  // Fallback to the original ability name
+  return ability
+}
 import type { Character, Ability, SkillName, Resource, ConditionName } from "@/lib/dnd-types"
 import { BorderedBox } from "./ui/bordered-box"
 import { StatBox } from "./ui/stat-box"
@@ -45,7 +75,7 @@ const SkillInput = ({
       {modifier >= 0 ? `+${modifier}` : modifier}
     </div>
     <label htmlFor={`prof-${name}`} className="flex-grow border-b border-gray-400 text-left text-sm">
-      <span className="text-xs text-gray-500">({ability.slice(0, 3)})</span> {name}
+      <span className="text-xs text-gray-500">({ability?.slice(0, 3) || ""})</span> {name}
     </label>
   </div>
 )
@@ -303,7 +333,7 @@ const FrontPage = ({
           {(Object.keys(character.abilities) as Ability[]).map((ability) => (
             <AbilityScore
               key={ability}
-              ability={ABILITIES_PT[ability]}
+              ability={getAbilityName(ability)}
               score={character.abilities[ability]}
               modifier={calculatedStats.abilityModifiers[ability]}
               onUpdate={(newScore) => onNestedChange(`abilities.${ability}`, newScore)}
@@ -451,8 +481,8 @@ const FrontPage = ({
                 return (
                   <SkillInput
                     key={ability}
-                    name={ABILITIES_PT[ability]}
-                    ability={ABILITIES_PT[ability]}
+                    name={getAbilityName(ability)}
+                    ability={getAbilityName(ability)}
                     modifier={modifier}
                     isProficient={character.savingThrowProficiencies.includes(ability)}
                     onProficiencyToggle={() => handleProficiencyToggle("savingThrow", ability)}
@@ -473,7 +503,7 @@ const FrontPage = ({
                   <SkillInput
                     key={skillName}
                     name={skillName}
-                    ability={ABILITIES_PT[skill.ability]}
+                    ability={getAbilityName(skill.ability)}
                     modifier={modifier}
                     isProficient={character.skillProficiencies.includes(skillName)}
                     onProficiencyToggle={() => handleProficiencyToggle("skill", skillName)}
