@@ -71,11 +71,11 @@ const SkillInput = ({
       onCheckedChange={onProficiencyToggle}
       className="h-3.5 w-3.5 rounded-full"
     />
-    <div className="flex h-6 w-8 items-center justify-center rounded-sm border border-black bg-gray-100 text-sm font-bold shadow-inner">
+    <div className="flex h-6 w-8 items-center justify-center rounded-sm border border-foreground bg-muted text-sm font-bold shadow-inner">
       {modifier >= 0 ? `+${modifier}` : modifier}
     </div>
-    <label htmlFor={`prof-${name}`} className="flex-grow border-b border-gray-400 text-left text-sm">
-      <span className="text-xs text-gray-500">({ability?.slice(0, 3) || ""})</span> {name}
+    <label htmlFor={`prof-${name}`} className="flex-grow border-b border-border text-left text-sm">
+      <span className="text-xs text-muted-foreground">({ability?.slice(0, 3) || ""})</span> {name}
     </label>
   </div>
 )
@@ -170,7 +170,7 @@ const FrontPage = ({
   const hitDieType = CLASS_DATA[character.class as keyof typeof CLASS_DATA]?.hitDie
 
   return (
-    <div className="p-4 bg-white rounded-lg shadow-lg border-2 border-black space-y-4">
+    <div className="p-4 bg-game-sheet rounded-lg shadow-lg border-2 border-foreground space-y-4">
       <LevelUpModal
         character={character}
         isOpen={isLevelUpModalOpen}
@@ -191,7 +191,7 @@ const FrontPage = ({
         onConfirm={onLongRest}
       />
       {/* Header */}
-      <div className="flex items-stretch gap-4 -mx-4 -mt-4 border-b-2 border-black">
+      <div className="flex items-stretch gap-4 -mx-4 -mt-4 border-b-2 border-foreground">
         <div className="relative flex-grow-[2] basis-0 flex items-center justify-center">
           <div className="absolute inset-4">
             <CharacterNameplateArt className="w-full h-full opacity-80" />
@@ -206,7 +206,7 @@ const FrontPage = ({
           </div>
         </div>
 
-        <div className="flex-grow-[1] basis-0 p-4 border-l-2 border-black">
+        <div className="flex-grow-[1] basis-0 p-4 border-l-2 border-foreground">
           <div className="grid grid-cols-2 gap-2 text-xs">
             <div className="flex items-center gap-1 col-span-2">
               <div className="flex-grow">
@@ -223,7 +223,7 @@ const FrontPage = ({
                         setIsCustomClass(false)
                         onUpdate({ class: "" })
                       }}
-                      className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                      className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                       aria-label="Limpar classe customizada e voltar"
                     >
                       <X className="h-4 w-4" />
@@ -464,7 +464,7 @@ const FrontPage = ({
               ))}
             </div>
             {character.classResources.length === 0 && (
-              <p className="text-xs text-center text-gray-400 py-2">Nenhum recurso de classe específico.</p>
+              <p className="text-xs text-center text-muted-foreground py-2">Nenhum recurso de classe específico.</p>
             )}
           </BorderedBox>
         </div>
@@ -517,18 +517,18 @@ const FrontPage = ({
             <div className="space-y-1">
               {character.weaponProficiencies.length > 0 && (
                 <div>
-                  <h4 className="text-xs font-semibold text-gray-600 mb-1">Armas:</h4>
-                  <p className="text-xs text-gray-700">{character.weaponProficiencies.join(", ")}</p>
+                  <h4 className="text-xs font-semibold text-muted-foreground mb-1">Armas:</h4>
+                  <p className="text-xs text-foreground">{character.weaponProficiencies.join(", ")}</p>
                 </div>
               )}
               {character.armorProficiencies.length > 0 && (
                 <div>
-                  <h4 className="text-xs font-semibold text-gray-600 mb-1">Armaduras:</h4>
-                  <p className="text-xs text-gray-700">{character.armorProficiencies.join(", ")}</p>
+                  <h4 className="text-xs font-semibold text-muted-foreground mb-1">Armaduras:</h4>
+                  <p className="text-xs text-foreground">{character.armorProficiencies.join(", ")}</p>
                 </div>
               )}
               <div>
-                <h4 className="text-xs font-semibold text-gray-600 mb-1">Outras:</h4>
+                <h4 className="text-xs font-semibold text-muted-foreground mb-1">Outras:</h4>
                 <Input
                   className="text-xs"
                   placeholder="Ex: Ferramentas de ladrão, Élfico"

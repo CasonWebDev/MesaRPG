@@ -42,7 +42,7 @@ export const SpellRoller = ({ spellName, spellLevel, onRoll, className }: SpellR
   return (
     <div className={`border rounded p-2 space-y-2 ${className}`}>
       <div className="flex items-center gap-2">
-        <Zap className="h-3 w-3 text-blue-600" />
+        <Zap className="h-3 w-3 text-primary" />
         <span className="font-semibold text-xs">{spellName}</span>
       </div>
       

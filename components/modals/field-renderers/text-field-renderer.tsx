@@ -20,7 +20,7 @@ export function TextFieldRenderer({ field, value, onChange }: TextFieldRendererP
         onChange={(e) => onChange(e.target.value)}
         placeholder={`Digite ${String(field.name).toLowerCase()}`}
         required={field.required}
-        className="bg-stone-50/50"
+        className="bg-background/50"
       />
     </div>
   )

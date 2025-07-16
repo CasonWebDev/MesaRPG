@@ -23,7 +23,7 @@ export const ClassResourceTracker = ({
         <Input
           value={resource.name}
           onChange={(e) => onUpdate({ ...resource, name: e.target.value })}
-          className="text-xs font-bold uppercase border-0 h-6 p-1 bg-transparent focus:bg-gray-100"
+          className="text-xs font-bold uppercase border-0 h-6 p-1 bg-transparent focus:bg-muted"
           placeholder="Nome do Recurso"
           readOnly={!isCustom}
         />
@@ -43,7 +43,7 @@ export const ClassResourceTracker = ({
           max={resource.max}
           min={0}
         />
-        <span className="text-gray-500">/</span>
+        <span className="text-muted-foreground">/</span>
         <Input
           type="number"
           className="w-16 text-center h-8 font-bold"

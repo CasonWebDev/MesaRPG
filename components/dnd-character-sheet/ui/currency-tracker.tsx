@@ -26,13 +26,13 @@ export const CurrencyTracker = ({ currencies, onUpdate, className }: CurrencyTra
 
   return (
     <BorderedBox className={`p-3 ${className}`}>
-      <h3 className="font-bold text-sm mb-2 text-center border-b border-gray-300 pb-1">
+      <h3 className="font-bold text-sm mb-2 text-center border-b border-border pb-1">
         Moedas
       </h3>
       <div className="grid grid-cols-5 gap-2">
         {currencyTypes.map((currency) => (
           <div key={currency.key} className="text-center">
-            <div className="border rounded-md p-2 bg-gray-50">
+            <div className="border rounded-md p-2 bg-muted">
               <Input
                 type="number"
                 min="0"

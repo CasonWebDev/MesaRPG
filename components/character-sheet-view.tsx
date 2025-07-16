@@ -111,16 +111,16 @@ function LegacyCharacterSheetView({ template, characterData, isEditing, onDataCh
             />
           )
         default:
-          return <div className="p-2 bg-gray-100 rounded">{value?.toString()}</div>
+          return <div className="p-2 bg-muted/50 rounded">{value?.toString()}</div>
       }
     }
     
     // View mode
-    return <div className="p-2 bg-gray-50 rounded">{value?.toString() || '-'}</div>
+    return <div className="p-2 bg-muted/30 rounded">{value?.toString() || '-'}</div>
   }
   
   return (
-    <div className="space-y-4 p-4 bg-white rounded-lg shadow">
+    <div className="space-y-4 p-4 bg-background rounded-lg shadow">
       <h2 className="text-2xl font-bold">Ficha de Personagem</h2>
       {template.map((field) => (
         <div key={field.id} className="space-y-2">

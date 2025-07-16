@@ -163,7 +163,7 @@ const FeaturesPage = ({
               </div>
             </div>
             {feature.description && (
-              <p className="text-sm text-gray-700 whitespace-pre-wrap">{feature.description}</p>
+              <p className="text-sm text-foreground whitespace-pre-wrap">{feature.description}</p>
             )}
           </>
         )}
@@ -172,10 +172,10 @@ const FeaturesPage = ({
   }
 
   return (
-    <div className="p-4 bg-white space-y-4">
+    <div className="p-4 bg-game-sheet space-y-4">
       {/* Add New Feature */}
       <BorderedBox className="p-3">
-        <h3 className="font-bold text-sm mb-2 text-center border-b border-gray-300 pb-1">ADICIONAR NOVA CARACTERÍSTICA</h3>
+        <h3 className="font-bold text-sm mb-2 text-center border-b border-border pb-1">ADICIONAR NOVA CARACTERÍSTICA</h3>
         <div className="space-y-2">
           <div className="flex gap-2">
             <Input
@@ -218,16 +218,16 @@ const FeaturesPage = ({
       {/* Templates Section */}
       {showTemplates && (
         <BorderedBox className="p-3">
-          <h3 className="font-bold text-sm mb-2 text-center border-b border-gray-300 pb-1">TEMPLATES DE CARACTERÍSTICAS</h3>
+          <h3 className="font-bold text-sm mb-2 text-center border-b border-border pb-1">TEMPLATES DE CARACTERÍSTICAS</h3>
           <div className="space-y-3">
             {/* Racial Templates */}
             <div>
               <h4 className="font-semibold text-sm mb-2">Características Raciais</h4>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                 {featureTemplates.racial.map((template, index) => (
-                  <div key={index} className="border rounded p-2 cursor-pointer hover:bg-gray-50" onClick={() => handleAddTemplate(template, 'racial')}>
+                  <div key={index} className="border rounded p-2 cursor-pointer hover:bg-muted" onClick={() => handleAddTemplate(template, 'racial')}>
                     <div className="font-medium text-sm">{template.name}</div>
-                    <div className="text-xs text-gray-600 mt-1">{template.description}</div>
+                    <div className="text-xs text-muted-foreground mt-1">{template.description}</div>
                   </div>
                 ))}
               </div>
@@ -238,9 +238,9 @@ const FeaturesPage = ({
               <h4 className="font-semibold text-sm mb-2">Características de Classe</h4>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                 {featureTemplates.class.map((template, index) => (
-                  <div key={index} className="border rounded p-2 cursor-pointer hover:bg-gray-50" onClick={() => handleAddTemplate(template, 'class')}>
+                  <div key={index} className="border rounded p-2 cursor-pointer hover:bg-muted" onClick={() => handleAddTemplate(template, 'class')}>
                     <div className="font-medium text-sm">{template.name}</div>
-                    <div className="text-xs text-gray-600 mt-1">{template.description}</div>
+                    <div className="text-xs text-muted-foreground mt-1">{template.description}</div>
                   </div>
                 ))}
               </div>
@@ -251,9 +251,9 @@ const FeaturesPage = ({
               <h4 className="font-semibold text-sm mb-2">Talentos</h4>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                 {featureTemplates.feat.map((template, index) => (
-                  <div key={index} className="border rounded p-2 cursor-pointer hover:bg-gray-50" onClick={() => handleAddTemplate(template, 'feat')}>
+                  <div key={index} className="border rounded p-2 cursor-pointer hover:bg-muted" onClick={() => handleAddTemplate(template, 'feat')}>
                     <div className="font-medium text-sm">{template.name}</div>
-                    <div className="text-xs text-gray-600 mt-1">{template.description}</div>
+                    <div className="text-xs text-muted-foreground mt-1">{template.description}</div>
                   </div>
                 ))}
               </div>
@@ -274,59 +274,59 @@ const FeaturesPage = ({
 
       {/* Racial Features */}
       <BorderedBox className="p-3">
-        <h3 className="font-bold text-sm mb-2 text-center border-b border-gray-300 pb-1">CARACTERÍSTICAS RACIAIS</h3>
+        <h3 className="font-bold text-sm mb-2 text-center border-b border-border pb-1">CARACTERÍSTICAS RACIAIS</h3>
         <div className="space-y-2">
           {getFeaturesBySource('racial').map(feature => (
             <FeatureCard key={feature.id} feature={feature} />
           ))}
           {getFeaturesBySource('racial').length === 0 && (
-            <p className="text-center text-gray-500 py-4">Nenhuma característica racial adicionada</p>
+            <p className="text-center text-muted-foreground py-4">Nenhuma característica racial adicionada</p>
           )}
         </div>
       </BorderedBox>
 
       {/* Class Features */}
       <BorderedBox className="p-3">
-        <h3 className="font-bold text-sm mb-2 text-center border-b border-gray-300 pb-1">CARACTERÍSTICAS DE CLASSE</h3>
+        <h3 className="font-bold text-sm mb-2 text-center border-b border-border pb-1">CARACTERÍSTICAS DE CLASSE</h3>
         <div className="space-y-2">
           {getFeaturesBySource('class').map(feature => (
             <FeatureCard key={feature.id} feature={feature} />
           ))}
           {getFeaturesBySource('class').length === 0 && (
-            <p className="text-center text-gray-500 py-4">Nenhuma característica de classe adicionada</p>
+            <p className="text-center text-muted-foreground py-4">Nenhuma característica de classe adicionada</p>
           )}
         </div>
       </BorderedBox>
 
       {/* Feats */}
       <BorderedBox className="p-3">
-        <h3 className="font-bold text-sm mb-2 text-center border-b border-gray-300 pb-1">TALENTOS</h3>
+        <h3 className="font-bold text-sm mb-2 text-center border-b border-border pb-1">TALENTOS</h3>
         <div className="space-y-2">
           {getFeaturesBySource('feat').map(feature => (
             <FeatureCard key={feature.id} feature={feature} />
           ))}
           {getFeaturesBySource('feat').length === 0 && (
-            <p className="text-center text-gray-500 py-4">Nenhum talento adicionado</p>
+            <p className="text-center text-muted-foreground py-4">Nenhum talento adicionado</p>
           )}
         </div>
       </BorderedBox>
 
       {/* Other Features */}
       <BorderedBox className="p-3">
-        <h3 className="font-bold text-sm mb-2 text-center border-b border-gray-300 pb-1">OUTRAS CARACTERÍSTICAS</h3>
+        <h3 className="font-bold text-sm mb-2 text-center border-b border-border pb-1">OUTRAS CARACTERÍSTICAS</h3>
         <div className="space-y-2">
           {getFeaturesBySource('other').map(feature => (
             <FeatureCard key={feature.id} feature={feature} />
           ))}
           {getFeaturesBySource('other').length === 0 && (
-            <p className="text-center text-gray-500 py-4">Nenhuma outra característica adicionada</p>
+            <p className="text-center text-muted-foreground py-4">Nenhuma outra característica adicionada</p>
           )}
         </div>
       </BorderedBox>
 
       {/* Legacy Features & Traits Field */}
       <BorderedBox className="p-3">
-        <h3 className="font-bold text-sm mb-2 text-center border-b border-gray-300 pb-1">CARACTERÍSTICAS E TRAÇOS ADICIONAIS</h3>
+        <h3 className="font-bold text-sm mb-2 text-center border-b border-border pb-1">CARACTERÍSTICAS E TRAÇOS ADICIONAIS</h3>
         <Textarea
           placeholder="Espaço para características adicionais, anotações, habilidades especiais..."
           value={character.featuresAndTraits || ''}

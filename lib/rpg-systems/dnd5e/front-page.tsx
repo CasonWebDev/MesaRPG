@@ -39,11 +39,11 @@ const SkillInput = ({
       onCheckedChange={onProficiencyToggle}
       className="h-3.5 w-3.5 rounded-full"
     />
-    <div className="flex h-6 w-8 items-center justify-center rounded-sm border border-black bg-gray-100 text-sm font-bold shadow-inner">
+    <div className="flex h-6 w-8 items-center justify-center rounded-sm border border-black bg-muted/50 text-sm font-bold shadow-inner">
       {modifier >= 0 ? `+${modifier}` : modifier}
     </div>
-    <label htmlFor={`prof-${name}`} className="flex-grow border-b border-gray-400 text-left text-sm">
-      <span className="text-xs text-gray-500">({ability.slice(0, 3)})</span> {name}
+    <label htmlFor={`prof-${name}`} className="flex-grow border-b border-muted-foreground text-left text-sm">
+      <span className="text-xs text-muted-foreground">({ability.slice(0, 3)})</span> {name}
     </label>
   </div>
 )
@@ -130,7 +130,7 @@ const FrontPage = ({
   const hitDieType = CLASS_DATA[character.class as keyof typeof CLASS_DATA]?.hitDie
 
   return (
-    <div className="p-4 bg-white rounded-lg shadow-lg border-2 border-black space-y-4">
+    <div className="p-4 bg-background rounded-lg shadow-lg border-2 border-black space-y-4">
       <LevelUpModal
         character={character}
         isOpen={isLevelUpModalOpen}
@@ -183,7 +183,7 @@ const FrontPage = ({
                         setIsCustomClass(false)
                         onUpdate({ class: "" })
                       }}
-                      className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                      className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                       aria-label="Limpar classe customizada e voltar"
                     >
                       <X className="h-4 w-4" />
@@ -402,7 +402,7 @@ const FrontPage = ({
               ))}
             </div>
             {character.classResources.length === 0 && (
-              <p className="text-xs text-center text-gray-400 py-2">Nenhum recurso de classe específico.</p>
+              <p className="text-xs text-center text-muted-foreground py-2">Nenhum recurso de classe específico.</p>
             )}
           </BorderedBox>
         </div>

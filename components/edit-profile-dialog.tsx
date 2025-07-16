@@ -15,6 +15,8 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { useToast } from "@/components/ui/use-toast"
+import { ThemeToggleWithText } from "@/components/ui/theme-toggle"
+import { Separator } from "@/components/ui/separator"
 import { Loader2 } from "lucide-react"
 
 interface EditProfileDialogProps {
@@ -194,7 +196,22 @@ export function EditProfileDialog({ user, open, onOpenChange }: EditProfileDialo
               />
             </div>
             
-            <div className="border-t pt-4">
+            <Separator />
+            
+            <div className="pt-4">
+              <h4 className="text-sm font-medium mb-3">Aparência</h4>
+              <div className="space-y-2">
+                <Label className="text-sm">Tema da Interface</Label>
+                <ThemeToggleWithText className="w-full" />
+                <p className="text-xs text-muted-foreground">
+                  Escolha entre tema claro (vermelho) ou escuro (laranja com tons de chumbo)
+                </p>
+              </div>
+            </div>
+            
+            <Separator />
+            
+            <div className="pt-4">
               <h4 className="text-sm font-medium mb-3">Alterar Senha (opcional)</h4>
               
               <div className="grid grid-cols-4 items-center gap-4 mb-3">

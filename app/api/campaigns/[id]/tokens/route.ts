@@ -60,7 +60,7 @@ export async function GET(
         alt: token.alt || token.name || 'Token',
         name: token.name || token.alt || 'Token',
         position: token.position || { top: 100, left: 100 },
-        borderColor: token.borderColor || 'border-gray-500',
+        borderColor: token.borderColor || 'border-muted-foreground',
         canPlayerMove: token.canPlayerMove !== false,
         ownerId: token.ownerId || null,
         characterId: token.characterId || null,
@@ -124,6 +124,6 @@ function getCharacterBorderColor(type: string): string {
     case 'CREATURE':
       return 'border-red-500'
     default:
-      return 'border-gray-500'
+      return 'border-muted-foreground'
   }
 }

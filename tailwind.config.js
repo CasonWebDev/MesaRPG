@@ -1,6 +1,5 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
-  darkMode: ["class"],
   content: [
     "./pages/**/*.{ts,tsx}",
     "./components/**/*.{ts,tsx}",
@@ -9,6 +8,7 @@ module.exports = {
     "*.{js,ts,jsx,tsx,mdx}",
   ],
   prefix: "",
+  darkMode: ["class"],
   theme: {
     container: {
       center: true,
@@ -57,6 +57,18 @@ module.exports = {
         card: {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
+        },
+        // Tokens específicos para elementos de jogo
+        game: {
+          grid: "hsl(var(--game-grid))",
+          "grid-border": "hsl(var(--game-grid-border))",
+          "grid-cell": "hsl(var(--game-grid-cell))",
+          chat: "hsl(var(--game-chat))",
+          "chat-input": "hsl(var(--game-chat-input))",
+          "chat-message": "hsl(var(--game-chat-message))",
+          sheet: "hsl(var(--game-sheet))",
+          "sheet-border": "hsl(var(--game-sheet-border))",
+          "sheet-input": "hsl(var(--game-sheet-input))",
         },
       },
       borderRadius: {

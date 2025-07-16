@@ -207,7 +207,7 @@ export function MapList({ campaignId }: MapListProps) {
   if (isLoading) {
     return (
       <div className="space-y-2 p-1">
-        <div className="text-center text-gray-500 py-4">
+        <div className="text-center text-muted-foreground py-4">
           Carregando mapas...
         </div>
       </div>
@@ -222,7 +222,7 @@ export function MapList({ campaignId }: MapListProps) {
       
       <div className="space-y-2">
         {maps.length === 0 ? (
-          <div className="text-center text-gray-500 py-4">
+          <div className="text-center text-muted-foreground py-4">
             Nenhum mapa criado ainda
           </div>
         ) : (
@@ -244,7 +244,7 @@ export function MapList({ campaignId }: MapListProps) {
                       onClick={() => handleActivateMap(map.id)}
                       disabled={map.isActive}
                     >
-                      <Play className={`h-4 w-4 ${map.isActive ? 'text-green-400' : 'text-gray-400'}`} />
+                      <Play className={`h-4 w-4 ${map.isActive ? 'text-green-400' : 'text-muted-foreground'}`} />
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent>

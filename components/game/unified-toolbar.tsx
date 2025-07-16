@@ -313,7 +313,7 @@ export function UnifiedToolbar({
                     onMeasurementSettingsChange?.({ unit: value })
                   }
                 >
-                  <SelectTrigger className="bg-stone-50/50">
+                  <SelectTrigger className="bg-background/50">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -425,7 +425,7 @@ export function UnifiedToolbar({
     
     if (isLocked && isHidden) return <Lock className="h-3 w-3 text-red-500" />
     if (isLocked) return <Lock className="h-3 w-3 text-orange-500" />
-    if (isHidden) return <EyeOff className="h-3 w-3 text-gray-500" />
+    if (isHidden) return <EyeOff className="h-3 w-3 text-muted-foreground" />
     return null
   }
 
@@ -517,7 +517,7 @@ export function UnifiedToolbar({
           <CardTitle className="text-lg flex items-center gap-2">
             <GripVertical className="h-5 w-5 text-muted-foreground" />
             Ferramentas
-            {userRole === 'GM' && <Crown className="h-4 w-4 text-yellow-500" />}
+            {userRole === 'GM' && <Crown className="h-4 w-4 text-primary" />}
           </CardTitle>
           <Button size="sm" onClick={onToggleExpanded} variant="ghost">
             <Settings className="h-4 w-4" />

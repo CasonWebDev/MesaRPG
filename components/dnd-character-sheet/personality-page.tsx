@@ -81,15 +81,15 @@ const PersonalityPage = ({
   }
 
   return (
-    <div className="p-4 bg-white space-y-4">
+    <div className="p-4 bg-game-sheet space-y-4">
       {/* Top Layout with Avatar and Physical Details */}
       <div className="grid grid-cols-4 gap-4">
         {/* Avatar Section */}
         <div className="col-span-1">
           <BorderedBox className="p-3">
-            <h3 className="font-bold text-sm mb-2 text-center border-b border-gray-300 pb-1">APARÊNCIA</h3>
+            <h3 className="font-bold text-sm mb-2 text-center border-b border-border pb-1">APARÊNCIA</h3>
             <div 
-              className={`relative w-full h-48 border-2 border-dashed ${dragOver ? 'border-blue-500 bg-blue-50' : 'border-gray-300'} rounded-lg flex items-center justify-center cursor-pointer transition-colors`}
+              className={`relative w-full h-48 border-2 border-dashed ${dragOver ? 'border-primary bg-primary/10' : 'border-border'} rounded-lg flex items-center justify-center cursor-pointer transition-colors`}
               onDragOver={(e) => { e.preventDefault(); setDragOver(true) }}
               onDragLeave={() => setDragOver(false)}
               onDrop={handleDrop}
@@ -103,8 +103,8 @@ const PersonalityPage = ({
                 />
               ) : (
                 <div className="text-center">
-                  <User className="w-12 h-12 mx-auto mb-2 text-gray-400" />
-                  <p className="text-xs text-gray-500">Clique ou arraste uma imagem</p>
+                  <User className="w-12 h-12 mx-auto mb-2 text-muted-foreground" />
+                  <p className="text-xs text-muted-foreground">Clique ou arraste uma imagem</p>
                 </div>
               )}
             </div>
@@ -132,7 +132,7 @@ const PersonalityPage = ({
         <div className="col-span-3">
           <div className="grid grid-cols-3 gap-2 mb-4">
             <BorderedBox className="p-2">
-              <h3 className="font-bold text-xs mb-1 text-center border-b border-gray-300 pb-1">IDADE</h3>
+              <h3 className="font-bold text-xs mb-1 text-center border-b border-border pb-1">IDADE</h3>
               <Input
                 placeholder="23 anos"
                 value={character.age || ''}
@@ -142,7 +142,7 @@ const PersonalityPage = ({
             </BorderedBox>
             
             <BorderedBox className="p-2">
-              <h3 className="font-bold text-xs mb-1 text-center border-b border-gray-300 pb-1">ALTURA</h3>
+              <h3 className="font-bold text-xs mb-1 text-center border-b border-border pb-1">ALTURA</h3>
               <Input
                 placeholder="1,85m"
                 value={character.height || ''}
@@ -152,7 +152,7 @@ const PersonalityPage = ({
             </BorderedBox>
 
             <BorderedBox className="p-2">
-              <h3 className="font-bold text-xs mb-1 text-center border-b border-gray-300 pb-1">PESO</h3>
+              <h3 className="font-bold text-xs mb-1 text-center border-b border-border pb-1">PESO</h3>
               <Input
                 placeholder="85kg"
                 value={character.weight || ''}
@@ -164,7 +164,7 @@ const PersonalityPage = ({
 
           <div className="grid grid-cols-3 gap-2">
             <BorderedBox className="p-2">
-              <h3 className="font-bold text-xs mb-1 text-center border-b border-gray-300 pb-1">OLHOS</h3>
+              <h3 className="font-bold text-xs mb-1 text-center border-b border-border pb-1">OLHOS</h3>
               <Input
                 placeholder="Azuis brilhantes"
                 value={character.eyes || ''}
@@ -174,7 +174,7 @@ const PersonalityPage = ({
             </BorderedBox>
             
             <BorderedBox className="p-2">
-              <h3 className="font-bold text-xs mb-1 text-center border-b border-gray-300 pb-1">PELE</h3>
+              <h3 className="font-bold text-xs mb-1 text-center border-b border-border pb-1">PELE</h3>
               <Input
                 placeholder="Bronzeada pelo sol"
                 value={character.skin || ''}
@@ -184,7 +184,7 @@ const PersonalityPage = ({
             </BorderedBox>
 
             <BorderedBox className="p-2">
-              <h3 className="font-bold text-xs mb-1 text-center border-b border-gray-300 pb-1">CABELO</h3>
+              <h3 className="font-bold text-xs mb-1 text-center border-b border-border pb-1">CABELO</h3>
               <Input
                 placeholder="Loiros desgrenhados"
                 value={character.hair || ''}
@@ -199,7 +199,7 @@ const PersonalityPage = ({
       {/* Personality Traits Section */}
       <div className="grid grid-cols-2 gap-4">
         <BorderedBox className="p-3">
-          <h3 className="font-bold text-sm mb-2 text-center border-b border-gray-300 pb-1">TRAÇOS DE PERSONALIDADE</h3>
+          <h3 className="font-bold text-sm mb-2 text-center border-b border-border pb-1">TRAÇOS DE PERSONALIDADE</h3>
           <Textarea
             placeholder="Sempre exagerado e teatral, Hélios transforma qualquer conversa em um espetáculo..."
             value={character.personalityTraits || ''}
@@ -209,7 +209,7 @@ const PersonalityPage = ({
         </BorderedBox>
 
         <BorderedBox className="p-3">
-          <h3 className="font-bold text-sm mb-2 text-center border-b border-gray-300 pb-1">CARACTERÍSTICAS E TRAÇOS</h3>
+          <h3 className="font-bold text-sm mb-2 text-center border-b border-border pb-1">CARACTERÍSTICAS E TRAÇOS</h3>
           <Textarea
             placeholder="Fala com entonação dramática, mesmo em situações mundanas..."
             value={character.featuresAndTraits || ''}
@@ -222,7 +222,7 @@ const PersonalityPage = ({
       {/* Ideals and Bonds */}
       <div className="grid grid-cols-2 gap-4">
         <BorderedBox className="p-3">
-          <h3 className="font-bold text-sm mb-2 text-center border-b border-gray-300 pb-1">IDEAIS</h3>
+          <h3 className="font-bold text-sm mb-2 text-center border-b border-border pb-1">IDEAIS</h3>
           <Textarea
             placeholder="A glória e a redenção são conquistadas através de atos heroicos e grandiosos..."
             value={character.ideals || ''}
@@ -232,7 +232,7 @@ const PersonalityPage = ({
         </BorderedBox>
 
         <BorderedBox className="p-3">
-          <h3 className="font-bold text-sm mb-2 text-center border-b border-gray-300 pb-1">VÍNCULOS</h3>
+          <h3 className="font-bold text-sm mb-2 text-center border-b border-border pb-1">VÍNCULOS</h3>
           <Textarea
             placeholder="Leal à sua ordem, ele acredita que sua missão é espalhar a luz da justiça..."
             value={character.bonds || ''}
@@ -244,7 +244,7 @@ const PersonalityPage = ({
 
       {/* Flaws */}
       <BorderedBox className="p-3">
-        <h3 className="font-bold text-sm mb-2 text-center border-b border-gray-300 pb-1">FRAQUEZAS</h3>
+        <h3 className="font-bold text-sm mb-2 text-center border-b border-border pb-1">FRAQUEZAS</h3>
         <Textarea
           placeholder="Sua necessidade de ser o centro das atenções pode colocá-lo em perigo..."
           value={character.flaws || ''}
@@ -255,7 +255,7 @@ const PersonalityPage = ({
 
       {/* Other Proficiencies & Languages */}
       <BorderedBox className="p-3">
-        <h3 className="font-bold text-sm mb-2 text-center border-b border-gray-300 pb-1">IDIOMAS</h3>
+        <h3 className="font-bold text-sm mb-2 text-center border-b border-border pb-1">IDIOMAS</h3>
         <Textarea
           placeholder="Comum, Élfico, Dracônico (porque achou que soava épico aprender a língua dos dragões)..."
           value={character.otherProficienciesAndLanguages || ''}
@@ -266,7 +266,7 @@ const PersonalityPage = ({
 
       {/* Character Backstory */}
       <BorderedBox className="p-3">
-        <h3 className="font-bold text-sm mb-2 text-center border-b border-gray-300 pb-1">HISTÓRIA DO PERSONAGEM</h3>
+        <h3 className="font-bold text-sm mb-2 text-center border-b border-border pb-1">HISTÓRIA DO PERSONAGEM</h3>
         <Textarea
           placeholder="Sir Hélios, o Iluminado, nasceu para a grandeza — mas não sabia qual seria a forma certa disso..."
           value={character.characterBackstory || ''}

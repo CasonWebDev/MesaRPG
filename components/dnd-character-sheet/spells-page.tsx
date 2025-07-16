@@ -134,12 +134,12 @@ const SpellsPage = ({
     calculatedStats.proficiencyBonus
 
   return (
-    <div className="p-4 bg-white space-y-4">
+    <div className="p-4 bg-game-sheet space-y-4">
       {/* Top Section - Spellcasting Info */}
       <div className="grid grid-cols-3 gap-4">
         {/* Spellcasting Class */}
         <BorderedBox className="p-3">
-          <h3 className="font-bold text-xs mb-2 text-center border-b border-gray-300 pb-1">CLASSE DE CONJURAÇÃO</h3>
+          <h3 className="font-bold text-xs mb-2 text-center border-b border-border pb-1">CLASSE DE CONJURAÇÃO</h3>
           <Input
             placeholder="Mago, Clérigo..."
             value={character.spellcastingClass}
@@ -150,7 +150,7 @@ const SpellsPage = ({
 
         {/* Spellcasting Ability */}
         <BorderedBox className="p-3">
-          <h3 className="font-bold text-xs mb-2 text-center border-b border-gray-300 pb-1">HABILIDADE DE CONJURAÇÃO</h3>
+          <h3 className="font-bold text-xs mb-2 text-center border-b border-border pb-1">HABILIDADE DE CONJURAÇÃO</h3>
           <Select 
             value={character.spellcastingAbility || ''} 
             onValueChange={handleSpellcastingAbilityChange}
@@ -170,11 +170,11 @@ const SpellsPage = ({
         <BorderedBox className="p-3">
           <div className="grid grid-cols-2 gap-2">
             <div className="text-center">
-              <h3 className="font-bold text-xs mb-1 border-b border-gray-300 pb-1">CD SALVAGUARDA</h3>
+              <h3 className="font-bold text-xs mb-1 border-b border-border pb-1">CD SALVAGUARDA</h3>
               <div className="text-lg font-bold">{spellSaveDC}</div>
             </div>
             <div className="text-center">
-              <h3 className="font-bold text-xs mb-1 border-b border-gray-300 pb-1">BÔNUS ATAQUE</h3>
+              <h3 className="font-bold text-xs mb-1 border-b border-border pb-1">BÔNUS ATAQUE</h3>
               <div className="text-lg font-bold">{spellAttackBonus >= 0 ? '+' : ''}{spellAttackBonus}</div>
             </div>
           </div>
@@ -183,7 +183,7 @@ const SpellsPage = ({
 
       {/* Spell Slots */}
       <BorderedBox className="p-3">
-        <h3 className="font-bold text-sm mb-2 text-center border-b border-gray-300 pb-1">ESPAÇOS DE MAGIA</h3>
+        <h3 className="font-bold text-sm mb-2 text-center border-b border-border pb-1">ESPAÇOS DE MAGIA</h3>
         <div className="grid grid-cols-9 gap-1">
           {[1, 2, 3, 4, 5, 6, 7, 8, 9].map(level => {
             const spellLevel = character.spells?.[level] || { slotsExpended: 0, slotsTotal: 0, spells: [] };
@@ -232,14 +232,14 @@ const SpellsPage = ({
             );
           })}
         </div>
-        <div className="mt-2 text-xs text-center text-gray-600">
+        <div className="mt-2 text-xs text-center text-muted-foreground">
           <span>Gastos / Total</span>
         </div>
       </BorderedBox>
 
       {/* Cantrips (Truques) */}
       <BorderedBox className="p-3">
-        <h3 className="font-bold text-sm mb-2 text-center border-b border-gray-300 pb-1">TRUQUES</h3>
+        <h3 className="font-bold text-sm mb-2 text-center border-b border-border pb-1">TRUQUES</h3>
         
         {/* Add Spell Form */}
         <div className="flex gap-2 mb-3">
@@ -274,7 +274,7 @@ const SpellsPage = ({
             </div>
           ))}
           {(!character.spells?.[0]?.spells || character.spells[0].spells.length === 0) && (
-            <p className="text-center text-gray-500 py-4 col-span-2">
+            <p className="text-center text-muted-foreground py-4 col-span-2">
               Nenhum truque adicionado
             </p>
           )}
@@ -287,7 +287,7 @@ const SpellsPage = ({
           const spellLevel = character.spells?.[level] || { slotsExpended: 0, slotsTotal: 0, spells: [] };
           return (
             <BorderedBox key={level} className="p-3">
-              <h3 className="font-bold text-sm mb-2 text-center border-b border-gray-300 pb-1">
+              <h3 className="font-bold text-sm mb-2 text-center border-b border-border pb-1">
                 NÍVEL {level}
               </h3>
               
@@ -332,7 +332,7 @@ const SpellsPage = ({
                           onCheckedChange={() => handleTogglePrepared(level, spell.id)}
                           className="h-3 w-3"
                         />
-                        <span className={`text-xs ${spell.prepared ? 'font-semibold' : 'text-gray-600'}`}>
+                        <span className={`text-xs ${spell.prepared ? 'font-semibold' : 'text-muted-foreground'}`}>
                           {spell.name}
                         </span>
                       </div>
@@ -371,7 +371,7 @@ const SpellsPage = ({
                   </div>
                 ))}
                 {spellLevel.spells.length === 0 && (
-                  <p className="text-center text-gray-500 py-2 text-xs">
+                  <p className="text-center text-muted-foreground py-2 text-xs">
                     Nenhuma magia
                   </p>
                 )}

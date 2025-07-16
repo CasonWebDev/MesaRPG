@@ -35,13 +35,13 @@ export function AddCreatureModal({ isOpen, onClose }: AddCreatureModalProps) {
           <Textarea
             id={field.id}
             placeholder={`Detalhes sobre ${field.name}...`}
-            className="col-span-3 bg-stone-50/50"
+            className="col-span-3 bg-background/50"
           />
         )
       case "Imagem":
         return (
           <div className="col-span-3">
-            <Button asChild variant="outline" className="w-full cursor-pointer bg-stone-50/50 hover:bg-stone-50/80">
+            <Button asChild variant="outline" className="w-full cursor-pointer bg-background/50 hover:bg-background/80">
               <label>
                 <Upload className="mr-2 h-4 w-4" />
                 <span>Carregar Imagem do Token</span>
@@ -58,7 +58,7 @@ export function AddCreatureModal({ isOpen, onClose }: AddCreatureModalProps) {
             id={field.id}
             placeholder={field.name}
             type={field.type === "Número" ? "number" : "text"}
-            className="col-span-3 bg-stone-50/50"
+            className="col-span-3 bg-background/50"
           />
         )
     }

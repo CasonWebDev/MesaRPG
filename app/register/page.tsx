@@ -80,13 +80,12 @@ export default function RegisterPage() {
 
   return (
     <main
-      className="flex items-center justify-center min-h-screen bg-cover bg-center"
-      style={{ backgroundImage: "url('/placeholder.png')" }}
+      className="flex items-center justify-center min-h-screen bg-background"
     >
-      <Card className="w-full max-w-sm bg-parchment/90 backdrop-blur-sm text-ink-text">
+      <Card className="w-full max-w-sm bg-card/95 backdrop-blur-sm text-card-foreground shadow-xl">
         <CardHeader className="text-center">
-          <CardTitle className="text-4xl font-heading">MesaRPG</CardTitle>
-          <CardDescription className="text-ink-text/80">Crie sua conta para começar a aventura.</CardDescription>
+          <CardTitle className="text-4xl font-heading text-primary">MesaRPG</CardTitle>
+          <CardDescription className="text-muted-foreground">Crie sua conta para começar a aventura.</CardDescription>
         </CardHeader>
         <form onSubmit={handleRegister}>
           <CardContent>
@@ -105,7 +104,7 @@ export default function RegisterPage() {
                   onChange={(e) => setName(e.target.value)}
                   required
                   disabled={isLoading}
-                  className="bg-stone-50/50"
+                  className="bg-input"
                   autoComplete="name"
                 />
               </div>
@@ -119,7 +118,7 @@ export default function RegisterPage() {
                   onChange={(e) => setEmail(e.target.value)}
                   required
                   disabled={isLoading}
-                  className="bg-stone-50/50"
+                  className="bg-input"
                   autoComplete="email"
                 />
               </div>
@@ -133,7 +132,7 @@ export default function RegisterPage() {
                   onChange={(e) => setPassword(e.target.value)}
                   required
                   disabled={isLoading}
-                  className="bg-stone-50/50"
+                  className="bg-input"
                   autoComplete="new-password"
                 />
               </div>
@@ -147,7 +146,7 @@ export default function RegisterPage() {
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   required
                   disabled={isLoading}
-                  className="bg-stone-50/50"
+                  className="bg-input"
                   autoComplete="new-password"
                 />
               </div>
@@ -158,7 +157,7 @@ export default function RegisterPage() {
               {isLoading ? "Criando conta..." : "Criar Conta"}
             </Button>
             <div className="text-center text-sm">
-              <p className="text-ink-text/80">
+              <p className="text-muted-foreground">
                 Já tem uma conta?{" "}
                 <Link href="/login" className="font-bold text-primary hover:underline">
                   Entrar

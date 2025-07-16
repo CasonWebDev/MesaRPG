@@ -129,9 +129,9 @@ export function DnD5eCharacterSheet({
 
 
   return (
-    <div className="w-full min-h-screen bg-white text-black">
+    <div className="w-full min-h-screen bg-game-sheet text-foreground">
       <Tabs defaultValue="main" className="w-full">
-        <TabsList className="w-full h-auto p-1 bg-gray-100 flex flex-wrap gap-1 justify-start">
+        <TabsList className="w-full h-auto p-1 bg-secondary flex flex-wrap gap-1 justify-start">
           <TabsTrigger value="main" className="flex-1 min-w-[100px] text-center">Frente</TabsTrigger>
           <TabsTrigger value="equipment" className="flex-1 min-w-[100px] text-center">Combate & Equip.</TabsTrigger>
           <TabsTrigger value="personality" className="flex-1 min-w-[100px] text-center">Personalidade</TabsTrigger>

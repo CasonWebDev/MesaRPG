@@ -23,7 +23,7 @@ export function NumberFieldRenderer({ field, value, onChange }: NumberFieldRende
         required={field.required}
         min={field.min}
         max={field.max}
-        className="bg-stone-50/50"
+        className="bg-background/50"
       />
     </div>
   )

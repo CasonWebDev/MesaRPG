@@ -178,7 +178,7 @@ const EquipmentPage = ({
   const weapons = character.inventory?.filter(item => item.type === 'weapon') || []
 
   return (
-    <div className="p-4 bg-white space-y-4">
+    <div className="p-4 bg-game-sheet space-y-4">
       {/* Layout em 2 colunas */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Coluna Esquerda - Cálculo de Armadura, Ataques */}
@@ -200,7 +200,7 @@ const EquipmentPage = ({
 
           {/* Attunement Counter */}
           <div className="text-center">
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-muted-foreground">
               Itens Sintonizados: {attunedCount} / 3
             </p>
           </div>
@@ -256,7 +256,7 @@ const EquipmentPage = ({
                   );
                 })
               ) : (
-                <p className="text-center text-gray-500 py-4">Nenhuma arma no inventário</p>
+                <p className="text-center text-muted-foreground py-4">Nenhuma arma no inventário</p>
               )}
             </div>
           </BorderedBox>
@@ -336,7 +336,7 @@ const EquipmentPage = ({
                 />
               ))}
               {(!character.customAttacks || character.customAttacks.length === 0) && (
-                <p className="text-center text-gray-500 py-4">
+                <p className="text-center text-muted-foreground py-4">
                   Nenhum ataque customizado adicionado
                 </p>
               )}
@@ -440,13 +440,13 @@ const EquipmentPage = ({
                   <div className="flex-1">
                     <div className="flex items-center gap-2">
                       <span className="font-semibold">{item.name}</span>
-                      <span className="text-sm text-gray-500">({item.type})</span>
-                      {item.isEquipped && <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">Equipado</span>}
-                      {item.isAttuned && <span className="text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded">Sintonizado</span>}
+                      <span className="text-sm text-muted-foreground">({item.type})</span>
+                      {item.isEquipped && <span className="text-xs bg-primary/20 text-primary px-2 py-1 rounded">Equipado</span>}
+                      {item.isAttuned && <span className="text-xs bg-secondary/20 text-secondary-foreground px-2 py-1 rounded">Sintonizado</span>}
                     </div>
-                    {item.damage && <p className="text-sm text-gray-600">Dano: {item.damage}</p>}
-                    {item.acBase && <p className="text-sm text-gray-600">CA: {item.acBase}</p>}
-                    {item.acBonus && <p className="text-sm text-gray-600">Bônus CA: +{item.acBonus}</p>}
+                    {item.damage && <p className="text-sm text-muted-foreground">Dano: {item.damage}</p>}
+                    {item.acBase && <p className="text-sm text-muted-foreground">CA: {item.acBase}</p>}
+                    {item.acBonus && <p className="text-sm text-muted-foreground">Bônus CA: +{item.acBonus}</p>}
                   </div>
                   <div className="flex gap-2">
                     {(item.type === 'armor' || item.type === 'shield') && (
@@ -480,7 +480,7 @@ const EquipmentPage = ({
                 </div>
               ))}
               {(!character.inventory || character.inventory.length === 0) && (
-                <p className="text-center text-gray-500 py-4">Nenhum item no inventário</p>
+                <p className="text-center text-muted-foreground py-4">Nenhum item no inventário</p>
               )}
             </div>
           </BorderedBox>

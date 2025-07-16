@@ -63,7 +63,7 @@ export function GameClient({
 
   return (
     <div className="h-screen w-screen bg-background text-foreground flex flex-col overflow-hidden">
-      <header className="bg-secondary/50 p-2 shadow-md flex items-center justify-between z-30 flex-shrink-0">
+      <header className="bg-card border-b border-border p-2 shadow-sm flex items-center justify-between z-30 flex-shrink-0">
         <div className="flex items-center gap-2">
           <Link href="/dashboard">
             <Button variant="ghost" size="sm">
@@ -103,7 +103,7 @@ export function GameClient({
         </div>
         
         {/* Fixed Map Container */}
-        <div className="flex-1 relative bg-stone-900 overflow-hidden">
+        <div className="flex-1 relative bg-game-grid overflow-hidden">
           <TacticalGrid
             campaignId={campaignId}
             userRole={userRole}

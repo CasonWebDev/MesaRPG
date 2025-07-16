@@ -124,7 +124,7 @@ export function TokenToolbar({
     
     if (isLocked && isHidden) return <Lock className="h-3 w-3 text-red-500" />
     if (isLocked) return <Lock className="h-3 w-3 text-orange-500" />
-    if (isHidden) return <EyeOff className="h-3 w-3 text-gray-500" />
+    if (isHidden) return <EyeOff className="h-3 w-3 text-muted-foreground" />
     return null
   }
 
@@ -165,7 +165,7 @@ export function TokenToolbar({
           <CardTitle className="text-lg flex items-center gap-2">
             <MousePointer className="h-5 w-5" />
             Gerenciar Tokens
-            {userRole === 'GM' && <Crown className="h-4 w-4 text-yellow-500" />}
+            {userRole === 'GM' && <Crown className="h-4 w-4 text-primary" />}
           </CardTitle>
           <div className="flex gap-1">
             <Button size="sm" onClick={onToggleVisibility} variant="ghost">

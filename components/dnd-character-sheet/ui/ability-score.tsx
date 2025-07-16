@@ -18,7 +18,7 @@ export const AbilityScore = ({
   return (
     <BorderedBox className="relative flex h-32 w-full flex-col items-center justify-between p-2 text-center">
       <label className="font-bold uppercase">{ability}</label>
-      <div className="flex h-16 w-16 items-center justify-center rounded-full border-2 border-black bg-gray-100 text-3xl font-bold shadow-inner">
+      <div className="flex h-16 w-16 items-center justify-center rounded-full border-2 border-foreground bg-muted text-3xl font-bold shadow-inner">
         {modifier >= 0 ? `+${modifier}` : modifier}
       </div>
       <div className="flex items-center gap-2">

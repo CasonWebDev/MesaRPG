@@ -156,7 +156,7 @@ export function EditCampaignDialog({
                 id="edit-description"
                 value={formData.description}
                 onChange={(e) => handleInputChange("description", e.target.value)}
-                className="col-span-3 resize-none bg-stone-50/50"
+                className="col-span-3 resize-none bg-input"
                 placeholder="Descrição opcional da campanha..."
                 rows={3}
               />

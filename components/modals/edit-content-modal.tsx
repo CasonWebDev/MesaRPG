@@ -124,7 +124,7 @@ export function EditContentModal({ item, itemType, isOpen, onClose, onSave, onSu
                 id="name" 
                 value={name} 
                 onChange={(e) => setName(e.target.value)}
-                className="col-span-3 bg-stone-50/50" 
+                className="col-span-3 bg-background/50" 
                 required
                 disabled={isLoading}
               />
@@ -137,7 +137,7 @@ export function EditContentModal({ item, itemType, isOpen, onClose, onSave, onSu
                 id="description" 
                 value={description} 
                 onChange={(e) => setDescription(e.target.value)}
-                className="col-span-3 bg-stone-50/50" 
+                className="col-span-3 bg-background/50" 
                 disabled={isLoading}
                 rows={itemType === "Utilitário" ? 4 : 3}
               />
@@ -149,7 +149,7 @@ export function EditContentModal({ item, itemType, isOpen, onClose, onSave, onSu
                   {item.imageUrl && (
                     <div className="space-y-2">
                       <Label className="text-sm font-medium">Imagem Atual</Label>
-                      <div className="w-full h-24 relative rounded-md overflow-hidden border border-input bg-stone-50/30">
+                      <div className="w-full h-24 relative rounded-md overflow-hidden border border-input bg-background/30">
                         <Image
                           src={item.imageUrl || `/placeholder.svg?width=150&height=96&query=${item.name}`}
                           alt={`Imagem atual de ${item.name}`}
@@ -173,7 +173,7 @@ export function EditContentModal({ item, itemType, isOpen, onClose, onSave, onSu
                       placeholder="Arraste a nova imagem do mapa aqui"
                     />
                     {uploadedImageUrl && (
-                      <div className="w-full h-32 relative rounded-md overflow-hidden border border-input bg-stone-50/30">
+                      <div className="w-full h-32 relative rounded-md overflow-hidden border border-input bg-background/30">
                         <Image
                           src={uploadedImageUrl}
                           alt="Nova imagem enviada"
@@ -198,7 +198,7 @@ export function EditContentModal({ item, itemType, isOpen, onClose, onSave, onSu
                       {attachments.map((url, index) => {
                         const fileName = url.split('/').pop() || `Arquivo ${index + 1}`
                         return (
-                          <div key={index} className="flex items-center justify-between p-2 bg-stone-50/50 rounded border">
+                          <div key={index} className="flex items-center justify-between p-2 bg-background/50 rounded border">
                             <span className="text-sm truncate">{fileName}</span>
                             <Button
                               type="button"

@@ -95,12 +95,12 @@ export const DamageRoller = ({
         </Button>
       </div>
       {isCritical && (
-        <span className="text-xs text-red-600 font-semibold">CRÍTICO!</span>
+        <span className="text-xs text-destructive font-semibold">CRÍTICO!</span>
       )}
       
       {lastRoll && (
-        <div className="text-xs text-gray-600">
-          <div className={`font-semibold ${lastRoll.isCritical ? 'text-red-600' : ''}`}>
+        <div className="text-xs text-muted-foreground">
+          <div className={`font-semibold ${lastRoll.isCritical ? 'text-destructive' : ''}`}>
             Dano: {lastRoll.total}
             {lastRoll.isCritical && " ⚡"}
           </div>

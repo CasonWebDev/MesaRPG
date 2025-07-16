@@ -63,7 +63,7 @@ export function HandoutSearch({ filters, onFiltersChange, isGM = false }: Handou
           placeholder="Buscar utilitários..."
           value={filters.search}
           onChange={(e) => handleSearchChange(e.target.value)}
-          className="pl-9 pr-16 bg-stone-50/50"
+          className="pl-9 pr-16 bg-background/50"
         />
         <div className="absolute right-1 top-1/2 transform -translate-y-1/2 flex items-center gap-1">
           {/* Botão de filtro */}
@@ -141,27 +141,27 @@ export function HandoutSearch({ filters, onFiltersChange, isGM = false }: Handou
       {hasActiveFilters && (
         <div className="flex flex-wrap gap-1">
           {filters.search && (
-            <Badge variant="secondary" className="text-xs text-black">
+            <Badge variant="secondary" className="text-xs text-foreground">
               Busca: "{filters.search}"
             </Badge>
           )}
           {isGM && !filters.showShared && (
-            <Badge variant="secondary" className="text-xs text-black">
+            <Badge variant="secondary" className="text-xs text-foreground">
               Ocultando compartilhados
             </Badge>
           )}
           {isGM && !filters.showPrivate && (
-            <Badge variant="secondary" className="text-xs text-black">
+            <Badge variant="secondary" className="text-xs text-foreground">
               Ocultando privados
             </Badge>
           )}
           {filters.hasAttachments === true && (
-            <Badge variant="secondary" className="text-xs text-black">
+            <Badge variant="secondary" className="text-xs text-foreground">
               Com anexos
             </Badge>
           )}
           {filters.hasAttachments === false && (
-            <Badge variant="secondary" className="text-xs text-black">
+            <Badge variant="secondary" className="text-xs text-foreground">
               Sem anexos
             </Badge>
           )}

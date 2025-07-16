@@ -156,7 +156,7 @@ export function InviteClient({ invite }: InviteClientProps) {
                 variant="ghost"
                 onClick={() => router.push("/dashboard")}
                 size="lg"
-                className="flex-1 sm:flex-none text-black hover:bg-gray-100"
+                className="flex-1 sm:flex-none text-foreground hover:bg-muted/50"
               >
                 Voltar ao Dashboard
               </Button>

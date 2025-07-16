@@ -186,7 +186,7 @@ export function PlayerManagement({ campaignId, members }: PlayerManagementProps)
                   <Input
                     value={inviteUrl}
                     readOnly
-                    className="bg-white border-green-300"
+                    className="bg-background border-green-300"
                   />
                   <Button
                     size="sm"

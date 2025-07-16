@@ -25,7 +25,7 @@ export function HandoutStats({ handouts, isGM = false }: HandoutStatsProps) {
           <div className="flex items-center gap-1">
             <ScrollText className="h-3 w-3 text-muted-foreground" />
             <span className="text-muted-foreground">Total:</span>
-            <Badge variant="secondary" className="text-xs text-black">
+            <Badge variant="secondary" className="text-xs text-foreground">
               {totalHandouts}
             </Badge>
           </div>
@@ -35,7 +35,7 @@ export function HandoutStats({ handouts, isGM = false }: HandoutStatsProps) {
               <div className="flex items-center gap-1">
                 <Share2 className="h-3 w-3 text-green-600" />
                 <span className="text-muted-foreground">Compartilhados:</span>
-                <Badge variant="secondary" className="text-xs text-black">
+                <Badge variant="secondary" className="text-xs text-foreground">
                   {sharedHandouts}
                 </Badge>
               </div>
@@ -43,7 +43,7 @@ export function HandoutStats({ handouts, isGM = false }: HandoutStatsProps) {
               <div className="flex items-center gap-1">
                 <Eye className="h-3 w-3 text-blue-600" />
                 <span className="text-muted-foreground">Privados:</span>
-                <Badge variant="secondary" className="text-xs text-black">
+                <Badge variant="secondary" className="text-xs text-foreground">
                   {privateHandouts}
                 </Badge>
               </div>
@@ -54,7 +54,7 @@ export function HandoutStats({ handouts, isGM = false }: HandoutStatsProps) {
             <div className="flex items-center gap-1">
               <Paperclip className="h-3 w-3 text-orange-600" />
               <span className="text-muted-foreground">Com anexos:</span>
-              <Badge variant="secondary" className="text-xs text-black">
+              <Badge variant="secondary" className="text-xs text-foreground">
                 {handoutsWithAttachments}
               </Badge>
             </div>

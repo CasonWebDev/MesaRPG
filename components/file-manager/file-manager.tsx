@@ -321,7 +321,7 @@ export function FileManager({
         </div>
         
         <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-          <SelectTrigger className="w-full sm:w-48 bg-stone-50/50">
+          <SelectTrigger className="w-full sm:w-48 bg-background/50">
             <SelectValue placeholder="Filtrar por categoria" />
           </SelectTrigger>
           <SelectContent>

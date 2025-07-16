@@ -234,7 +234,7 @@ export default function SheetPage({
   const SaveStatusIndicator = () => {
     if (!isOnline) {
       return (
-        <div className="flex items-center gap-2 text-sm text-amber-600">
+        <div className="flex items-center gap-2 text-sm text-primary">
           <AlertCircle className="h-4 w-4" />
           Desconectado
         </div>
@@ -315,7 +315,7 @@ export default function SheetPage({
       `}</style>
       
       <div className="min-h-screen bg-background text-foreground">
-        <header className="bg-secondary/50 p-4 shadow-md sticky top-0 z-10 print:hidden">
+        <header className="bg-card border-b border-border p-4 shadow-sm sticky top-0 z-10 print:hidden">
           <div className="container mx-auto flex justify-between items-center">
             <div className="flex items-center gap-4">
               <Link href={`/campaign/${resolvedParams.id}/play?role=${userRole}`}>

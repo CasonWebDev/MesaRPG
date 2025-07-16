@@ -155,7 +155,7 @@ export function AddContentModal({ itemType, isOpen, onClose, onSave, onSubmit }:
               <Input 
                 id="name" 
                 placeholder={`Nome do ${itemType}`} 
-                className="col-span-3 bg-stone-50/50" 
+                className="col-span-3 bg-background/50" 
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 required
@@ -169,7 +169,7 @@ export function AddContentModal({ itemType, isOpen, onClose, onSave, onSubmit }:
               <Textarea 
                 id="description" 
                 placeholder={itemType === "Mapa" ? "Uma breve descrição..." : "Conteúdo do utilitário..."} 
-                className="col-span-3 bg-stone-50/50" 
+                className="col-span-3 bg-background/50" 
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 disabled={isLoading}
@@ -239,7 +239,7 @@ export function AddContentModal({ itemType, isOpen, onClose, onSave, onSubmit }:
                       placeholder="Arraste sua imagem personalizada aqui"
                     />
                     {uploadedImageUrl && !selectedTemplate && (
-                      <div className="w-full h-32 relative rounded-md overflow-hidden border border-input bg-stone-50/30">
+                      <div className="w-full h-32 relative rounded-md overflow-hidden border border-input bg-background/30">
                         <Image
                           src={uploadedImageUrl}
                           alt="Imagem personalizada"
@@ -274,7 +274,7 @@ export function AddContentModal({ itemType, isOpen, onClose, onSave, onSubmit }:
                       {attachments.map((url, index) => {
                         const fileName = url.split('/').pop() || `Arquivo ${index + 1}`
                         return (
-                          <div key={index} className="flex items-center justify-between p-2 bg-stone-50/50 rounded border">
+                          <div key={index} className="flex items-center justify-between p-2 bg-background/50 rounded border">
                             <span className="text-sm truncate">{fileName}</span>
                             <Button
                               type="button"

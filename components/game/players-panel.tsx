@@ -129,15 +129,15 @@ export function PlayersPanel({ campaignId, connectedPlayers, isConnected }: Play
           <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
             Mestre
           </div>
-          <div className="flex items-center justify-between py-1 px-2 rounded-md bg-amber-500/10 border border-amber-500/20">
+          <div className="flex items-center justify-between py-1 px-2 rounded-md bg-primary/10 border border-primary/20">
             <div className="flex items-center space-x-2">
-              <Crown className="h-4 w-4 text-amber-500" />
+              <Crown className="h-4 w-4 text-primary" />
               <span className="text-sm font-medium">{gm.name}</span>
             </div>
             <div className="flex items-center space-x-2">
               <div className={cn(
                 "h-2 w-2 rounded-full",
-                isPlayerOnline(gm.email, gm.id) ? "bg-green-500" : "bg-gray-400"
+                isPlayerOnline(gm.email, gm.id) ? "bg-green-500" : "bg-muted-foreground"
               )} />
               <span className="text-xs text-muted-foreground">
                 {isPlayerOnline(gm.email, gm.id) ? 'Online' : 'Offline'}
@@ -166,7 +166,7 @@ export function PlayersPanel({ campaignId, connectedPlayers, isConnected }: Play
                 <div className="flex items-center space-x-2">
                   <div className={cn(
                     "h-2 w-2 rounded-full",
-                    isPlayerOnline(player.email, player.id) ? "bg-green-500" : "bg-gray-400"
+                    isPlayerOnline(player.email, player.id) ? "bg-green-500" : "bg-muted-foreground"
                   )} />
                   <span className="text-xs text-muted-foreground">
                     {isPlayerOnline(player.email, player.id) ? 'Online' : 'Offline'}

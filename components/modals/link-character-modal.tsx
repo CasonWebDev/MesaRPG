@@ -194,13 +194,13 @@ export function LinkCharacterModal({
   const getCharacterTypeColor = (type: string) => {
     switch (type) {
       case 'PC':
-        return 'text-blue-600 bg-blue-50'
+        return 'text-blue-600 bg-blue-500/20'
       case 'NPC':
-        return 'text-green-600 bg-green-50'
+        return 'text-green-600 bg-green-500/20'
       case 'CREATURE':
-        return 'text-red-600 bg-red-50'
+        return 'text-red-600 bg-destructive/20'
       default:
-        return 'text-gray-600 bg-gray-50'
+        return 'text-muted-foreground bg-muted'
     }
   }
 
@@ -220,21 +220,21 @@ export function LinkCharacterModal({
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[80vh] overflow-hidden">
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+      <div className="bg-card rounded-lg shadow-xl w-full max-w-2xl max-h-[80vh] overflow-hidden">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b">
           <div>
             <h2 className="text-xl font-semibold">Vincular Ficha de Personagem</h2>
             {tokenName && (
-              <p className="text-sm text-gray-600 mt-1">
+              <p className="text-sm text-muted-foreground mt-1">
                 Token: <span className="font-medium">{tokenName}</span>
               </p>
             )}
           </div>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+            className="p-2 hover:bg-muted rounded-full transition-colors">
           >
             <X size={20} />
           </button>
@@ -244,19 +244,19 @@ export function LinkCharacterModal({
         <div className="p-6">
           {loading && (
             <div className="flex items-center justify-center py-8">
-              <div className="text-gray-600">Carregando personagens...</div>
+              <div className="text-muted-foreground">Carregando personagens...</div>
             </div>
           )}
 
           {error && (
-            <div className="bg-red-50 border border-red-200 rounded-md p-4 mb-4">
-              <div className="text-red-800 text-sm">{error}</div>
+            <div className="bg-destructive/20 border border-destructive/30 rounded-md p-4 mb-4">
+              <div className="text-destructive text-sm">{error}</div>
             </div>
           )}
 
           {!loading && !error && characters.length === 0 && (
             <div className="text-center py-8">
-              <div className="text-gray-600">
+              <div className="text-muted-foreground">
                 {userRole === 'PLAYER' 
                   ? 'Você não possui personagens nesta campanha.' 
                   : 'Nenhum personagem encontrado nesta campanha.'
@@ -267,7 +267,7 @@ export function LinkCharacterModal({
 
           {!loading && !error && characters.length > 0 && (
             <div className="space-y-3 max-h-96 overflow-y-auto">
-              <div className="text-sm text-gray-600 mb-4">
+              <div className="text-sm text-muted-foreground mb-4">
                 {userRole === 'GM' 
                   ? `${characters.length} personagem(ns) disponível(is) (PCs, NPCs e Criaturas)`
                   : `${characters.length} personagem(ns) seu(s) disponível(is)`
@@ -277,7 +277,7 @@ export function LinkCharacterModal({
               {characters.map((character) => (
                 <div
                   key={character.id}
-                  className="flex items-center space-x-4 p-4 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors"
+                  className="flex items-center space-x-4 p-4 border border-border rounded-lg hover:bg-muted cursor-pointer transition-colors"
                   onClick={() => {
                     onSelectCharacter(character.id)
                     console.log(`🔗 Character selected: ${character.name} (${character.type})`)
@@ -290,14 +290,14 @@ export function LinkCharacterModal({
                       alt={character.name}
                       width={48}
                       height={48}
-                      className="w-12 h-12 rounded-full border border-gray-200 object-cover"
+                      className="w-12 h-12 rounded-full border border-border object-cover"
                     />
                   </div>
 
                   {/* Character Info */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center space-x-2">
-                      <h3 className="font-medium text-gray-900 truncate">
+                      <h3 className="font-medium text-card-foreground truncate">
                         {getCharacterName(character)}
                       </h3>
                       <span className={`px-2 py-1 text-xs font-medium rounded-full ${getCharacterTypeColor(character.type)}`}>
@@ -306,7 +306,7 @@ export function LinkCharacterModal({
                     </div>
                     
                     {character.user && (
-                      <p className="text-sm text-gray-600 truncate">
+                      <p className="text-sm text-muted-foreground truncate">
                         Criado por: {character.user.name || character.user.email}
                       </p>
                     )}
@@ -314,7 +314,7 @@ export function LinkCharacterModal({
 
                   {/* Selection indicator */}
                   <div className="flex-shrink-0">
-                    <div className="w-4 h-4 border-2 border-gray-300 rounded-full"></div>
+                    <div className="w-4 h-4 border-2 border-border rounded-full"></div>
                   </div>
                 </div>
               ))}
@@ -323,10 +323,10 @@ export function LinkCharacterModal({
         </div>
 
         {/* Footer */}
-        <div className="flex justify-end space-x-3 p-6 border-t bg-gray-50">
+        <div className="flex justify-end space-x-3 p-6 border-t bg-muted">
           <button
             onClick={onClose}
-            className="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
+            className="px-4 py-2 text-card-foreground bg-card border border-border rounded-md hover:bg-muted transition-colors"
           >
             Cancelar
           </button>

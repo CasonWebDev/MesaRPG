@@ -64,8 +64,8 @@ export const DiceRoller = ({ label, modifier, onRoll, className, criticalRange =
       </div>
       
       {lastRoll && (
-        <div className="text-sm text-gray-600">
-          <div className={`font-semibold ${lastRoll.isCritical ? 'text-red-600' : ''}`}>
+        <div className="text-sm text-muted-foreground">
+          <div className={`font-semibold ${lastRoll.isCritical ? 'text-destructive' : ''}`}>
             Total: {lastRoll.total}
             {lastRoll.isCritical && " ⚡ CRÍTICO!"}
           </div>

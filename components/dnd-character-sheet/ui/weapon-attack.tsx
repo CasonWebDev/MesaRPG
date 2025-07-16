@@ -79,10 +79,10 @@ export const WeaponAttack = ({
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <Sword className="h-4 w-4 text-orange-600" />
+          <Sword className="h-4 w-4 text-primary" />
           <span className="font-semibold text-lg">{attackName}</span>
           {isCustomAttack && (
-            <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
+            <span className="text-xs bg-primary/20 text-primary px-2 py-1 rounded">
               CUSTOM
             </span>
           )}
@@ -116,7 +116,7 @@ export const WeaponAttack = ({
       </div>
 
       {/* Attack Info */}
-      <div className="text-sm text-gray-600">
+      <div className="text-sm text-muted-foreground">
         <span>Bônus de Ataque: {numericAttackBonus >= 0 ? '+' : ''}{numericAttackBonus}</span>
         <span className="ml-4">Dano: {damage}</span>
       </div>
@@ -146,27 +146,27 @@ export const WeaponAttack = ({
 
         {/* Attack Result Display */}
         {lastAttackRoll && (
-          <div className="bg-gray-50 rounded p-2 text-sm">
+          <div className="bg-muted rounded p-2 text-sm">
             <div className="flex items-center gap-2">
               <span className="font-semibold">
                 Resultado: {lastAttackRoll.total}
               </span>
               {lastAttackRoll.isCritical && (
-                <span className="bg-red-100 text-red-800 px-2 py-1 rounded text-xs font-bold">
+                <span className="bg-destructive/20 text-destructive px-2 py-1 rounded text-xs font-bold">
                   CRÍTICO!
                 </span>
               )}
               {lastAttackRoll.advantage && lastAttackRoll.advantage !== 'normal' && (
                 <span className={`px-2 py-1 rounded text-xs font-medium ${
                   lastAttackRoll.advantage === 'advantage' 
-                    ? 'bg-green-100 text-green-800' 
-                    : 'bg-yellow-100 text-yellow-800'
+                    ? 'bg-green-500/20 text-green-700' 
+                    : 'bg-primary/20 text-primary'
                 }`}>
                   {lastAttackRoll.advantage === 'advantage' ? 'VANTAGEM' : 'DESVANTAGEM'}
                 </span>
               )}
             </div>
-            <div className="text-xs text-gray-600 mt-1">
+            <div className="text-xs text-muted-foreground mt-1">
               {lastAttackRoll.breakdown}
             </div>
           </div>
@@ -178,7 +178,7 @@ export const WeaponAttack = ({
         <div className="flex items-center justify-between">
           <span className="text-sm font-medium">2. Rolagem de Dano</span>
           {!canRollDamage && (
-            <span className="text-xs text-gray-500">Role o ataque primeiro</span>
+            <span className="text-xs text-muted-foreground">Role o ataque primeiro</span>
           )}
         </div>
         
@@ -203,7 +203,7 @@ export const WeaponAttack = ({
       </div>
 
       {/* Instructions */}
-      <div className="text-xs text-gray-500 bg-blue-50 p-2 rounded">
+      <div className="text-xs text-muted-foreground bg-primary/10 p-2 rounded">
         <strong>Como usar:</strong> Primeiro role o d20 de ataque para ver se acerta. 
         Se o ataque for bem-sucedido, role o dano. Críticos dobram os dados de dano.
       </div>

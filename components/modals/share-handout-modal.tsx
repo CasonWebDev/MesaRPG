@@ -157,11 +157,11 @@ export function ShareHandoutModal({
             <Label className="text-sm font-medium">Status atual:</Label>
             <div className="mt-1">
               {handout.sharedWith.length > 0 ? (
-                <Badge variant="secondary" className="text-black">
+                <Badge variant="secondary" className="text-card-foreground">
                   Compartilhado com {handout.sharedWith.length} jogador(es)
                 </Badge>
               ) : (
-                <Badge variant="outline" className="text-black">
+                <Badge variant="outline" className="text-card-foreground">
                   Não compartilhado
                 </Badge>
               )}
@@ -197,7 +197,7 @@ export function ShareHandoutModal({
                 {members.map((member) => (
                   <div
                     key={member.id}
-                    className="flex items-center space-x-2 p-2 rounded border bg-stone-50/30"
+                    className="flex items-center space-x-2 p-2 rounded border bg-background/30"
                   >
                     <Checkbox
                       id={`member-${member.id}`}
@@ -230,7 +230,7 @@ export function ShareHandoutModal({
                 {selectedEmails.map((email) => {
                   const member = members.find(m => m.email === email)
                   return (
-                    <Badge key={email} variant="secondary" className="text-xs text-black">
+                    <Badge key={email} variant="secondary" className="text-xs text-card-foreground">
                       {member?.name || email}
                     </Badge>
                   )

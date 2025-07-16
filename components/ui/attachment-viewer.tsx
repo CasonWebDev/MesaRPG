@@ -61,7 +61,7 @@ export function AttachmentViewer({ attachments, showTitle = true }: AttachmentVi
               <CardContent className="p-3">
                 <div className="flex items-center gap-3">
                   {fileInfo.isImage ? (
-                    <div className="relative w-12 h-12 rounded border overflow-hidden bg-stone-50 flex-shrink-0">
+                    <div className="relative w-12 h-12 rounded border overflow-hidden bg-muted/30 flex-shrink-0">
                       <Image
                         src={url}
                         alt={fileInfo.fileName}
@@ -71,7 +71,7 @@ export function AttachmentViewer({ attachments, showTitle = true }: AttachmentVi
                       />
                     </div>
                   ) : (
-                    <div className="w-12 h-12 rounded border bg-stone-50 flex items-center justify-center flex-shrink-0">
+                    <div className="w-12 h-12 rounded border bg-muted/30 flex items-center justify-center flex-shrink-0">
                       {getFileIcon(fileInfo)}
                     </div>
                   )}
@@ -80,7 +80,7 @@ export function AttachmentViewer({ attachments, showTitle = true }: AttachmentVi
                     <p className="text-sm font-medium truncate">
                       {fileInfo.fileName}
                     </p>
-                    <Badge variant="outline" className="text-xs text-black">
+                    <Badge variant="outline" className="text-xs text-foreground">
                       {fileInfo.extension.toUpperCase()}
                     </Badge>
                   </div>
@@ -115,7 +115,7 @@ export function AttachmentViewer({ attachments, showTitle = true }: AttachmentVi
       {/* Modal para visualizar imagem expandida */}
       {expandedImage && (
         <div 
-          className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4"
+          className="fixed inset-0 bg-background/80 z-50 flex items-center justify-center p-4"
           onClick={() => setExpandedImage(null)}
         >
           <div className="relative max-w-4xl max-h-[90vh] w-full h-full">

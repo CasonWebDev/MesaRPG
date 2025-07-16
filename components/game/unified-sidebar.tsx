@@ -34,7 +34,7 @@ export function UnifiedSidebar({
   rpgSystem = 'dnd5e',
 }: UnifiedSidebarProps) {
   return (
-    <div className="h-full flex flex-col bg-secondary/30 p-2">
+    <div className="h-full flex flex-col bg-card p-2">
       <Tabs defaultValue="comunicacao" className="flex flex-col flex-grow min-h-0">
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="comunicacao">
