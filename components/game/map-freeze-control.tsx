@@ -10,7 +10,7 @@ interface MapFreezeControlProps {
 }
 
 export function MapFreezeControl({ campaignId, isGM }: MapFreezeControlProps) {
-  const { mapFrozen, frozenBy, frozenAt, loading, toggleFreeze } = useMapFreeze(campaignId, isGM)
+  const { mapFrozen, frozenByName, frozenAt, loading, toggleFreeze } = useMapFreeze(campaignId, isGM)
 
   // Não exibir se não for GM
   if (!isGM) {
@@ -44,7 +44,7 @@ export function MapFreezeControl({ campaignId, isGM }: MapFreezeControlProps) {
       {mapFrozen && frozenAt && (
         <div className="text-xs text-muted-foreground text-center">
           <p>Congelado desde {new Date(frozenAt).toLocaleTimeString()}</p>
-          {frozenBy && <p>por {frozenBy}</p>}
+          {frozenByName && <p>por {frozenByName}</p>}
         </div>
       )}
     </div>

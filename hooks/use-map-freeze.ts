@@ -1,18 +1,28 @@
 import { useState, useEffect } from 'react'
 
 interface MapFreezeState {
-  isFrozen: boolean
-  freezeMessage: string
+  mapFrozen: boolean
+  frozenBy: string | null
+  frozenByName: string | null
+  frozenAt: string | null
+  loading: boolean
 }
 
-export function useMapFreeze(campaignId: string) {
-  const [freezeState, setFreezeState] = useState<MapFreezeState>({
-    isFrozen: false,
-    freezeMessage: ''
+export function useMapFreeze(campaignId: string, isGM: boolean) {
+  const [state, setState] = useState<MapFreezeState>({
+    mapFrozen: false,
+    frozenBy: null,
+    frozenByName: null,
+    frozenAt: null,
+    loading: false
   })
 
-  // Função para congelar o mapa
-  const freezeMap = async (message: string = 'Mapa congelado pelo mestre') => {
+  // Função para alternar estado do congelamento
+  const toggleFreeze = async () => {
+    if (!isGM) return
+
+    setState(prev => ({ ...prev, loading: true }))
+
     try {
       const response = await fetch(`/api/campaigns/${campaignId}/freeze-map`, {
         method: 'POST',
@@ -20,53 +30,27 @@ export function useMapFreeze(campaignId: string) {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ 
-          frozen: true, 
-          message 
+          frozen: !state.mapFrozen
         }),
       })
 
       if (response.ok) {
-        setFreezeState({
-          isFrozen: true,
-          freezeMessage: message
-        })
+        const data = await response.json()
+        setState(prev => ({
+          ...prev,
+          mapFrozen: data.mapFrozen,
+          frozenBy: data.frozenBy,
+          frozenByName: data.frozenByName,
+          frozenAt: data.frozenAt,
+          loading: false
+        }))
+      } else {
+        console.error('Erro ao alterar estado do mapa:', response.statusText)
+        setState(prev => ({ ...prev, loading: false }))
       }
     } catch (error) {
-      console.error('Erro ao congelar mapa:', error)
-    }
-  }
-
-  // Função para descongelar o mapa
-  const unfreezeMap = async () => {
-    try {
-      const response = await fetch(`/api/campaigns/${campaignId}/freeze-map`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ 
-          frozen: false, 
-          message: '' 
-        }),
-      })
-
-      if (response.ok) {
-        setFreezeState({
-          isFrozen: false,
-          freezeMessage: ''
-        })
-      }
-    } catch (error) {
-      console.error('Erro ao descongelar mapa:', error)
-    }
-  }
-
-  // Alternar estado do congelamento
-  const toggleFreeze = async (message?: string) => {
-    if (freezeState.isFrozen) {
-      await unfreezeMap()
-    } else {
-      await freezeMap(message)
+      console.error('Erro ao alterar estado do mapa:', error)
+      setState(prev => ({ ...prev, loading: false }))
     }
   }
 
@@ -74,29 +58,33 @@ export function useMapFreeze(campaignId: string) {
   useEffect(() => {
     const loadFreezeState = async () => {
       try {
-        const response = await fetch(`/api/campaigns/${campaignId}/game-state`)
+        const response = await fetch(`/api/campaigns/${campaignId}/freeze-map`)
         if (response.ok) {
           const data = await response.json()
-          if (data.gameState?.mapFrozen) {
-            setFreezeState({
-              isFrozen: true,
-              freezeMessage: data.gameState.freezeMessage || 'Mapa congelado'
-            })
-          }
+          setState(prev => ({
+            ...prev,
+            mapFrozen: data.mapFrozen || false,
+            frozenBy: data.frozenBy || null,
+            frozenByName: data.frozenByName || null,
+            frozenAt: data.frozenAt || null
+          }))
         }
       } catch (error) {
         console.error('Erro ao carregar estado do mapa:', error)
       }
     }
 
-    loadFreezeState()
+    if (campaignId) {
+      loadFreezeState()
+    }
   }, [campaignId])
 
   return {
-    isFrozen: freezeState.isFrozen,
-    freezeMessage: freezeState.freezeMessage,
-    freezeMap,
-    unfreezeMap,
+    mapFrozen: state.mapFrozen,
+    frozenBy: state.frozenBy,
+    frozenByName: state.frozenByName,
+    frozenAt: state.frozenAt,
+    loading: state.loading,
     toggleFreeze
   }
 }
