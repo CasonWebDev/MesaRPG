@@ -74,10 +74,8 @@ public/uploads/
 coverage/
 .nyc_output/
 jest/
-*.spec.ts
-*.spec.tsx
-*.test.ts
-*.test.tsx
+test-results/
+playwright-report/
 
 # Misc
 .cache/
