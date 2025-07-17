@@ -7,7 +7,7 @@ import { z } from "zod"
 const updateCampaignSchema = z.object({
   name: z.string().min(1, "Nome é obrigatório").max(100, "Nome muito longo"),
   description: z.string().optional(),
-  system: z.string().min(1, "Sistema é obrigatório").max(50, "Sistema muito longo"),
+  rpgSystem: z.string().min(1, "Sistema é obrigatório").max(50, "Sistema muito longo"),
   playerLimit: z.union([
     z.number().int().min(1, "Limite deve ser pelo menos 1").max(20, "Limite máximo é 20"),
     z.string().transform(val => parseInt(val)).refine(val => val >= 1 && val <= 20, "Limite deve ser entre 1 e 20")
@@ -65,7 +65,7 @@ export async function PUT(
       data: {
         name: validatedData.name,
         description: validatedData.description || null,
-        system: validatedData.system,
+        rpgSystem: validatedData.rpgSystem,
         playerLimit: validatedData.playerLimit,
         updatedAt: new Date()
       },
@@ -73,7 +73,7 @@ export async function PUT(
         id: true,
         name: true,
         description: true,
-        system: true,
+        rpgSystem: true,
         playerLimit: true,
         createdAt: true,
         updatedAt: true,

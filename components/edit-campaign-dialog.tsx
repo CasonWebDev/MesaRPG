@@ -34,7 +34,7 @@ export function EditCampaignDialog({
   const [formData, setFormData] = useState({
     name: campaign.name,
     description: campaign.description,
-    system: campaign.system,
+    rpgSystem: campaign.system,
   })
   const { toast } = useToast()
 
@@ -44,7 +44,7 @@ export function EditCampaignDialog({
       setFormData({
         name: campaign.name,
         description: campaign.description,
-        system: campaign.system,
+        rpgSystem: campaign.system,
       })
     }
   }, [campaign, open])
@@ -99,7 +99,7 @@ export function EditCampaignDialog({
     setFormData({
       name: campaign.name,
       description: campaign.description,
-      system: campaign.system,
+      rpgSystem: campaign.system,
     })
   }
 
@@ -140,8 +140,8 @@ export function EditCampaignDialog({
               </Label>
               <Input
                 id="edit-system"
-                value={formData.system}
-                onChange={(e) => handleInputChange("system", e.target.value)}
+                value={formData.rpgSystem}
+                onChange={(e) => handleInputChange("rpgSystem", e.target.value)}
                 className="col-span-3"
                 placeholder="Ex: D&D 5e, Pathfinder, Call of Cthulhu"
                 required
@@ -173,7 +173,7 @@ export function EditCampaignDialog({
             </Button>
             <Button 
               type="submit" 
-              disabled={isLoading || !formData.name.trim() || !formData.system.trim()}
+              disabled={isLoading || !formData.name.trim() || !formData.rpgSystem.trim()}
             >
               {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               {isLoading ? "Salvando..." : "Salvar Alterações"}

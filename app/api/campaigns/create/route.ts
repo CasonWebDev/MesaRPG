@@ -36,7 +36,6 @@ export async function POST(request: NextRequest) {
       data: {
         name: validatedData.name,
         description: validatedData.description,
-        system: "D&D 5ª Edição",
         rpgSystem: validatedData.rpgSystem,
         ownerId: user.id,
       },
@@ -44,7 +43,6 @@ export async function POST(request: NextRequest) {
         id: true,
         name: true,
         description: true,
-        system: true,
         rpgSystem: true,
         createdAt: true,
       }

@@ -26,7 +26,7 @@ export async function GET(
             id: true,
             name: true,
             description: true,
-            system: true
+            rpgSystem: true
           }
         },
         createdBy: {

@@ -25,7 +25,7 @@ export default async function DashboardPage() {
           id: true,
           name: true,
           description: true,
-          system: true,
+          rpgSystem: true,
           createdAt: true,
         },
         orderBy: { createdAt: 'desc' }
@@ -37,7 +37,7 @@ export default async function DashboardPage() {
               id: true,
               name: true,
               description: true,
-              system: true,
+              rpgSystem: true,
               createdAt: true,
             }
           }
@@ -58,7 +58,7 @@ export default async function DashboardPage() {
       id: campaign.id,
       name: campaign.name,
       description: campaign.description || "Sem descrição",
-      system: campaign.system,
+      system: campaign.rpgSystem,
       userRole: "Mestre" as const
     })),
     // Campaigns where user is a player
@@ -66,7 +66,7 @@ export default async function DashboardPage() {
       id: membership.campaign.id,
       name: membership.campaign.name,
       description: membership.campaign.description || "Sem descrição",
-      system: membership.campaign.system,
+      system: membership.campaign.rpgSystem,
       userRole: "Jogador" as const
     }))
   ]

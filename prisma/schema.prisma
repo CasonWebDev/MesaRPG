@@ -37,11 +37,10 @@ model Campaign {
   id          String   @id @default(cuid())
   name        String
   description String?
-  system      String   @default("Generic")
-  rpgSystem   String   @default("generic")
+  rpgSystem   String   @default("generic") @map("rpg_system")
   ownerId     String @map("owner_id")
-  isActive    Boolean  @default(true)
-  playerLimit Int?     @default(8)
+  isActive    Boolean  @default(true) @map("is_active")
+  playerLimit Int?     @default(8) @map("player_limit")
   settings    String   @default("{}")
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
@@ -79,12 +78,12 @@ model CampaignMember {
 
 model Map {
   id          String   @id @default(cuid())
-  campaignId  String
+  campaignId  String @map("campaign_id")
   name        String
   description String?
-  imageUrl    String?
-  isActive    Boolean  @default(false)
-  gridSize    Int      @default(20)
+  imageUrl    String? @map("image_url")
+  isActive    Boolean  @default(false) @map("is_active")
+  gridSize    Int      @default(20) @map("grid_size")
   settings    String   @default("{}")
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
@@ -97,15 +96,15 @@ model Map {
 
 model Character {
   id         String        @id @default(cuid())
-  campaignId String
-  userId     String?
+  campaignId String @map("campaign_id")
+  userId     String? @map("user_id")
   name       String
   type       CharacterType
   data       String        @default("{}")
-  tokenData  String        @default("{}")
-  templateId String?
-  createdAt  DateTime      @default(now())
-  updatedAt  DateTime      @updatedAt
+  tokenData  String        @default("{}") @map("token_data")
+  templateId String? @map("template_id")
+  createdAt  DateTime      @default(now()) @map("created_at")
+  updatedAt  DateTime      @updatedAt @map("updated_at")
 
   // Relacionamentos
   campaign Campaign      @relation(fields: [campaignId], references: [id], onDelete: Cascade)
@@ -118,12 +117,12 @@ model Character {
 
 model ChatMessage {
   id         String      @id @default(cuid())
-  campaignId String
-  userId     String
+  campaignId String @map("campaign_id")
+  userId     String @map("user_id")
   message    String
   type       MessageType @default(CHAT)
   metadata   String      @default("{}")
-  createdAt  DateTime    @default(now())
+  createdAt  DateTime    @default(now()) @map("created_at")
 
   // Relacionamentos
   campaign Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
@@ -134,13 +133,13 @@ model ChatMessage {
 
 model Handout {
   id         String   @id @default(cuid())
-  campaignId String
+  campaignId String @map("campaign_id")
   name       String
   content    String
   attachments String  @default("[]")
-  sharedWith  String  @default("[]")
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  sharedWith  String  @default("[]") @map("shared_with")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
 
   // Relacionamentos
   campaign Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
@@ -150,17 +149,17 @@ model Handout {
 
 model GameState {
   id            String   @id @default(cuid())
-  campaignId    String   @unique
-  activeMapId   String?
+  campaignId    String   @unique @map("campaign_id")
+  activeMapId   String? @map("active_map_id")
   tokens        String   @default("[]")
-  gameData      String   @default("{}")
-  gridConfig    String   @default("{}")
-  fogAreas      String   @default("[]")
-  mapFrozen     Boolean  @default(false)
-  frozenBy      String?
-  frozenAt      DateTime?
-  lastActivity  DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  gameData      String   @default("{}") @map("game_data")
+  gridConfig    String   @default("{}") @map("grid_config")
+  fogAreas      String   @default("[]") @map("fog_areas")
+  mapFrozen     Boolean  @default(false) @map("map_frozen")
+  frozenBy      String? @map("frozen_by")
+  frozenAt      DateTime? @map("frozen_at")
+  lastActivity  DateTime @default(now()) @map("last_activity")
+  updatedAt     DateTime @updatedAt @map("updated_at")
 
   // Relacionamentos
   campaign Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
@@ -170,13 +169,13 @@ model GameState {
 
 model SheetTemplate {
   id         String   @id @default(cuid())
-  campaignId String
+  campaignId String @map("campaign_id")
   name       String
   type       CharacterType
   fields     String   @default("[]")
-  isDefault  Boolean  @default(false)
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  isDefault  Boolean  @default(false) @map("is_default")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
 
   // Relacionamentos
   campaign   Campaign    @relation(fields: [campaignId], references: [id], onDelete: Cascade)
@@ -187,16 +186,16 @@ model SheetTemplate {
 
 model File {
   id           String      @id @default(cuid())
-  campaignId   String
+  campaignId   String @map("campaign_id")
   name         String
-  originalName String
+  originalName String @map("original_name")
   url          String
   type         String
   size         Int
   category     FileCategory @default(MISC)
-  uploadedById String
-  createdAt    DateTime    @default(now())
-  updatedAt    DateTime    @updatedAt
+  uploadedById String @map("uploaded_by_id")
+  createdAt    DateTime    @default(now()) @map("created_at")
+  updatedAt    DateTime    @updatedAt @map("updated_at")
 
   // Relacionamentos
   campaign   Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
@@ -207,14 +206,14 @@ model File {
 
 model CampaignInvite {
   id         String   @id @default(cuid())
-  campaignId String
+  campaignId String @map("campaign_id")
   token      String   @unique
   email      String?
-  createdById String
-  usedById   String?
-  expiresAt  DateTime?
-  usedAt     DateTime?
-  createdAt  DateTime @default(now())
+  createdById String @map("created_by_id")
+  usedById   String? @map("used_by_id")
+  expiresAt  DateTime? @map("expires_at")
+  usedAt     DateTime? @map("used_at")
+  createdAt  DateTime @default(now()) @map("created_at")
 
   // Relacionamentos
   campaign    Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
@@ -226,31 +225,31 @@ model CampaignInvite {
 
 model Token {
   id           String     @id @default(cuid())
-  campaignId   String
+  campaignId   String @map("campaign_id")
   name         String
   x            Float
   y            Float
-  imageUrl     String?
+  imageUrl     String? @map("image_url")
   size         Float      @default(1)
   rotation     Float      @default(0)
   visible      Boolean    @default(true)
-  characterId  String?
-  ownerId      String
+  characterId  String? @map("character_id")
+  ownerId      String @map("owner_id")
   type         TokenType  @default(CUSTOM)
-  autoCreated  Boolean    @default(false)
-  syncAvatar   Boolean    @default(false)
-  borderColor  String     @default("#6b7280")
-  showName     Boolean    @default(true)
-  showHealthBar Boolean   @default(false)
+  autoCreated  Boolean    @default(false) @map("auto_created")
+  syncAvatar   Boolean    @default(false) @map("sync_avatar")
+  borderColor  String     @default("#6b7280") @map("border_color")
+  showName     Boolean    @default(true) @map("show_name")
+  showHealthBar Boolean   @default(false) @map("show_health_bar")
   conditions   String     @default("[]")
-  canPlayerMove Boolean?
+  canPlayerMove Boolean? @map("can_player_move")
   locked       Boolean    @default(false)
   hidden       Boolean    @default(false)
-  ownershipType String    @default("manual")
-  lastSyncAt   DateTime?
-  createdAt    DateTime   @default(now())
-  updatedAt    DateTime   @updatedAt
-  createdBy    String
+  ownershipType String    @default("manual") @map("ownership_type")
+  lastSyncAt   DateTime? @map("last_sync_at")
+  createdAt    DateTime   @default(now()) @map("created_at")
+  updatedAt    DateTime   @updatedAt @map("updated_at")
+  createdBy    String @map("created_by")
 
   // Relacionamentos
   campaign   Campaign   @relation(fields: [campaignId], references: [id], onDelete: Cascade)
