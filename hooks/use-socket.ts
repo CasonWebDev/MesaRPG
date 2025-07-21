@@ -230,6 +230,14 @@ export function useSocket(campaignId?: string) {
           setCharacterUpdates(prev => [...prev, characterUpdate])
         }
 
+        const handleMapFrozenChanged = (data: any) => {
+          console.log('🔒 Global WebSocket: Received map:frozen-changed event:', data)
+          // Re-emit for any listening components
+          if (socketInstance) {
+            socketInstance.emit('map:frozen-changed-internal', data)
+          }
+        }
+
         const handleError = (error: string) => {
           console.error('❌ Socket error:', error)
           
@@ -259,6 +267,7 @@ export function useSocket(campaignId?: string) {
         socketInstance.on('game:tokens-cleared', handleTokensClear)
         socketInstance.on('game:token-deleted', handleTokenDelete)
         socketInstance.on('character:updated', handleCharacterUpdate)
+        socketInstance.on('map:frozen-changed', handleMapFrozenChanged)
         socketInstance.on('campaign:joined', handleCampaignJoined)
         socketInstance.on('error', handleError)
 
@@ -280,6 +289,7 @@ export function useSocket(campaignId?: string) {
           socketInstance.off('game:tokens-cleared', handleTokensClear)
           socketInstance.off('game:token-deleted', handleTokenDelete)
           socketInstance.off('character:updated', handleCharacterUpdate)
+          socketInstance.off('map:frozen-changed', handleMapFrozenChanged)
           socketInstance.off('campaign:joined', handleCampaignJoined)
           socketInstance.off('error', handleError)
         }

@@ -1,7 +1,6 @@
 "use client"
 
-import { useState } from "react"
-import { Lock, Eye, EyeOff } from "lucide-react"
+import { Lock } from "lucide-react"
 import { useMapFreeze } from "@/hooks/use-map-freeze"
 
 interface FrozenMapOverlayProps {
@@ -10,32 +9,17 @@ interface FrozenMapOverlayProps {
 }
 
 export function FrozenMapOverlay({ campaignId, isGM }: FrozenMapOverlayProps) {
-  const [showOverlay, setShowOverlay] = useState(true)
+  // SEMPRE chamar o hook, independente das condições
   const { mapFrozen, frozenByName, frozenAt } = useMapFreeze(campaignId, isGM)
 
   // Para GMs, não mostrar overlay (eles sempre veem tudo)
+  // Para Players, só mostrar quando o mapa estiver congelado
   if (isGM || !mapFrozen) {
     return null
   }
 
-  // Para jogadores, mostrar overlay quando mapa está congelado
-  if (!showOverlay) {
-    // Botão pequeno para mostrar o overlay novamente
-    return (
-      <div className="fixed top-4 right-4 z-50">
-        <button
-          onClick={() => setShowOverlay(true)}
-          className="bg-destructive/90 text-destructive-foreground p-2 rounded-lg shadow-lg hover:bg-destructive transition-colors"
-          title="Mostrar informações do mapa congelado"
-        >
-          <Lock className="h-4 w-4" />
-        </button>
-      </div>
-    )
-  }
-
   return (
-    <div className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm flex items-center justify-center">
+    <div className="absolute inset-0 z-50 bg-black/90 backdrop-blur-sm flex items-center justify-center">
       <div className="bg-card/95 rounded-xl shadow-2xl p-8 max-w-md mx-4 text-center border border-border">
         <div className="mb-6">
           <div className="bg-destructive/20 p-4 rounded-full w-20 h-20 mx-auto mb-4 flex items-center justify-center">
@@ -58,26 +42,14 @@ export function FrozenMapOverlay({ campaignId, isGM }: FrozenMapOverlayProps) {
           </div>
         )}
 
-        <div className="flex gap-3 justify-center">
-          <button
-            onClick={() => setShowOverlay(false)}
-            className="flex items-center gap-2 px-4 py-2 bg-secondary text-secondary-foreground rounded-lg hover:bg-secondary/80 transition-colors"
-          >
-            <EyeOff className="h-4 w-4" />
-            Ocultar Aviso
-          </button>
-          <button
-            onClick={() => {/* Manter visível */}}
-            className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
-            disabled
-          >
-            <Eye className="h-4 w-4" />
-            Aguardar Liberação
-          </button>
-        </div>
-
-        <div className="mt-4 text-xs text-muted-foreground">
-          Este aviso desaparecerá automaticamente quando o mestre liberar o mapa.
+        <div className="text-sm text-muted-foreground">
+          <p className="flex items-center justify-center gap-2">
+            <Lock className="h-4 w-4" />
+            Aguardando liberação do mestre...
+          </p>
+          <p className="mt-2 text-xs">
+            Este aviso desaparecerá automaticamente quando o mestre liberar o mapa.
+          </p>
         </div>
       </div>
     </div>
