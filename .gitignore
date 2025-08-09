@@ -81,3 +81,4 @@ playwright-report/
 .cache/
 .parcel-cache/
 .eslintcache
+.npm-cache/

@@ -24,6 +24,7 @@ export default function LoginPage() {
   const inviteToken = searchParams.get('invite')
 
   useEffect(() => {
+    import("altcha");
     if (inviteToken) {
       // Armazenar o token no localStorage para uso após o login
       localStorage.setItem('pendingInvite', inviteToken)
@@ -35,18 +36,22 @@ export default function LoginPage() {
     setIsLoading(true)
     setError("")
 
+    const formData = new FormData(e.target as HTMLFormElement)
+    const altchaPayload = formData.get('altcha')
+
     try {
       const result = await signIn("credentials", {
         email,
         password,
+        altcha: altchaPayload,
         redirect: false,
       })
 
       if (result?.error) {
-        setError("Credenciais inválidas. Tente novamente.")
+        setError(result.error)
         toast({
           title: "Erro no login",
-          description: "Credenciais inválidas. Verifique seus dados e tente novamente.",
+          description: result.error,
           variant: "destructive",
         })
       } else {
@@ -100,6 +105,7 @@ export default function LoginPage() {
                 <Label htmlFor="email">Email</Label>
                 <Input
                   id="email"
+                  name="email"
                   type="email"
                   placeholder="mestre@email.com"
                   value={email}
@@ -114,6 +120,7 @@ export default function LoginPage() {
                 <Label htmlFor="password">Senha</Label>
                 <Input
                   id="password"
+                  name="password"
                   type="password"
                   placeholder="********"
                   value={password}
@@ -124,18 +131,18 @@ export default function LoginPage() {
                   autoComplete="current-password"
                 />
               </div>
+              <altcha-widget challengeurl="/api/auth/altcha"></altcha-widget>
             </div>
+            <Button
+              type="submit"
+              className="w-full mt-4"
+              disabled={isLoading}
+            >
+              {isLoading ? "Entrando..." : "Entrar"}
+            </Button>
           </form>
         </CardContent>
-        <CardFooter className="flex-col items-stretch gap-4">
-          <Button
-            type="submit"
-            className="w-full"
-            onClick={handleLogin}
-            disabled={isLoading}
-          >
-            {isLoading ? "Entrando..." : "Entrar"}
-          </Button>
+        <CardFooter className="flex-col items-stretch gap-4 mt-4">
           <div className="text-center text-sm">
             <p className="text-muted-foreground">
               Não tem uma conta?{" "}
