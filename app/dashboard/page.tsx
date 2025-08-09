@@ -77,7 +77,12 @@ export default async function DashboardPage() {
           <h1 className="text-3xl font-heading text-primary">MesaRPG</h1>
           <div className="flex items-center gap-4">
             <CreateCampaignDialog />
-            <UserMenu user={{ name: user.name || 'Usuário', email: user.email }} />
+            <UserMenu user={{ 
+              name: user.name || 'Usuário', 
+              email: user.email,
+              plan: user.plan,
+              credits: user.credits
+            }} />
           </div>
         </div>
       </header>

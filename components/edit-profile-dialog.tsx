@@ -19,10 +19,21 @@ import { ThemeToggleWithText } from "@/components/ui/theme-toggle"
 import { Separator } from "@/components/ui/separator"
 import { Loader2 } from "lucide-react"
 
+// Mapeamento de Planos para exibição
+const planNames: { [key: string]: string } = {
+  FREE: "Gratuito",
+  MONTHLY: "Mensal",
+  ANNUAL: "Anual",
+  LIFETIME: "Vitalício",
+  CREDITS: "Créditos Avulsos",
+};
+
 interface EditProfileDialogProps {
   user: {
     name: string
     email: string
+    plan: string
+    credits: number
   }
   open: boolean
   onOpenChange: (open: boolean) => void
@@ -143,6 +154,10 @@ export function EditProfileDialog({ user, open, onOpenChange }: EditProfileDialo
     setError("")
   }
 
+  const canChangePlan = ['FREE', 'MONTHLY', 'ANNUAL', 'CREDITS'].includes(user.plan);
+  const canBuyCredits = user.plan === 'FREE';
+  const canCancelPlan = ['MONTHLY', 'ANNUAL'].includes(user.plan);
+
   return (
     <Dialog 
       open={open} 
@@ -156,7 +171,7 @@ export function EditProfileDialog({ user, open, onOpenChange }: EditProfileDialo
           <DialogHeader>
             <DialogTitle>Editar Perfil</DialogTitle>
             <DialogDescription>
-              Atualize suas informações pessoais. Deixe os campos de senha em branco se não quiser alterá-la.
+              Atualize suas informações pessoais e gerencie sua assinatura.
             </DialogDescription>
           </DialogHeader>
           
@@ -194,6 +209,29 @@ export function EditProfileDialog({ user, open, onOpenChange }: EditProfileDialo
                 required
                 autoComplete="email"
               />
+            </div>
+            
+            <Separator />
+
+            <div className="pt-4">
+              <h4 className="text-sm font-medium mb-3">Plano e Assinatura</h4>
+              <div className="space-y-4">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-muted-foreground">Plano Atual:</span>
+                  <span className="font-bold">{planNames[user.plan] || "Não definido"}</span>
+                </div>
+                {user.plan === 'CREDITS' && (
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-muted-foreground">Créditos:</span>
+                    <span className="font-bold">{user.credits}</span>
+                  </div>
+                )}
+                <div className="flex flex-col sm:flex-row gap-2">
+                  {canChangePlan && <Button type="button" className="flex-1">Mudar Plano</Button>}
+                  {canBuyCredits && <Button type="button" variant="secondary" className="flex-1">Comprar Créditos</Button>}
+                  {canCancelPlan && <Button type="button" variant="destructive" className="flex-1">Cancelar Plano</Button>}
+                </div>
+              </div>
             </div>
             
             <Separator />

@@ -18,6 +18,8 @@ interface UserMenuProps {
   user: {
     name: string
     email: string
+    plan: string
+    credits: number
   }
 }
 

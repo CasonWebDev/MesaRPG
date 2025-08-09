@@ -54,6 +54,8 @@ export const authOptions: NextAuthOptions = {
             email: user.email,
             name: user.name,
             role: user.role.toString(), // Garante que o enum seja uma string
+            plan: user.plan,
+            credits: user.credits,
           };
         } catch (error) {
           console.error("Auth error:", error);
@@ -76,6 +78,8 @@ export const authOptions: NextAuthOptions = {
       if (user) {
         token.id = user.id;
         token.role = user.role;
+        token.plan = user.plan;
+        token.credits = user.credits;
       }
       return token;
     },
@@ -84,6 +88,8 @@ export const authOptions: NextAuthOptions = {
       if (session.user) {
         session.user.id = token.id as string;
         session.user.role = token.role as string;
+        session.user.plan = token.plan as string;
+        session.user.credits = token.credits as number;
       }
       return session;
     },

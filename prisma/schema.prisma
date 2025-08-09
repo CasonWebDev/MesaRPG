@@ -30,6 +30,12 @@ model User {
   ownedTokens     Token[]    @relation("OwnedTokens")
   createdTokens   Token[]    @relation("CreatedTokens")
 
+  // Campos de Plano e Assinatura
+  plan               PlanType            @default(FREE)
+  credits            Int                 @default(0)
+  planExpiresAt      DateTime?           @map("plan_expires_at")
+  subscriptionStatus SubscriptionStatus? @map("subscription_status")
+
   @@map("users")
 }
 
@@ -265,6 +271,21 @@ enum Role {
   GM
   PLAYER
   ADMIN
+}
+
+enum PlanType {
+  FREE
+  MONTHLY
+  ANNUAL
+  LIFETIME
+  CREDITS
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  CANCELED
+  INCOMPLETE
+  PAST_DUE
 }
 
 enum FileCategory {
