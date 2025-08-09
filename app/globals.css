@@ -47,6 +47,16 @@
     --game-sheet: 0 0% 100%;       /* Character sheet - fundo branco */
     --game-sheet-border: 210 10% 85%; /* Character sheet - bordas */
     --game-sheet-input: 210 10% 97%; /* Character sheet - inputs */
+
+    --altcha-color-base: hsl(var(--input));
+    --altcha-color-border: hsl(var(--border));
+    --altcha-color-text: hsl(var(--muted-foreground));
+    --altcha-color-primary: hsl(var(--primary));
+    --altcha-color-success: hsl(var(--primary));
+    --altcha-color-error: hsl(var(--destructive));
+    --altcha-border-radius: var(--radius);
+    --altcha-font-size: 0.95rem;
+    --altcha-max-width: 100%;
   }
 
   .dark {

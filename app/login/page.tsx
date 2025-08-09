@@ -1,5 +1,6 @@
 "use client"
 
+import "altcha/i18n/pt-br"
 import { useState, useEffect } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { signIn } from "next-auth/react"
@@ -131,11 +132,16 @@ export default function LoginPage() {
                   autoComplete="current-password"
                 />
               </div>
-              <altcha-widget challengeurl="/api/auth/altcha"></altcha-widget>
+              <altcha-widget 
+                challengeurl="/api/auth/altcha" 
+                language="pt-br" 
+                hidefooter
+              >
+              </altcha-widget>
             </div>
             <Button
               type="submit"
-              className="w-full mt-4"
+              className="w-full mt-4 bt-submit"
               disabled={isLoading}
             >
               {isLoading ? "Entrando..." : "Entrar"}
