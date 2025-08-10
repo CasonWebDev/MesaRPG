@@ -33,6 +33,7 @@ model User {
   // Campos de Plano e Assinatura
   plan               PlanType            @default(FREE)
   credits            Int                 @default(0)
+  planStartedAt      DateTime?           @map("plan_started_at")
   planExpiresAt      DateTime?           @map("plan_expires_at")
   subscriptionStatus SubscriptionStatus? @map("subscription_status")
 

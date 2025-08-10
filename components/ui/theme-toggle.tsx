@@ -73,8 +73,11 @@ export function ThemeToggleWithText({
       className={cn("justify-start", className)}
       onClick={toggleTheme}
     >
-      <Sun className="h-4 w-4 mr-2 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-      <Moon className="absolute h-4 w-4 mr-2 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+      {theme === "light" ? 
+      <Sun className="h-4 w-1 mr-2 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+      :
+      <Moon className="h-4 w-1 mr-2 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+      }
       <span className="ml-6">
         {theme === "light" ? "Tema Escuro" : "Tema Claro"}
       </span>

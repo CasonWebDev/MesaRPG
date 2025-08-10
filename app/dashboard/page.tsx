@@ -6,6 +6,7 @@ import { type Campaign } from "@/components/campaign-card"
 import { CreateCampaignDialog } from "@/components/create-campaign-dialog"
 import { UserMenu } from "@/components/user-menu"
 import { CampaignListClient } from "@/components/campaign-list-client"
+import { SubscriptionNotifier } from "@/components/subscription-notifier"
 
 export const dynamic = 'force-dynamic'
 
@@ -17,7 +18,7 @@ export default async function DashboardPage() {
   }
 
   // Get user with their campaigns
-  const user = await prisma.user.findUnique({
+  let user = await prisma.user.findUnique({
     where: { email: session.user.email },
     include: {
       ownedCampaigns: {
@@ -51,6 +52,15 @@ export default async function DashboardPage() {
     redirect("/login")
   }
 
+  let notification = null;
+  if (session.user.justDowngraded) {
+    notification = {
+      planExpired: true,
+      planStartedAt: session.user.planStartedAt,
+      planExpiresAt: session.user.planExpiresAt,
+    };
+  }
+
   // Transform data to match Campaign interface
   const campaigns: Campaign[] = [
     // User's owned campaigns (where they are GM)
@@ -72,6 +82,7 @@ export default async function DashboardPage() {
   ]
   return (
     <div className="min-h-screen bg-background">
+      {notification && <SubscriptionNotifier notification={notification} />}
       <header className="bg-card border-b border-border p-4 shadow-sm">
         <div className="container mx-auto flex justify-between items-center">
           <h1 className="text-3xl font-heading text-primary">MesaRPG</h1>
@@ -81,7 +92,9 @@ export default async function DashboardPage() {
               name: user.name || 'Usuário', 
               email: user.email,
               plan: user.plan,
-              credits: user.credits
+              credits: user.credits,
+              planStartedAt: user.planStartedAt,
+              planExpiresAt: user.planExpiresAt,
             }} />
           </div>
         </div>

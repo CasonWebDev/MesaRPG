@@ -9,6 +9,9 @@ declare module 'next-auth' {
       role: string
       plan: string
       credits: number
+      planStartedAt?: string | null
+      planExpiresAt?: string | null
+      justDowngraded?: boolean
     }
   }
 
@@ -19,6 +22,9 @@ declare module 'next-auth' {
     role: string
     plan: string
     credits: number
+    planStartedAt?: Date | null
+    planExpiresAt?: Date | null
+    justDowngraded?: boolean
   }
 }
 
@@ -27,5 +33,8 @@ declare module 'next-auth/jwt' {
     role: string
     plan: string
     credits: number
+    planStartedAt?: string | null
+    planExpiresAt?: string | null
+    justDowngraded?: boolean
   }
 }

@@ -6,6 +6,7 @@ import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/lib/auth"
 import "./globals.css"
 import { cn } from "@/lib/utils"
+import { Toaster } from "@/components/ui/sonner"
 
 const fontHeading = Cinzel_Decorative({
   subsets: ["latin"],
@@ -37,6 +38,7 @@ export default async function RootLayout({
       <body className={cn("antialiased bg-background text-foreground", fontHeading.variable, fontBody.variable)}>
         <ClientProviders session={session}>
           {children}
+          <Toaster />
         </ClientProviders>
       </body>
     </html>

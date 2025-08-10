@@ -48,14 +48,40 @@ export const authOptions: NextAuthOptions = {
             throw new Error("Credenciais inválidas.");
           }
 
-          // Retorna um objeto PLAIN com tipos serializáveis
+          let userToReturn = { ...user, justDowngraded: false };
+
+          // VERIFICAÇÃO DE EXPIRAÇÃO DO PLANO
+          const isPaidPlan = ['MONTHLY', 'ANNUAL'].includes(user.plan);
+          if (isPaidPlan && user.planExpiresAt && new Date() > user.planExpiresAt) {
+            const updatedUser = await prisma.user.update({
+              where: { id: user.id },
+              data: {
+                plan: 'FREE',
+                planStartedAt: null,
+                planExpiresAt: null,
+                subscriptionStatus: 'CANCELED',
+              },
+            });
+            userToReturn = { 
+              ...updatedUser, 
+              justDowngraded: true,
+              // Passa as datas antigas para a notificação
+              planStartedAt: user.planStartedAt, 
+              planExpiresAt: user.planExpiresAt,
+            };
+          }
+
+          // Retorna um objeto PLAIN com os dados do usuário (possivelmente atualizados)
           return {
-            id: user.id,
-            email: user.email,
-            name: user.name,
-            role: user.role.toString(), // Garante que o enum seja uma string
-            plan: user.plan,
-            credits: user.credits,
+            id: userToReturn.id,
+            email: userToReturn.email,
+            name: userToReturn.name,
+            role: userToReturn.role.toString(),
+            plan: userToReturn.plan,
+            credits: userToReturn.credits,
+            planStartedAt: userToReturn.planStartedAt,
+            planExpiresAt: userToReturn.planExpiresAt,
+            justDowngraded: userToReturn.justDowngraded,
           };
         } catch (error) {
           console.error("Auth error:", error);
@@ -74,22 +100,30 @@ export const authOptions: NextAuthOptions = {
   },
   callbacks: {
     async jwt({ token, user }) {
-      // Na primeira vez (login), o objeto 'user' está disponível
       if (user) {
         token.id = user.id;
         token.role = user.role;
         token.plan = user.plan;
         token.credits = user.credits;
+        if (user.justDowngraded) {
+          token.justDowngraded = true;
+          token.planStartedAt = user.planStartedAt?.toISOString();
+          token.planExpiresAt = user.planExpiresAt?.toISOString();
+        }
       }
       return token;
     },
     async session({ session, token }) {
-      // Adiciona as propriedades do token ao objeto da sessão
       if (session.user) {
         session.user.id = token.id as string;
         session.user.role = token.role as string;
         session.user.plan = token.plan as string;
         session.user.credits = token.credits as number;
+        if (token.justDowngraded) {
+          session.user.justDowngraded = true;
+          session.user.planStartedAt = token.planStartedAt;
+          session.user.planExpiresAt = token.planExpiresAt;
+        }
       }
       return session;
     },

@@ -20,6 +20,8 @@ interface UserMenuProps {
     email: string
     plan: string
     credits: number
+    planStartedAt: Date | null
+    planExpiresAt: Date | null
   }
 }
 
