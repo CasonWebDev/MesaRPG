@@ -64,6 +64,25 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    // Busca o usuário e a contagem de campanhas que ele possui
+    const user = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: {
+        plan: true,
+        _count: {
+          select: { ownedCampaigns: true },
+        },
+      },
+    });
+
+    // Aplica a regra de negócio para o plano Gratuito
+    if (user?.plan === 'FREE' && user._count.ownedCampaigns >= 1) {
+      return NextResponse.json(
+        { error: 'Usuários do plano Gratuito podem ter apenas uma campanha. Exclua a campanha existente para criar uma nova.' },
+        { status: 403 } // 403 Forbidden é mais apropriado aqui
+      );
+    }
+
     const { name, description } = await request.json()
 
     if (!name) {

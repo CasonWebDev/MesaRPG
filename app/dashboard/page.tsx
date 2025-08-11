@@ -61,6 +61,8 @@ export default async function DashboardPage() {
     };
   }
 
+  const canCreateCampaign = user.plan !== 'FREE' || user.ownedCampaigns.length < 1;
+
   // Transform data to match Campaign interface
   const campaigns: Campaign[] = [
     // User's owned campaigns (where they are GM)
@@ -87,7 +89,7 @@ export default async function DashboardPage() {
         <div className="container mx-auto flex justify-between items-center">
           <h1 className="text-3xl font-heading text-primary">MesaRPG</h1>
           <div className="flex items-center gap-4">
-            <CreateCampaignDialog />
+            <CreateCampaignDialog canCreate={canCreateCampaign} />
             <UserMenu user={{ 
               name: user.name || 'Usuário', 
               email: user.email,
@@ -104,7 +106,7 @@ export default async function DashboardPage() {
         {campaigns.length === 0 ? (
           <div className="text-center py-12">
             <p className="text-muted-foreground text-lg mb-4">Você ainda não participa de nenhuma campanha.</p>
-            <CreateCampaignDialog />
+            <CreateCampaignDialog canCreate={canCreateCampaign} />
           </div>
         ) : (
           <CampaignListClient campaigns={campaigns} />
