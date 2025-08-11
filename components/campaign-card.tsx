@@ -12,9 +12,11 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { MoreVertical, Edit, Trash2, Settings } from "lucide-react"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
+import { MoreVertical, Edit, Trash2, Settings, Archive } from "lucide-react"
 import { EditCampaignDialog } from "./edit-campaign-dialog"
 import { DeleteCampaignDialog } from "./delete-campaign-dialog"
+import { cn } from "@/lib/utils"
 
 export interface Campaign {
   id: string
@@ -22,6 +24,7 @@ export interface Campaign {
   description: string
   system: string
   userRole: "Mestre" | "Jogador"
+  isArchived: boolean
 }
 
 interface CampaignCardProps {
@@ -34,12 +37,17 @@ export function CampaignCard({ campaign, onCampaignUpdated, onCampaignDeleted }:
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
 
-  return (
-    <Card className="bg-parchment text-ink-text flex flex-col">
+  const cardContent = (
+    <Card className={cn("bg-parchment text-ink-text flex flex-col transition-opacity", {
+      "opacity-50": campaign.isArchived,
+    })}>
       <CardHeader>
         <div className="flex justify-between items-start">
           <div className="flex-1">
-            <CardTitle className="text-2xl font-heading">{campaign.name}</CardTitle>
+            <CardTitle className="text-2xl font-heading flex items-center gap-2">
+              {campaign.isArchived && <Archive className="h-5 w-5 text-muted-foreground" />}
+              {campaign.name}
+            </CardTitle>
             <CardDescription className="text-ink-text/80 pt-1">{campaign.system}</CardDescription>
           </div>
           <div className="flex items-center gap-2">
@@ -49,7 +57,7 @@ export function CampaignCard({ campaign, onCampaignUpdated, onCampaignDeleted }:
             {campaign.userRole === "Mestre" && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="h-8 w-8">
+                  <Button variant="ghost" size="icon" className="h-8 w-8" disabled={campaign.isArchived}>
                     <MoreVertical className="h-4 w-4" />
                     <span className="sr-only">Menu de opções</span>
                   </Button>
@@ -87,8 +95,8 @@ export function CampaignCard({ campaign, onCampaignUpdated, onCampaignDeleted }:
         <p>{campaign.description}</p>
       </CardContent>
       <CardFooter>
-        <Link href={`/campaign/${campaign.id}/play?role=${campaign.userRole}`} className="w-full">
-          <Button className="w-full">Entrar na Campanha</Button>
+        <Link href={`/campaign/${campaign.id}/play?role=${campaign.userRole}`} className={cn("w-full", { "pointer-events-none": campaign.isArchived })}>
+          <Button className="w-full" disabled={campaign.isArchived}>Entrar na Campanha</Button>
         </Link>
       </CardFooter>
 
@@ -106,5 +114,22 @@ export function CampaignCard({ campaign, onCampaignUpdated, onCampaignDeleted }:
         onCampaignDeleted={onCampaignDeleted}
       />
     </Card>
-  )
+  );
+
+  if (campaign.isArchived) {
+    return (
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div>{cardContent}</div>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>Esta campanha está desativada. Para reativá-la, mude para um plano pago.</p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    );
+  }
+
+  return cardContent;
 }

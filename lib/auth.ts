@@ -53,6 +53,22 @@ export const authOptions: NextAuthOptions = {
           // VERIFICAÇÃO DE EXPIRAÇÃO DO PLANO
           const isPaidPlan = ['MONTHLY', 'ANNUAL'].includes(user.plan);
           if (isPaidPlan && user.planExpiresAt && new Date() > user.planExpiresAt) {
+            // 1. Buscar as campanhas do usuário, da mais nova para a mais antiga
+            const userCampaigns = await prisma.campaign.findMany({
+              where: { ownerId: user.id },
+              orderBy: { createdAt: 'desc' },
+            });
+
+            // 2. Arquivar todas, exceto a mais recente
+            if (userCampaigns.length > 1) {
+              const campaignsToArchive = userCampaigns.slice(1).map(c => c.id);
+              await prisma.campaign.updateMany({
+                where: { id: { in: campaignsToArchive } },
+                data: { isArchived: true },
+              });
+            }
+
+            // 3. Fazer o downgrade do plano do usuário
             const updatedUser = await prisma.user.update({
               where: { id: user.id },
               data: {
@@ -65,7 +81,6 @@ export const authOptions: NextAuthOptions = {
             userToReturn = { 
               ...updatedUser, 
               justDowngraded: true,
-              // Passa as datas antigas para a notificação
               planStartedAt: user.planStartedAt, 
               planExpiresAt: user.planExpiresAt,
             };

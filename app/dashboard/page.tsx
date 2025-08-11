@@ -28,6 +28,7 @@ export default async function DashboardPage() {
           description: true,
           rpgSystem: true,
           createdAt: true,
+          isArchived: true,
         },
         orderBy: { createdAt: 'desc' }
       },
@@ -40,6 +41,7 @@ export default async function DashboardPage() {
               description: true,
               rpgSystem: true,
               createdAt: true,
+              isArchived: true,
             }
           }
         },
@@ -71,7 +73,8 @@ export default async function DashboardPage() {
       name: campaign.name,
       description: campaign.description || "Sem descrição",
       system: campaign.rpgSystem,
-      userRole: "Mestre" as const
+      userRole: "Mestre" as const,
+      isArchived: campaign.isArchived,
     })),
     // Campaigns where user is a player
     ...user.campaignMemberships.map(membership => ({
@@ -79,7 +82,8 @@ export default async function DashboardPage() {
       name: membership.campaign.name,
       description: membership.campaign.description || "Sem descrição",
       system: membership.campaign.rpgSystem,
-      userRole: "Jogador" as const
+      userRole: "Jogador" as const,
+      isArchived: membership.campaign.isArchived,
     }))
   ]
   return (

@@ -47,6 +47,7 @@ model Campaign {
   rpgSystem   String   @default("generic") @map("rpg_system")
   ownerId     String @map("owner_id")
   isActive    Boolean  @default(true) @map("is_active")
+  isArchived  Boolean  @default(false) @map("is_archived")
   playerLimit Int?     @default(8) @map("player_limit")
   settings    String   @default("{}")
   createdAt   DateTime @default(now()) @map("created_at")
