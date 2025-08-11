@@ -1,302 +1,136 @@
-# MesaRPG v1.0 🎲
-
-> **Uma plataforma Virtual Tabletop (VTT) completa e funcional para campanhas de RPG**
-
-**MesaRPG** é uma aplicação web moderna construída com Next.js 15 que oferece uma experiência completa de RPG online para mestres e jogadores. Com recursos em tempo real, sistema de personagens dinâmico, grid tático funcional e interface intuitiva.
+# MesaRPG 🎲
 
 ![Status](https://img.shields.io/badge/Status-Production%20Ready-green)
-![Version](https://img.shields.io/badge/Version-v1.0-blue)
+![Version](https://img.shields.io/badge/Version-v1.2-blue)
 ![License](https://img.shields.io/badge/License-MIT-yellow)
 
----
+**MesaRPG** é uma plataforma Virtual Tabletop (VTT) moderna e completa, construída com Next.js 15. Oferece uma experiência de RPG online imersiva para mestres e jogadores, com recursos em tempo real, sistema de personagens dinâmico, grid tático funcional e uma interface intuitiva.
 
-## 🚀 **Características Principais**
-
-### **🎮 Interface de Jogo Completa**
-- **Sidebar Unificada**: Abas organizadas (Comunicação/Conteúdo) com navegação fluida
-- **Chat em Tempo Real**: Sistema WebSocket com comandos de dados integrados (`/r`, `/ooc`)
-- **Grid Tático Funcional**: Mapa de 800x600px com sistema de tokens estável
-- **Players Conectados**: Visualização em tempo real de jogadores ativos
-
-### **👥 Sistema de Personagens Avançado**
-- **CRUD Completo**: Criação, edição e gerenciamento de PCs, NPCs e Criaturas
-- **Templates Dinâmicos**: Fichas customizáveis com campos flexíveis
-- **Visualização Inteligente**: Renderização automática baseada em templates
-- **Mini Resumos**: Prévia de personagens na sidebar com avatares
-
-### **🗺️ Mapas e Grid Tático**
-- **Templates de Mapa**: 3 ambientes pré-definidos (Deserto, Masmorra, Floresta)
-- **Upload Personalizado**: Suporte a imagens customizadas
-- **Ativação em Tempo Real**: Mudança de mapas sincronizada via WebSocket
-- **Sistema de Tokens Simplificado**: Movimento livre com sincronização perfeita
-
-### **📄 Sistema de Handouts**
-- **Documentos Compartilhados**: Criação e gerenciamento de conteúdo
-- **Controle de Acesso**: Sistema GM → Jogadores com notificações
-- **Anexos**: Suporte a múltiplos tipos de arquivo
-
-### **⚙️ Configurações da Campanha**
-- **Gerenciamento de Jogadores**: Sistema de convites com links únicos e expiração
-- **Editor de Templates**: Interface drag & drop para criação de fichas dinâmicas
-- **Configurações Gerais**: Personalização completa (nome, descrição, sistema RPG)
-- **Sistema de Convites**: Links únicos com expiração de 24 horas
-
-### **🎨 Sistema de Temas**
-- **Tema Claro**: Design profissional com cores vermelhas
-- **Tema Escuro**: Tons de chumbo com destaques laranja
-- **Transições Suaves**: Animações de 300ms para mudanças confortáveis
-- **Persistência**: Salvamento automático no localStorage
+<!-- Adicione um screenshot ou GIF da aplicação aqui para um grande impacto visual -->
+<!-- ![MesaRPG Screenshot](./docs/screenshot.png) -->
 
 ---
 
-## 🏗️ **Arquitetura Técnica**
+## Índice
 
-### **Stack Principal**
-```typescript
-Frontend:    Next.js 15 (App Router) + TypeScript
-Backend:     API Routes + Custom Server Node.js
-Database:    SQLite + Prisma ORM
-Auth:        NextAuth.js
-Real-time:   Socket.IO
-UI:          TailwindCSS + shadcn/ui
-```
-
-### **Estrutura do Projeto**
-```
-📁 MesaRPG/
-├── 📁 app/                  # Next.js App Router
-│   ├── 📁 api/             # API Routes (30+ endpoints)
-│   ├── 📁 campaign/        # Páginas de campanha
-│   └── 📁 dashboard/       # Dashboard principal
-├── 📁 components/          # Componentes React
-│   ├── 📁 game/           # Componentes de jogo (Chat, Grid, etc.)
-│   ├── 📁 ui/             # Componentes shadcn/ui
-│   └── 📁 providers/      # Context providers
-├── 📁 lib/                 # Utilitários e configurações
-│   ├── 📁 rpg-systems/    # Sistema modular de RPG
-│   └── auth.ts            # Configuração NextAuth
-├── 📁 hooks/              # Custom React hooks
-├── 📁 prisma/             # Database schema e migrations
-└── 📁 docs/               # Documentação organizada
-```
-
-### **APIs Implementadas (30+ Endpoints)**
-- **Autenticação**: Login, registro, sessões
-- **Campanhas**: CRUD completo, configurações
-- **Personagens**: Criação, edição, templates
-- **Chat**: Mensagens em tempo real, comandos
-- **Mapas**: Upload, ativação, gerenciamento
-- **Handouts**: Documentos, compartilhamento
-- **Arquivos**: Upload, categorização
-- **Convites**: Criação, validação, expiração
+- [✨ Features](#-features)
+- [🛠️ Tech Stack](#️-tech-stack)
+- [🚀 Getting Started](#-getting-started)
+  - [Pré-requisitos](#pré-requisitos)
+  - [Instalação](#instalação)
+- [📜 Scripts Disponíveis](#-scripts-disponíveis)
+- [🤝 Contribuindo](#-contribuindo)
+- [📄 Licença](#-licença)
 
 ---
 
-## 🎯 **Como Usar**
+## ✨ Features
 
-### **Instalação**
-```bash
-# Clonar o repositório
-git clone https://github.com/your-username/mesarpg-shell-v1.git
-cd mesarpg-shell-v1
-
-# Instalar dependências
-npm install --legacy-peer-deps
-
-# Configurar banco de dados
-npx prisma migrate dev
-
-# Executar em desenvolvimento
-npm run dev
-```
-
-### **Variáveis de Ambiente**
-Crie um arquivo `.env.local`:
-```env
-DATABASE_URL="file:./dev.db"
-NEXTAUTH_SECRET="your-secret-here"
-NEXTAUTH_URL="http://localhost:3000"
-```
-
-### **Fluxo de Uso**
-1. **Registro/Login** → Acesso à plataforma
-2. **Criar Campanha** → Configurar sistema RPG
-3. **Convidar Jogadores** → Sistema de convites
-4. **Gerenciar Personagens** → Criar PCs, NPCs, Criaturas
-5. **Jogar** → Chat, grid tático, handouts
+- **🎲 Interface de Jogo Completa**: Sidebar unificada, chat em tempo real com comandos de dados (`/r`), grid tático funcional e visualização de jogadores conectados.
+- **👥 Sistema de Personagens Avançado**: CRUD completo para PCs, NPCs e Criaturas, com fichas baseadas em templates dinâmicos.
+- **🗺️ Mapas e Tokens**: Upload de mapas personalizados, ativação em tempo real e sistema de tokens com movimento livre e sincronizado.
+- **📄 Handouts (Notas)**: Criação e compartilhamento de documentos e imagens entre o mestre e os jogadores, com controle de acesso e notificações.
+- **⚙️ Gerenciamento de Campanha**: Sistema de convites com links únicos, editor de templates de fichas e configurações gerais da campanha.
+- **🎨 Temas**: Suporte a temas claro e escuro com persistência no `localStorage`.
+- **💳 Sistema de Planos**: Modelo de assinatura com múltiplos níveis (Gratuito, Mensal, Anual, etc.) e regras de negócio para limitação de recursos.
 
 ---
 
-## 🎮 **Funcionalidades em Destaque**
+## 🛠️ Tech Stack
 
-### **Sistema de Chat Avançado**
-- **Comandos de Dados**: `/r 1d20+5` para rolagens
-- **Mensagens OOC**: `/ooc` para comunicação fora do personagem
-- **Histórico Persistente**: Mensagens salvas no banco
-- **Sincronização**: Tempo real via WebSocket
-
-### **Grid Tático Funcional**
-- **Tokens Simples**: Sistema ultra-estável
-- **Movimento Livre**: Sem restrições de permissão
-- **Sincronização**: Movimento em tempo real
-- **Mapas Dinâmicos**: Troca automática de cenários
-
-### **Sistema de Personagens Inteligente**
-- **Templates Flexíveis**: Campos dinâmicos por sistema RPG
-- **Visualização Adaptativa**: Renderização automática
-- **Três Tipos**: PC (Jogador), NPC (Mestre), Creature (Bestiário)
-- **Busca Avançada**: Filtros por tipo e criador
-
-### **Gerenciamento de Arquivo**
-- **Upload Drag & Drop**: Interface intuitiva
-- **Categorização**: Mapas, handouts, avatares
-- **Validação**: Tipos e tamanhos permitidos
-- **Preview**: Visualização integrada
+- **Frontend**: Next.js 15 (App Router), React 19, TypeScript
+- **UI**: TailwindCSS, shadcn/ui, Sonner (notificações)
+- **Backend**: Next.js API Routes, Node.js (Custom Server)
+- **Banco de Dados**: PostgreSQL + Prisma ORM
+- **Autenticação**: NextAuth.js
+- **Comunicação em Tempo Real**: Socket.IO
+- **Segurança**: ALTCHA (proteção anti-bot)
 
 ---
 
-## 📊 **Métricas de Build**
+## 🚀 Getting Started
 
-### **Performance**
-- **First Load JS**: ~101 kB (compartilhado)
-- **Páginas Principais**: 3-67 kB (otimizadas)
-- **Build Time**: ~45 segundos
-- **Bundle Size**: Otimizado com tree-shaking
+Siga estas instruções para obter uma cópia do projeto e executá-la em sua máquina local para desenvolvimento e testes.
 
-### **Cobertura de Funcionalidades**
-- ✅ **Autenticação**: 100% funcional
-- ✅ **Dashboard**: 100% funcional
-- ✅ **Campanhas**: 100% funcional
-- ✅ **Personagens**: 100% funcional
-- ✅ **Chat**: 100% funcional
-- ✅ **Grid Tático**: 100% funcional
-- ✅ **Handouts**: 100% funcional
-- ✅ **Configurações**: 100% funcional
-- ✅ **Temas**: 100% funcional
+### Pré-requisitos
 
----
+- [Node.js](https://nodejs.org/) (v18 ou superior)
+- [Docker](https://www.docker.com/) e Docker Compose
+- [Git](https://git-scm.com/)
 
-## 🔧 **Desenvolvimento**
+### Instalação
 
-### **Scripts Disponíveis**
-```bash
-npm run dev          # Desenvolvimento
-npm run build        # Build de produção
-npm run start        # Executar produção
-npm run lint         # Linting
-npm run db:reset     # Reset do banco
-npm run db:migrate   # Migração do banco
-```
+1.  **Clone o repositório:**
+    ```bash
+    git clone https://github.com/CasonWebDev/MesaRPG.git
+    cd MesaRPG
+    ```
 
-### **Estrutura de Desenvolvimento**
-```
-📁 docs/
-├── 📁 core/         # Documentação essencial
-├── 📁 features/     # Funcionalidades específicas
-└── 📁 development/  # Guias de desenvolvimento
-```
+2.  **Instale as dependências:**
+    ```bash
+    npm install --legacy-peer-deps
+    ```
 
-### **Ambiente de Desenvolvimento**
-- **Node.js**: 18+ recomendado
-- **Database**: SQLite (desenvolvimento)
-- **Package Manager**: npm
-- **TypeScript**: Strict mode habilitado
+3.  **Configure as Variáveis de Ambiente:**
+    Crie um arquivo chamado `.env` na raiz do projeto e adicione o seguinte conteúdo. Este arquivo é necessário para o banco de dados e a autenticação.
 
----
+    ```env
+    # URL do Banco de Dados (Docker)
+    DATABASE_URL="postgresql://test:test@localhost:5433/mesarpg_test"
 
-## 🚀 **Deploy**
+    # Configuração do NextAuth
+    NEXTAUTH_URL="http://localhost:3000"
+    NEXTAUTH_SECRET="gere-uma-secret-segura-aqui" # Ex: use `openssl rand -base64 32`
 
-### **Opções de Deploy**
-- **Railway**: Configuração automática via `railway.json`
-- **Vercel**: Suporte nativo ao Next.js
-- **Docker**: Dockerfile incluído
-- **VPS**: Scripts de setup incluídos
+    # Chave para o ALTCHA
+    ALTCHA_HMAC_KEY="gere-uma-outra-secret-segura-aqui"
+    ```
 
-### **Configuração de Produção**
-```bash
-# Build otimizado
-npm run build
+4.  **Inicie o Banco de Dados:**
+    Execute o contêiner do PostgreSQL com Docker Compose.
+    ```bash
+    docker-compose -f docker-compose.test.yml up -d
+    ```
 
-# Executar em produção
-npm start
+5.  **Aplique as Migrações do Banco de Dados:**
+    Este comando irá criar as tabelas necessárias no banco de dados.
+    ```bash
+    npx prisma migrate dev
+    ```
 
-# Configurar banco de produção
-DATABASE_URL="postgresql://user:pass@host:5432/db"
-```
+6.  **Execute o Servidor de Desenvolvimento:**
+    ```bash
+    npm run dev
+    ```
+
+    A aplicação estará disponível em [http://localhost:3000](http://localhost:3000).
 
 ---
 
-## 🤝 **Contribuindo**
+## 📜 Scripts Disponíveis
 
-### **Guidelines**
-1. **Fork** o projeto
-2. **Crie** uma branch para sua feature
-3. **Commit** suas mudanças
-4. **Push** para a branch
-5. **Abra** um Pull Request
-
-### **Padrões de Código**
-- **TypeScript**: Strict mode
-- **ESLint**: Configuração padrão
-- **Prettier**: Formatação automática
-- **Commits**: Conventional commits
+- `npm run dev`: Inicia o servidor de desenvolvimento.
+- `npm run build`: Compila a aplicação para produção.
+- `npm run start`: Inicia o servidor de produção.
+- `npm run lint`: Executa o linter para verificar a qualidade do código.
+- `npm run test`: Executa os testes unitários e de integração.
 
 ---
 
-## 📝 **Documentação**
+## 🤝 Contribuindo
 
-### **Documentação Completa**
-- 📖 **[Guia de Autenticação](docs/core/01-authentication.md)**
-- 📖 **[Gerenciamento de Campanhas](docs/core/02-campaign-management.md)**
-- 📖 **[Sistema de Personagens](docs/features/03-character-system.md)**
-- 📖 **[Chat em Tempo Real](docs/features/04-chat-realtime.md)**
-- 📖 **[Grid Tático](docs/features/05-tactical-grid.md)**
-- 📖 **[Sistema de Handouts](docs/features/06-handouts-system.md)**
-- 📖 **[Gerenciamento de Arquivos](docs/features/07-file-management.md)**
-- 📖 **[Referência da API](docs/development/08-api-reference.md)**
-- 📖 **[Setup e Deploy](docs/core/09-setup-deployment.md)**
-- 📖 **[Roadmap](docs/development/10-development-roadmap.md)**
+Contribuições são o que tornam a comunidade de código aberto um lugar incrível para aprender, inspirar e criar. Qualquer contribuição que você fizer será **muito apreciada**.
+
+1.  Faça um **Fork** do projeto.
+2.  Crie sua **Feature Branch** (`git checkout -b feature/AmazingFeature`).
+3.  Faça o **Commit** de suas alterações (`git commit -m 'feat: Add some AmazingFeature'`).
+4.  Faça o **Push** para a Branch (`git push origin feature/AmazingFeature`).
+5.  Abra um **Pull Request**.
+
+Para mais detalhes, consulte o arquivo `CONTRIBUTING.md` (se existir) e o template de Pull Request.
 
 ---
 
-## 🏆 **Status do Projeto**
+## 📄 Licença
 
-### **Versão Atual: v1.0**
-- **Status**: ✅ **Production Ready**
-- **Fases Concluídas**: 15/15 (100%)
-- **Funcionalidades**: 100% implementadas
-- **Estabilidade**: Sistema rock-solid
-- **Performance**: Otimizado para produção
-
-### **Próximas Versões**
-- **v1.1**: Funcionalidades avançadas de combate
-- **v1.2**: Sistema de macros e automação
-- **v1.3**: Integração com APIs externas
-- **v2.0**: Recursos de audio/vídeo
-
----
-
-## 📄 **Licença**
-
-Este projeto está licenciado sob a **MIT License**. Veja o arquivo [LICENSE](LICENSE) para mais detalhes.
-
----
-
-## 🎯 **Conclusão**
-
-O **MesaRPG** representa um Virtual Tabletop **completo e funcional** que oferece:
-
-- ✅ **30+ APIs** totalmente implementadas
-- ✅ **Interface moderna** com design responsivo
-- ✅ **Sistema em tempo real** ultra-estável
-- ✅ **Arquitetura escalável** bem estruturada
-- ✅ **Código limpo** e bem documentado
-- ✅ **Performance otimizada** para produção
-
-**Pronto para uso em campanhas reais** com estabilidade e confiabilidade comprovadas!
-
----
-
-*🎮 Desenvolvido com ❤️ para a comunidade RPG*  
-*📅 Última atualização: 2025*  
-*🔧 Status: COMPLETO E FUNCIONAL*
+Distribuído sob a licença MIT. Veja `LICENSE` para mais informações.
