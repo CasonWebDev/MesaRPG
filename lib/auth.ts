@@ -48,6 +48,33 @@ export const authOptions: NextAuthOptions = {
             throw new Error("Credenciais inválidas.");
           }
 
+          // SE O USUÁRIO TEM PLANO PAGO, REATIVA TODAS AS CAMPANHAS
+          if (['MONTHLY', 'ANNUAL', 'LIFETIME'].includes(user.plan)) {
+            await prisma.campaign.updateMany({
+              where: { ownerId: user.id, isArchived: true },
+              data: { isArchived: false, expiresAt: null },
+            });
+          }
+
+          // VERIFICAÇÃO DE EXPIRAÇÃO DE CAMPANHAS (DE CRÉDITO OU OUTRAS)
+          const expiredCampaigns = await prisma.campaign.findMany({
+            where: {
+              ownerId: user.id,
+              isArchived: false,
+              expiresAt: {
+                lte: new Date(),
+              },
+            },
+          });
+
+          if (expiredCampaigns.length > 0) {
+            const idsToArchive = expiredCampaigns.map(c => c.id);
+            await prisma.campaign.updateMany({
+              where: { id: { in: idsToArchive } },
+              data: { isArchived: true },
+            });
+          }
+
           let userToReturn = { ...user, justDowngraded: false };
 
           // VERIFICAÇÃO DE EXPIRAÇÃO DO PLANO
@@ -69,10 +96,11 @@ export const authOptions: NextAuthOptions = {
             }
 
             // 3. Fazer o downgrade do plano do usuário
+            const newPlan = user.credits > 0 ? 'CREDITS' : 'FREE';
             const updatedUser = await prisma.user.update({
               where: { id: user.id },
               data: {
-                plan: 'FREE',
+                plan: newPlan,
                 planStartedAt: null,
                 planExpiresAt: null,
                 subscriptionStatus: 'CANCELED',

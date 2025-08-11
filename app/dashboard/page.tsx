@@ -29,6 +29,7 @@ export default async function DashboardPage() {
           rpgSystem: true,
           createdAt: true,
           isArchived: true,
+          expiresAt: true,
         },
         orderBy: { createdAt: 'desc' }
       },
@@ -42,6 +43,7 @@ export default async function DashboardPage() {
               rpgSystem: true,
               createdAt: true,
               isArchived: true,
+              expiresAt: true,
             }
           }
         },
@@ -63,7 +65,10 @@ export default async function DashboardPage() {
     };
   }
 
-  const canCreateCampaign = user.plan !== 'FREE' || user.ownedCampaigns.length < 1;
+  const freePlanLimit = user.ownedCampaigns.length < 1;
+  const creditsPlanLimit = user.credits > 0;
+  const canCreateCampaign = user.plan !== 'FREE' || freePlanLimit;
+  const canCreateWithCredits = user.plan === 'CREDITS' && creditsPlanLimit;
 
   // Transform data to match Campaign interface
   const campaigns: Campaign[] = [
@@ -75,6 +80,7 @@ export default async function DashboardPage() {
       system: campaign.rpgSystem,
       userRole: "Mestre" as const,
       isArchived: campaign.isArchived,
+      expiresAt: campaign.expiresAt,
     })),
     // Campaigns where user is a player
     ...user.campaignMemberships.map(membership => ({
@@ -84,6 +90,7 @@ export default async function DashboardPage() {
       system: membership.campaign.rpgSystem,
       userRole: "Jogador" as const,
       isArchived: membership.campaign.isArchived,
+      expiresAt: membership.campaign.expiresAt,
     }))
   ]
   return (
@@ -93,7 +100,11 @@ export default async function DashboardPage() {
         <div className="container mx-auto flex justify-between items-center">
           <h1 className="text-3xl font-heading text-primary">MesaRPG</h1>
           <div className="flex items-center gap-4">
-            <CreateCampaignDialog canCreate={canCreateCampaign} />
+            <CreateCampaignDialog 
+              canCreate={canCreateCampaign} 
+              canCreateWithCredits={canCreateWithCredits}
+              userPlan={user.plan}
+            />
             <UserMenu user={{ 
               name: user.name || 'Usuário', 
               email: user.email,
@@ -110,10 +121,18 @@ export default async function DashboardPage() {
         {campaigns.length === 0 ? (
           <div className="text-center py-12">
             <p className="text-muted-foreground text-lg mb-4">Você ainda não participa de nenhuma campanha.</p>
-            <CreateCampaignDialog canCreate={canCreateCampaign} />
+            <CreateCampaignDialog 
+              canCreate={canCreateCampaign} 
+              canCreateWithCredits={canCreateWithCredits}
+              userPlan={user.plan}
+            />
           </div>
         ) : (
-          <CampaignListClient campaigns={campaigns} />
+          <CampaignListClient 
+            campaigns={campaigns} 
+            userPlan={user.plan} 
+            userCredits={user.credits} 
+          />
         )}
       </main>
     </div>

@@ -69,17 +69,30 @@ export async function POST(request: NextRequest) {
       where: { id: session.user.id },
       select: {
         plan: true,
+        credits: true,
         _count: {
           select: { ownedCampaigns: true },
         },
       },
     });
 
+    if (!user) {
+      return NextResponse.json({ error: 'Usuário não encontrado' }, { status: 404 });
+    }
+
     // Aplica a regra de negócio para o plano Gratuito
-    if (user?.plan === 'FREE' && user._count.ownedCampaigns >= 1) {
+    if (user.plan === 'FREE' && user._count.ownedCampaigns >= 1) {
       return NextResponse.json(
         { error: 'Usuários do plano Gratuito podem ter apenas uma campanha. Exclua a campanha existente para criar uma nova.' },
-        { status: 403 } // 403 Forbidden é mais apropriado aqui
+        { status: 403 }
+      );
+    }
+
+    // Aplica a regra de negócio para o plano de Créditos
+    if (user.plan === 'CREDITS' && user.credits <= 0) {
+      return NextResponse.json(
+        { error: 'Você não tem créditos suficientes para criar uma nova campanha.' },
+        { status: 403 }
       );
     }
 
@@ -92,11 +105,21 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Se for plano de créditos, debita um crédito
+    if (user.plan === 'CREDITS') {
+      await prisma.user.update({
+        where: { id: session.user.id },
+        data: { credits: { decrement: 1 } },
+      });
+    }
+
     const campaign = await prisma.campaign.create({
       data: {
         name,
         description,
         ownerId: session.user.id,
+        // Define a data de expiração se for criada com créditos
+        expiresAt: user.plan === 'CREDITS' ? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) : null,
         settings: JSON.stringify({
           gridSize: 20,
           maxPlayers: 6,
