@@ -20,6 +20,7 @@ import { Separator } from "@/components/ui/separator"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Loader2 } from "lucide-react"
 import { BuyCreditsDialog } from "@/components/billing/buy-credits-dialog"
+import { ChangePlanDialog } from "@/components/billing/change-plan-dialog"
 
 // Mapeamento de Planos para exibição
 const planNames: { [key: string]: string } = {
@@ -58,6 +59,7 @@ export function EditProfileDialog({ user, open, onOpenChange }: EditProfileDialo
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState("")
   const [isBuyCreditsOpen, setIsBuyCreditsOpen] = useState(false)
+  const [isChangePlanOpen, setIsChangePlanOpen] = useState(false)
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }))
@@ -246,7 +248,7 @@ export function EditProfileDialog({ user, open, onOpenChange }: EditProfileDialo
                       </>
                     )}
                     <div className="flex flex-col sm:flex-row gap-2 pt-2">
-                      {canChangePlan && <Button type="button" className="flex-1">Mudar Plano</Button>}
+                      {canChangePlan && <Button type="button" className="flex-1" onClick={() => setIsChangePlanOpen(true)}>Mudar Plano</Button>}
                       {canBuyCredits && <Button type="button" variant="secondary" className="flex-1" onClick={() => setIsBuyCreditsOpen(true)}>Comprar Créditos</Button>}
                       {canCancelPlan && <Button type="button" variant="destructive" className="flex-1">Cancelar Plano</Button>}
                     </div>
@@ -337,6 +339,7 @@ export function EditProfileDialog({ user, open, onOpenChange }: EditProfileDialo
         </DialogContent>
       </Dialog>
       <BuyCreditsDialog open={isBuyCreditsOpen} onOpenChange={setIsBuyCreditsOpen} />
+      <ChangePlanDialog open={isChangePlanOpen} onOpenChange={setIsChangePlanOpen} currentUserPlan={user.plan} />
     </>
   )
 }
