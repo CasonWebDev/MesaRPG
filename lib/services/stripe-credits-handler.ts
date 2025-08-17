@@ -16,6 +16,23 @@ export async function handleCreditsPurchase(session: Stripe.Checkout.Session) {
       throw new Error(`Valor de créditos inválido na metadata: "${credits}"`);
     }
 
+    // Obter o PaymentIntent para detalhes da transação
+    const paymentIntentId = typeof session.payment_intent === 'string' 
+      ? session.payment_intent 
+      : session.payment_intent?.id;
+
+    if (!paymentIntentId) {
+      throw new Error(`Payment Intent ID ausente na sessão ${session.id}`);
+    }
+
+    // Obter o objeto PaymentIntent completo para detalhes de valor e moeda
+    const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
+
+    if (!paymentIntent) {
+      throw new Error(`Payment Intent ${paymentIntentId} não encontrado.`);
+    }
+
+    // Atualizar os créditos do usuário
     await prisma.user.update({
       where: { id: userId },
       data: {
@@ -25,11 +42,23 @@ export async function handleCreditsPurchase(session: Stripe.Checkout.Session) {
       },
     });
 
-    console.log(`HANDLER: Créditos adicionados com sucesso para o usuário ${userId}.`);
+    // Criar um registro de compra de crédito para auditoria
+    await prisma.creditPurchase.create({
+      data: {
+        userId: userId,
+        stripePaymentIntentId: paymentIntent.id,
+        creditsPurchased: creditsToAdd,
+        amountPaid: paymentIntent.amount,
+        currency: paymentIntent.currency,
+        status: paymentIntent.status,
+        purchasedAt: new Date(paymentIntent.created * 1000), // Convert timestamp to Date
+      },
+    });
+
+    console.log(`HANDLER: Créditos adicionados e registro de compra criado com sucesso para o usuário ${userId}.`);
 
   } catch (error) {
     console.error(`HANDLER: Erro ao creditar o usuário ${userId}.`, error);
-    // Re-throw para que o webhook possa capturar e retornar um erro 500
     throw new Error(`Erro no banco de dados ao creditar o usuário: ${error instanceof Error ? error.message : String(error)}`);
   }
 }

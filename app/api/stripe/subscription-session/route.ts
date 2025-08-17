@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { stripe } from '@/lib/stripe';
+import { prisma } from '@/lib/prisma';
 
 const planPriceIds: { [key: string]: string } = {
   MONTHLY: process.env.STRIPE_MONTHLY_PLAN_PRICE_ID!,
@@ -29,7 +30,36 @@ export async function POST(req: NextRequest) {
 
     const YOUR_DOMAIN = process.env.NEXTAUTH_URL || 'http://localhost:3000';
 
+    // Buscar o usuário para verificar se já tem um customerId no Stripe
+    const user = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { stripeCustomerId: true, email: true, name: true },
+    });
+
+    if (!user) {
+      return NextResponse.json({ error: 'Usuário não encontrado.' }, { status: 404 });
+    }
+
+    let customerId = user.stripeCustomerId;
+
+    // Se o usuário não tem um customerId, crie um novo no Stripe
+    if (!customerId) {
+      const customer = await stripe.customers.create({
+        email: user.email,
+        name: user.name || undefined,
+        metadata: { userId: user.id },
+      });
+      customerId = customer.id;
+
+      // Salvar o customerId no nosso banco de dados
+      await prisma.user.update({
+        where: { id: user.id },
+        data: { stripeCustomerId: customerId },
+      });
+    }
+
     const checkoutSession = await stripe.checkout.sessions.create({
+      customer: customerId, // Usar o customerId existente ou recém-criado
       payment_method_types: ['card'],
       line_items: [
         {

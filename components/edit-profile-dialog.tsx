@@ -31,6 +31,14 @@ const planNames: { [key: string]: string } = {
   CREDITS: "Créditos Avulsos",
 };
 
+// Mapeamento de Status de Assinatura para exibição
+const subscriptionStatusNames: { [key: string]: string } = {
+  ACTIVE: "Ativa",
+  CANCELED: "Cancelada (até o fim do período)",
+  INCOMPLETE: "Incompleta",
+  PAST_DUE: "Vencida",
+};
+
 interface EditProfileDialogProps {
   user: {
     name: string
@@ -39,6 +47,7 @@ interface EditProfileDialogProps {
     credits: number
     planStartedAt: Date | null
     planExpiresAt: Date | null
+    subscriptionStatus: string | null;
   }
   open: boolean
   onOpenChange: (open: boolean) => void
@@ -60,6 +69,7 @@ export function EditProfileDialog({ user, open, onOpenChange }: EditProfileDialo
   const [error, setError] = useState("")
   const [isBuyCreditsOpen, setIsBuyCreditsOpen] = useState(false)
   const [isChangePlanOpen, setIsChangePlanOpen] = useState(false)
+  const [isCancellingPlan, setIsCancellingPlan] = useState(false);
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }))
@@ -150,6 +160,37 @@ export function EditProfileDialog({ user, open, onOpenChange }: EditProfileDialo
     }
   }
 
+  const handleCancelPlan = async () => {
+    setIsCancellingPlan(true);
+    try {
+      const response = await fetch('/api/stripe/cancel-subscription', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      });
+      const result = await response.json();
+
+      if (response.ok) {
+        toast({
+          title: "Cancelamento Agendado!",
+          description: `Seu plano foi agendado para cancelamento e permanecerá ativo até ${new Date(result.cancelAt).toLocaleDateString('pt-BR')}.`,
+        });
+        // Atualizar a sessão para refletir o status de cancelamento
+        await updateSession({ subscriptionStatus: 'CANCELED' });
+      } else {
+        throw new Error(result.error || "Erro ao agendar cancelamento.");
+      }
+    } catch (error) {
+      console.error("Erro ao cancelar plano:", error);
+      toast({
+        title: "Erro ao cancelar plano",
+        description: error instanceof Error ? error.message : "Ocorreu um erro inesperado ao cancelar o plano.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsCancellingPlan(false);
+    }
+  };
+
   const resetForm = () => {
     setFormData({
       name: user.name,
@@ -163,7 +204,7 @@ export function EditProfileDialog({ user, open, onOpenChange }: EditProfileDialo
 
   const canChangePlan = ['FREE', 'CREDITS'].includes(user.plan);
   const canBuyCredits = ['FREE', 'CREDITS'].includes(user.plan);
-  const canCancelPlan = ['MONTHLY', 'ANNUAL'].includes(user.plan);
+  const canCancelPlan = ['MONTHLY', 'ANNUAL'].includes(user.plan) && user.subscriptionStatus !== 'CANCELED';
 
   return (
     <>
@@ -235,6 +276,12 @@ export function EditProfileDialog({ user, open, onOpenChange }: EditProfileDialo
                         <span className="font-bold">{user.credits}</span>
                       </div>
                     )}
+                    {user.plan !== 'FREE' && user.plan !== 'CREDITS' && (
+                      <div className="flex justify-between items-center text-xs">
+                        <span className="text-muted-foreground">Status da Assinatura:</span>
+                        <span className="font-bold">{subscriptionStatusNames[user.subscriptionStatus || 'ACTIVE']}</span>
+                      </div>
+                    )}
                     {['MONTHLY', 'ANNUAL'].includes(user.plan) && (
                       <>
                         <div className="flex justify-between items-center text-xs">
@@ -250,7 +297,18 @@ export function EditProfileDialog({ user, open, onOpenChange }: EditProfileDialo
                     <div className="flex flex-col sm:flex-row gap-2 pt-2">
                       {canChangePlan && <Button type="button" className="flex-1" onClick={() => setIsChangePlanOpen(true)}>Mudar Plano</Button>}
                       {canBuyCredits && <Button type="button" variant="secondary" className="flex-1" onClick={() => setIsBuyCreditsOpen(true)}>Comprar Créditos</Button>}
-                      {canCancelPlan && <Button type="button" variant="destructive" className="flex-1">Cancelar Plano</Button>}
+                      {canCancelPlan && (
+                        <Button 
+                          type="button" 
+                          variant="destructive" 
+                          className="flex-1"
+                          onClick={handleCancelPlan}
+                          disabled={isCancellingPlan}
+                        >
+                          {isCancellingPlan && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                          {isCancellingPlan ? "Cancelando..." : "Cancelar Plano"}
+                        </Button>
+                      )}
                     </div>
                   </div>
                 </div>

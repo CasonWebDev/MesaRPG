@@ -11,33 +11,55 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  name      String?
-  password  String
-  role      Role     @default(PLAYER)
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  id            String   @id @default(cuid())
+  email         String   @unique
+  name          String?
+  password      String
+  role          Role     @default(PLAYER)
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
 
   // Relacionamentos
-  ownedCampaigns Campaign[] @relation("GameMaster")
+  ownedCampaigns      Campaign[]       @relation("GameMaster")
   campaignMemberships CampaignMember[]
-  chatMessages    ChatMessage[]
-  characters      Character[]
-  uploadedFiles   File[]     @relation("UploadedFiles")
-  createdInvites  CampaignInvite[] @relation("CreatedInvites")
-  usedInvites     CampaignInvite[] @relation("UsedInvites")
-  ownedTokens     Token[]    @relation("OwnedTokens")
-  createdTokens   Token[]    @relation("CreatedTokens")
+  chatMessages        ChatMessage[]
+  characters          Character[]
+  uploadedFiles       File[]           @relation("UploadedFiles")
+  createdInvites      CampaignInvite[] @relation("CreatedInvites")
+  usedInvites         CampaignInvite[] @relation("UsedInvites")
+  ownedTokens         Token[]          @relation("OwnedTokens")
+  createdTokens       Token[]          @relation("CreatedTokens")
+  creditPurchases     CreditPurchase[]
 
   // Campos de Plano e Assinatura
-  plan               PlanType            @default(FREE)
-  credits            Int                 @default(0)
-  planStartedAt      DateTime?           @map("plan_started_at")
-  planExpiresAt      DateTime?           @map("plan_expires_at")
-  subscriptionStatus SubscriptionStatus? @map("subscription_status")
+  plan                      PlanType            @default(FREE)
+  credits                   Int                 @default(0)
+  planStartedAt             DateTime?           @map("plan_started_at")
+  planExpiresAt             DateTime?           @map("plan_expires_at")
+  subscriptionStatus        SubscriptionStatus? @map("subscription_status")
+
+  // Campos de Auditoria do Stripe
+  stripeCustomerId        String?   @unique @map("stripe_customer_id")
+  stripeSubscriptionId    String?   @unique @map("stripe_subscription_id")
+  stripePriceId           String?   @map("stripe_price_id")
+  stripeCurrentPeriodEnd  DateTime? @map("stripe_current_period_end")
 
   @@map("users")
+}
+
+model CreditPurchase {
+  id                    String   @id @default(cuid())
+  userId                String   @map("user_id")
+  stripePaymentIntentId String   @unique @map("stripe_payment_intent_id")
+  creditsPurchased      Int      @map("credits_purchased")
+  amountPaid            Int      @map("amount_paid")
+  currency              String
+  status                String
+  purchasedAt           DateTime @default(now()) @map("purchased_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("credit_purchases")
 }
 
 model Campaign {
