@@ -161,7 +161,7 @@ export function EditProfileDialog({ user, open, onOpenChange }: EditProfileDialo
     setError("")
   }
 
-  const canChangePlan = ['FREE', 'MONTHLY', 'ANNUAL', 'CREDITS'].includes(user.plan);
+  const canChangePlan = ['FREE', 'CREDITS'].includes(user.plan);
   const canBuyCredits = ['FREE', 'CREDITS'].includes(user.plan);
   const canCancelPlan = ['MONTHLY', 'ANNUAL'].includes(user.plan);
 

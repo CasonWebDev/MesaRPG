@@ -1,6 +1,8 @@
 "use client"
 
 import { useState } from "react"
+import { loadStripe } from '@stripe/stripe-js';
+import { useToast } from "@/components/ui/use-toast"
 import {
   Dialog,
   DialogContent,
@@ -41,22 +43,58 @@ const availablePlans = [
   },
 ]
 
+const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!)
+
 export function ChangePlanDialog({ open, onOpenChange, currentUserPlan }: ChangePlanDialogProps) {
   const [isLoading, setIsLoading] = useState(false)
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null)
+  const { toast } = useToast()
 
   const plansToShow = availablePlans.filter(plan => plan.key !== currentUserPlan)
 
-  const handleSelectPlan = (planKey: string) => {
-    console.log(`Contratando o plano: ${planKey}`)
+  const handleSelectPlan = async (planKey: string) => {
     setSelectedPlan(planKey)
     setIsLoading(true)
-    // Simula uma chamada de API
-    setTimeout(() => {
-      setIsLoading(false)
-      setSelectedPlan(null)
-      onOpenChange(false)
-    }, 2000)
+    try {
+      const response = await fetch('/api/stripe/subscription-session', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ planKey }),
+      });
+
+      const { sessionId, error } = await response.json();
+
+      if (error) {
+        throw new Error(error);
+      }
+
+      if (!sessionId) {
+        throw new Error('Session ID não recebida.');
+      }
+
+      const stripe = await stripePromise;
+      if (!stripe) {
+        throw new Error('Stripe.js não carregou.');
+      }
+
+      const { error: stripeError } = await stripe.redirectToCheckout({ sessionId });
+
+      if (stripeError) {
+        throw new Error(stripeError.message);
+      }
+
+    } catch (error) {
+      console.error("Erro ao selecionar plano:", error);
+      toast({
+        title: "Erro ao iniciar processo de assinatura",
+        description: error instanceof Error ? error.message : "Ocorreu um erro inesperado.",
+        variant: "destructive",
+      })
+      setIsLoading(false);
+      setSelectedPlan(null);
+    }
   }
 
   const handleClose = () => {

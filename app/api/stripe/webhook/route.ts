@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { headers } from 'next/headers';
 import Stripe from 'stripe';
 import { stripe } from '@/lib/stripe';
-import { prisma } from '@/lib/prisma';
-import { Prisma } from '@prisma/client';
+import { handleSubscriptionChange } from '@/lib/services/stripe-subscription-handler';
+import { handleCreditsPurchase } from '@/lib/services/stripe-credits-handler';
 
 export async function POST(req: NextRequest) {
   const body = await req.text();
@@ -26,49 +26,27 @@ export async function POST(req: NextRequest) {
   }
 
   console.log(`🟡 Processando evento: ${event.type}`);
-  switch (event.type) {
-    case 'checkout.session.completed':
-      const session = event.data.object as Stripe.Checkout.Session;
-      const { userId, credits } = session.metadata || {};
+  try {
+    switch (event.type) {
+      case 'checkout.session.completed':
+        const session = event.data.object as Stripe.Checkout.Session;
+        const { planKey, credits } = session.metadata || {};
 
-      if (!userId || !credits) {
-        console.error(`🔴 Metadata faltando na sessão de checkout: ${session.id}`);
-        return NextResponse.json({ error: 'Metadata inválida.' }, { status: 400 });
-      }
-
-      console.log(`🟡 Tentando creditar ${credits} créditos para o usuário ${userId}`);
-
-      try {
-        const creditsToAdd = parseInt(credits, 10);
-        if (isNaN(creditsToAdd)) {
-          console.error(`🔴 Valor de créditos inválido na metadata: "${credits}"`);
-          return NextResponse.json({ error: 'Valor de créditos inválido.' }, { status: 400 });
-        }
-
-        const updatedUser = await prisma.user.update({
-          where: { id: userId },
-          data: {
-            credits: {
-              increment: creditsToAdd,
-            },
-          },
-        });
-        console.log(`🟢 Créditos adicionados com sucesso! Usuário ${userId} agora tem ${updatedUser.credits} créditos.`);
-      
-      } catch (dbError) {
-        console.error('🔴 Erro ao atualizar o banco de dados.');
-        if (dbError instanceof Prisma.PrismaClientKnownRequestError) {
-          console.error(`   - Código do Erro Prisma: ${dbError.code}`);
-          console.error(`   - Mensagem: ${dbError.message}`);
-          console.error(`   - Meta: ${JSON.stringify(dbError.meta)}`);
+        if (planKey) {
+          await handleSubscriptionChange(session);
+        } else if (credits) {
+          await handleCreditsPurchase(session);
         } else {
-          console.error(dbError);
+          console.warn(`🟡 Metadata da sessão ${session.id} não contém planKey ou credits.`);
         }
-        return NextResponse.json({ error: 'Erro no banco de dados ao creditar o usuário.' }, { status: 500 });
-      }
-      break;
-    default:
-      console.warn(`🟡 Evento de webhook não tratado: ${event.type}`);
+        break;
+      // TODO: Adicionar case para 'invoice.payment_succeeded' para renovações
+      default:
+        console.warn(`🟡 Evento de webhook não tratado: ${event.type}`);
+    }
+  } catch (error) {
+    console.error('🔴 Erro ao processar evento do webhook:', error);
+    return NextResponse.json({ error: (error as Error).message }, { status: 500 });
   }
 
   return NextResponse.json({ received: true });
