@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useMemo } from "react"
+import { loadStripe } from '@stripe/stripe-js';
 import {
   Dialog,
   DialogContent,
@@ -12,6 +13,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { useToast } from "@/components/ui/use-toast"
 import { Loader2 } from "lucide-react"
 
 interface BuyCreditsDialogProps {
@@ -21,9 +23,13 @@ interface BuyCreditsDialogProps {
 
 const CREDIT_PRICE = 2.90
 
+// Promessa do Stripe para evitar recarregamentos
+const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!)
+
 export function BuyCreditsDialog({ open, onOpenChange }: BuyCreditsDialogProps) {
   const [quantity, setQuantity] = useState(1)
   const [isLoading, setIsLoading] = useState(false)
+  const { toast } = useToast()
 
   const totalAmount = useMemo(() => {
     return quantity * CREDIT_PRICE
@@ -44,15 +50,47 @@ export function BuyCreditsDialog({ open, onOpenChange }: BuyCreditsDialogProps) 
     onOpenChange(false)
   }
 
-  const handlePayment = () => {
-    // Lógica de pagamento será implementada futuramente
-    console.log(`Iniciando pagamento para ${quantity} créditos no valor de R$ ${totalAmount.toFixed(2)}`)
+  const handlePayment = async () => {
     setIsLoading(true)
-    // Simula uma chamada de API
-    setTimeout(() => {
-      setIsLoading(false)
-      handleClose()
-    }, 2000)
+    try {
+      const response = await fetch('/api/stripe/checkout-session', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ quantity }),
+      });
+
+      const { sessionId, error } = await response.json();
+
+      if (error) {
+        throw new Error(error);
+      }
+
+      if (!sessionId) {
+        throw new Error('Session ID não recebida.');
+      }
+
+      const stripe = await stripePromise;
+      if (!stripe) {
+        throw new Error('Stripe.js não carregou.');
+      }
+
+      const { error: stripeError } = await stripe.redirectToCheckout({ sessionId });
+
+      if (stripeError) {
+        throw new Error(stripeError.message);
+      }
+
+    } catch (error) {
+      console.error("Erro no pagamento:", error);
+      toast({
+        title: "Erro ao processar pagamento",
+        description: error instanceof Error ? error.message : "Ocorreu um erro inesperado.",
+        variant: "destructive",
+      })
+      setIsLoading(false);
+    }
   }
 
   return (
