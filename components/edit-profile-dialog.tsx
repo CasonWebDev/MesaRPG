@@ -21,6 +21,7 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { Loader2 } from "lucide-react"
 import { BuyCreditsDialog } from "@/components/billing/buy-credits-dialog"
 import { ChangePlanDialog } from "@/components/billing/change-plan-dialog"
+import { CancelPlanDialog } from "@/components/billing/cancel-plan-dialog"
 
 // Mapeamento de Planos para exibição
 const planNames: { [key: string]: string } = {
@@ -69,7 +70,7 @@ export function EditProfileDialog({ user, open, onOpenChange }: EditProfileDialo
   const [error, setError] = useState("")
   const [isBuyCreditsOpen, setIsBuyCreditsOpen] = useState(false)
   const [isChangePlanOpen, setIsChangePlanOpen] = useState(false)
-  const [isCancellingPlan, setIsCancellingPlan] = useState(false);
+  const [isCancelPlanOpen, setIsCancelPlanOpen] = useState(false);
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }))
@@ -159,37 +160,6 @@ export function EditProfileDialog({ user, open, onOpenChange }: EditProfileDialo
       setIsLoading(false)
     }
   }
-
-  const handleCancelPlan = async () => {
-    setIsCancellingPlan(true);
-    try {
-      const response = await fetch('/api/stripe/cancel-subscription', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-      });
-      const result = await response.json();
-
-      if (response.ok) {
-        toast({
-          title: "Cancelamento Agendado!",
-          description: `Seu plano foi agendado para cancelamento e permanecerá ativo até ${new Date(result.cancelAt).toLocaleDateString('pt-BR')}.`,
-        });
-        // Atualizar a sessão para refletir o status de cancelamento
-        await updateSession({ subscriptionStatus: 'CANCELED' });
-      } else {
-        throw new Error(result.error || "Erro ao agendar cancelamento.");
-      }
-    } catch (error) {
-      console.error("Erro ao cancelar plano:", error);
-      toast({
-        title: "Erro ao cancelar plano",
-        description: error instanceof Error ? error.message : "Ocorreu um erro inesperado ao cancelar o plano.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsCancellingPlan(false);
-    }
-  };
 
   const resetForm = () => {
     setFormData({
@@ -302,11 +272,9 @@ export function EditProfileDialog({ user, open, onOpenChange }: EditProfileDialo
                           type="button" 
                           variant="destructive" 
                           className="flex-1"
-                          onClick={handleCancelPlan}
-                          disabled={isCancellingPlan}
+                          onClick={() => setIsCancelPlanOpen(true)}
                         >
-                          {isCancellingPlan && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                          {isCancellingPlan ? "Cancelando..." : "Cancelar Plano"}
+                          Cancelar Plano
                         </Button>
                       )}
                     </div>
@@ -398,6 +366,11 @@ export function EditProfileDialog({ user, open, onOpenChange }: EditProfileDialo
       </Dialog>
       <BuyCreditsDialog open={isBuyCreditsOpen} onOpenChange={setIsBuyCreditsOpen} />
       <ChangePlanDialog open={isChangePlanOpen} onOpenChange={setIsChangePlanOpen} currentUserPlan={user.plan} />
+      <CancelPlanDialog 
+        open={isCancelPlanOpen} 
+        onOpenChange={setIsCancelPlanOpen} 
+        planExpiresAt={user.planExpiresAt} 
+      />
     </>
   )
 }
