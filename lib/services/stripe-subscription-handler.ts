@@ -29,28 +29,20 @@ export async function handleSubscriptionChange(session: Stripe.Checkout.Session)
       stripeSubscriptionId = subscription.id;
       stripePriceId = subscription.items.data[0]?.price.id || null;
       stripeCurrentPeriodEnd = new Date(subscription.current_period_end * 1000);
+      planExpiresAt = stripeCurrentPeriodEnd; // Corrigido: Usar a data do Stripe
     } else if (session.mode === 'payment' && plan === 'LIFETIME') {
       // Para o plano vitalício (pagamento único), não há subscription ID
       // O priceId pode ser obtido do line_items se necessário para auditoria
       stripePriceId = session.line_items?.data[0]?.price?.id || null;
       planExpiresAt = null; // Vitalício não expira
-    } else {
-      // Para planos mensais/anuais que não são via subscription (ex: trial, ou erro)
-      if (plan === 'MONTHLY') {
-        planExpiresAt = new Date(planStartedAt);
-        planExpiresAt.setMonth(planStartedAt.getMonth() + 1);
-      } else if (plan === 'ANNUAL') {
-        planExpiresAt = new Date(planStartedAt);
-        planExpiresAt.setFullYear(planStartedAt.getFullYear() + 1);
-      }
     }
-
+    
     await prisma.user.update({
       where: { id: userId },
       data: {
         plan: plan,
         planStartedAt: planStartedAt,
-        planExpiresAt: planExpiresAt,
+        planExpiresAt: planExpiresAt, // Agora está correto
         stripeSubscriptionId: stripeSubscriptionId,
         stripePriceId: stripePriceId,
         stripeCurrentPeriodEnd: stripeCurrentPeriodEnd,

@@ -67,7 +67,7 @@ export async function POST(req: NextRequest) {
         },
       ],
       mode: mode,
-      success_url: `${YOUR_DOMAIN}/dashboard?payment_success=true`,
+      success_url: `${YOUR_DOMAIN}/payment/success`,
       cancel_url: `${YOUR_DOMAIN}/dashboard?payment_canceled=true`,
       metadata: {
         userId: user.id,
