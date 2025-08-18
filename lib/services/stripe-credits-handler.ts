@@ -32,10 +32,11 @@ export async function handleCreditsPurchase(session: Stripe.Checkout.Session) {
       throw new Error(`Payment Intent ${paymentIntentId} não encontrado.`);
     }
 
-    // Atualizar os créditos do usuário
+    // Atualizar os créditos e o plano do usuário
     await prisma.user.update({
       where: { id: userId },
       data: {
+        plan: 'CREDITS',
         credits: {
           increment: creditsToAdd,
         },
