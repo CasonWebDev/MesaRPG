@@ -12,6 +12,7 @@ declare module 'next-auth' {
       planStartedAt?: string | null
       planExpiresAt?: string | null
       justDowngraded?: boolean
+      subscriptionStatus?: string | null; // Adicionado
     }
   }
 
@@ -25,6 +26,7 @@ declare module 'next-auth' {
     planStartedAt?: Date | null
     planExpiresAt?: Date | null
     justDowngraded?: boolean
+    subscriptionStatus?: string | null; // Adicionado
   }
 }
 
@@ -36,5 +38,6 @@ declare module 'next-auth/jwt' {
     planStartedAt?: string | null
     planExpiresAt?: string | null
     justDowngraded?: boolean
+    subscriptionStatus?: string | null; // Adicionado
   }
 }

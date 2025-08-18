@@ -125,6 +125,7 @@ export const authOptions: NextAuthOptions = {
             planStartedAt: userToReturn.planStartedAt,
             planExpiresAt: userToReturn.planExpiresAt,
             justDowngraded: userToReturn.justDowngraded,
+            subscriptionStatus: userToReturn.subscriptionStatus,
           };
         } catch (error) {
           console.error("Auth error:", error);
@@ -148,6 +149,7 @@ export const authOptions: NextAuthOptions = {
         token.role = user.role;
         token.plan = user.plan;
         token.credits = user.credits;
+        token.subscriptionStatus = user.subscriptionStatus; // Adicionado
         if (user.justDowngraded) {
           token.justDowngraded = true;
           token.planStartedAt = user.planStartedAt?.toISOString();
@@ -162,6 +164,7 @@ export const authOptions: NextAuthOptions = {
         session.user.role = token.role as string;
         session.user.plan = token.plan as string;
         session.user.credits = token.credits as number;
+        session.user.subscriptionStatus = token.subscriptionStatus as string | null; // Adicionado
         if (token.justDowngraded) {
           session.user.justDowngraded = true;
           session.user.planStartedAt = token.planStartedAt;

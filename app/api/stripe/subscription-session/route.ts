@@ -30,10 +30,9 @@ export async function POST(req: NextRequest) {
 
     const YOUR_DOMAIN = process.env.NEXTAUTH_URL || 'http://localhost:3000';
 
-    // Buscar o usuário para verificar se já tem um customerId no Stripe
+    // Buscar o usuário completo para garantir que temos todos os dados
     const user = await prisma.user.findUnique({
       where: { id: session.user.id },
-      select: { stripeCustomerId: true, email: true, name: true },
     });
 
     if (!user) {
@@ -71,7 +70,7 @@ export async function POST(req: NextRequest) {
       success_url: `${YOUR_DOMAIN}/dashboard?payment_success=true`,
       cancel_url: `${YOUR_DOMAIN}/dashboard?payment_canceled=true`,
       metadata: {
-        userId: session.user.id,
+        userId: user.id,
         planKey: planKey,
       },
     });
