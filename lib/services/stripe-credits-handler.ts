@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/prisma';
 import Stripe from 'stripe';
+import { stripe } from '@/lib/stripe';
 
 export async function handleCreditsPurchase(session: Stripe.Checkout.Session) {
   const { userId, credits } = session.metadata || {};
