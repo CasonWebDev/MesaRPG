@@ -17,12 +17,38 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { useToast } from "@/components/ui/use-toast"
 import { ThemeToggleWithText } from "@/components/ui/theme-toggle"
 import { Separator } from "@/components/ui/separator"
+import { ScrollArea } from "@/components/ui/scroll-area"
 import { Loader2 } from "lucide-react"
+import { BuyCreditsDialog } from "@/components/billing/buy-credits-dialog"
+import { ChangePlanDialog } from "@/components/billing/change-plan-dialog"
+import { CancelPlanDialog } from "@/components/billing/cancel-plan-dialog"
+
+// Mapeamento de Planos para exibição
+const planNames: { [key: string]: string } = {
+  FREE: "Gratuito",
+  MONTHLY: "Mensal",
+  ANNUAL: "Anual",
+  LIFETIME: "Vitalício",
+  CREDITS: "Créditos Avulsos",
+};
+
+// Mapeamento de Status de Assinatura para exibição
+const subscriptionStatusNames: { [key: string]: string } = {
+  ACTIVE: "Ativa",
+  CANCELED: "Cancelada (até o fim do período)",
+  INCOMPLETE: "Incompleta",
+  PAST_DUE: "Vencida",
+};
 
 interface EditProfileDialogProps {
   user: {
     name: string
     email: string
+    plan: string
+    credits: number
+    planStartedAt: Date | null
+    planExpiresAt: Date | null
+    subscriptionStatus: string | null;
   }
   open: boolean
   onOpenChange: (open: boolean) => void
@@ -42,6 +68,9 @@ export function EditProfileDialog({ user, open, onOpenChange }: EditProfileDialo
   
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState("")
+  const [isBuyCreditsOpen, setIsBuyCreditsOpen] = useState(false)
+  const [isChangePlanOpen, setIsChangePlanOpen] = useState(false)
+  const [isCancelPlanOpen, setIsCancelPlanOpen] = useState(false);
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }))
@@ -143,140 +172,205 @@ export function EditProfileDialog({ user, open, onOpenChange }: EditProfileDialo
     setError("")
   }
 
+  const canChangePlan = ['FREE', 'CREDITS'].includes(user.plan);
+  const canBuyCredits = ['FREE', 'CREDITS'].includes(user.plan);
+  const canCancelPlan = ['MONTHLY', 'ANNUAL'].includes(user.plan) && user.subscriptionStatus !== 'CANCELED';
+
   return (
-    <Dialog 
-      open={open} 
-      onOpenChange={(newOpen) => {
-        onOpenChange(newOpen)
-        if (!newOpen) resetForm()
-      }}
-    >
-      <DialogContent className="sm:max-w-[425px]">
-        <form onSubmit={handleSubmit}>
-          <DialogHeader>
-            <DialogTitle>Editar Perfil</DialogTitle>
-            <DialogDescription>
-              Atualize suas informações pessoais. Deixe os campos de senha em branco se não quiser alterá-la.
-            </DialogDescription>
-          </DialogHeader>
-          
-          <div className="grid gap-4 py-4">
-            {error && (
-              <Alert variant="destructive">
-                <AlertDescription>{error}</AlertDescription>
-              </Alert>
-            )}
+    <>
+      <Dialog 
+        open={open} 
+        onOpenChange={(newOpen) => {
+          onOpenChange(newOpen)
+          if (!newOpen) resetForm()
+        }}
+      >
+        <DialogContent className="sm:max-w-[425px]">
+          <form onSubmit={handleSubmit} className="flex flex-col max-h-[85vh]">
+            <DialogHeader className="flex-shrink-0">
+              <DialogTitle>Editar Perfil</DialogTitle>
+              <DialogDescription>
+                Atualize suas informações pessoais e gerencie sua assinatura.
+              </DialogDescription>
+            </DialogHeader>
             
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="name" className="text-right">
-                Nome*
-              </Label>
-              <Input
-                id="name"
-                value={formData.name}
-                onChange={(e) => handleInputChange("name", e.target.value)}
-                className="col-span-3"
-                required
-                autoComplete="name"
-              />
-            </div>
-            
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="email" className="text-right">
-                Email*
-              </Label>
-              <Input
-                id="email"
-                type="email"
-                value={formData.email}
-                onChange={(e) => handleInputChange("email", e.target.value)}
-                className="col-span-3"
-                required
-                autoComplete="email"
-              />
-            </div>
-            
-            <Separator />
-            
-            <div className="pt-4">
-              <h4 className="text-sm font-medium mb-3">Aparência</h4>
-              <div className="space-y-2">
-                <Label className="text-sm">Tema da Interface</Label>
-                <ThemeToggleWithText className="w-full" />
-                <p className="text-xs text-muted-foreground">
-                  Escolha entre tema claro (vermelho) ou escuro (laranja com tons de chumbo)
-                </p>
+            <ScrollArea className="flex-grow">
+              <div className="grid gap-4 p-4">
+                {error && (
+                  <Alert variant="destructive">
+                    <AlertDescription>{error}</AlertDescription>
+                  </Alert>
+                )}
+                
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="name" className="text-right">
+                    Nome*
+                  </Label>
+                  <Input
+                    id="name"
+                    value={formData.name}
+                    onChange={(e) => handleInputChange("name", e.target.value)}
+                    className="col-span-3"
+                    required
+                    autoComplete="name"
+                  />
+                </div>
+                
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="email" className="text-right">
+                    Email*
+                  </Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    value={formData.email}
+                    onChange={(e) => handleInputChange("email", e.target.value)}
+                    className="col-span-3"
+                    required
+                    autoComplete="email"
+                  />
+                </div>
+                
+                <Separator />
+
+                <div className="pt-4">
+                  <h4 className="text-sm font-medium mb-3">Plano e Assinatura</h4>
+                  <div className="space-y-4">
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-muted-foreground">Plano Atual:</span>
+                      <span className="font-bold">{planNames[user.plan] || "Não definido"}</span>
+                    </div>
+                    {user.plan === 'CREDITS' && (
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-muted-foreground">Créditos:</span>
+                        <span className="font-bold">{user.credits}</span>
+                      </div>
+                    )}
+                    {user.plan !== 'FREE' && user.plan !== 'CREDITS' && (
+                      <div className="flex justify-between items-center text-xs">
+                        <span className="text-muted-foreground">Status da Assinatura:</span>
+                        <span className="font-bold">{subscriptionStatusNames[user.subscriptionStatus || 'ACTIVE']}</span>
+                      </div>
+                    )}
+                    {['MONTHLY', 'ANNUAL'].includes(user.plan) && (
+                      <>
+                        <div className="flex justify-between items-center text-xs">
+                          <span className="text-muted-foreground">Início da Vigência:</span>
+                          <span>{user.planStartedAt ? new Date(user.planStartedAt).toLocaleDateString('pt-BR') : 'N/A'}</span>
+                        </div>
+                        <div className="flex justify-between items-center text-xs">
+                          <span className="text-muted-foreground">Fim da Vigência:</span>
+                          <span>{user.planExpiresAt ? new Date(user.planExpiresAt).toLocaleDateString('pt-BR') : 'N/A'}</span>
+                        </div>
+                      </>
+                    )}
+                    <div className="flex flex-col sm:flex-row gap-2 pt-2">
+                      {canChangePlan && <Button type="button" className="flex-1" onClick={() => setIsChangePlanOpen(true)}>Mudar Plano</Button>}
+                      {canBuyCredits && <Button type="button" variant="secondary" className="flex-1" onClick={() => setIsBuyCreditsOpen(true)}>Comprar Créditos</Button>}
+                      {canCancelPlan && (
+                        <Button 
+                          type="button" 
+                          variant="destructive" 
+                          className="flex-1"
+                          onClick={() => setIsCancelPlanOpen(true)}
+                        >
+                          Cancelar Plano
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+                
+                <Separator />
+                
+                <div className="pt-4">
+                  <h4 className="text-sm font-medium mb-3">Aparência</h4>
+                  <div className="space-y-2">
+                    <Label className="text-sm">Tema da Interface</Label>
+                    <ThemeToggleWithText className="w-full" />
+                    <p className="text-xs text-muted-foreground">
+                      Escolha entre tema claro (vermelho) ou escuro (laranja com tons de chumbo)
+                    </p>
+                  </div>
+                </div>
+                
+                <Separator />
+                
+                <div className="pt-4">
+                  <h4 className="text-sm font-medium mb-3">Alterar Senha (opcional)</h4>
+                  
+                  <div className="grid grid-cols-4 items-center gap-4 mb-3">
+                    <Label htmlFor="currentPassword" className="text-right text-sm">
+                      Senha Atual
+                    </Label>
+                    <Input
+                      id="currentPassword"
+                      type="password"
+                      value={formData.currentPassword}
+                      onChange={(e) => handleInputChange("currentPassword", e.target.value)}
+                      className="col-span-3"
+                      autoComplete="current-password"
+                    />
+                  </div>
+                  
+                  <div className="grid grid-cols-4 items-center gap-4 mb-3">
+                    <Label htmlFor="newPassword" className="text-right text-sm">
+                      Nova Senha
+                    </Label>
+                    <Input
+                      id="newPassword"
+                      type="password"
+                      value={formData.newPassword}
+                      onChange={(e) => handleInputChange("newPassword", e.target.value)}
+                      className="col-span-3"
+                      autoComplete="new-password"
+                    />
+                  </div>
+                  
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="confirmPassword" className="text-right text-sm">
+                      Confirmar
+                    </Label>
+                    <Input
+                      id="confirmPassword"
+                      type="password"
+                      value={formData.confirmPassword}
+                      onChange={(e) => handleInputChange("confirmPassword", e.target.value)}
+                      className="col-span-3"
+                      autoComplete="new-password"
+                    />
+                  </div>
+                </div>
               </div>
-            </div>
+            </ScrollArea>
             
-            <Separator />
-            
-            <div className="pt-4">
-              <h4 className="text-sm font-medium mb-3">Alterar Senha (opcional)</h4>
-              
-              <div className="grid grid-cols-4 items-center gap-4 mb-3">
-                <Label htmlFor="currentPassword" className="text-right text-sm">
-                  Senha Atual
-                </Label>
-                <Input
-                  id="currentPassword"
-                  type="password"
-                  value={formData.currentPassword}
-                  onChange={(e) => handleInputChange("currentPassword", e.target.value)}
-                  className="col-span-3"
-                  autoComplete="current-password"
-                />
-              </div>
-              
-              <div className="grid grid-cols-4 items-center gap-4 mb-3">
-                <Label htmlFor="newPassword" className="text-right text-sm">
-                  Nova Senha
-                </Label>
-                <Input
-                  id="newPassword"
-                  type="password"
-                  value={formData.newPassword}
-                  onChange={(e) => handleInputChange("newPassword", e.target.value)}
-                  className="col-span-3"
-                  autoComplete="new-password"
-                />
-              </div>
-              
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="confirmPassword" className="text-right text-sm">
-                  Confirmar
-                </Label>
-                <Input
-                  id="confirmPassword"
-                  type="password"
-                  value={formData.confirmPassword}
-                  onChange={(e) => handleInputChange("confirmPassword", e.target.value)}
-                  className="col-span-3"
-                  autoComplete="new-password"
-                />
-              </div>
-            </div>
-          </div>
-          
-          <DialogFooter>
-            <Button 
-              type="button" 
-              variant="outline" 
-              onClick={() => onOpenChange(false)}
-              disabled={isLoading}
-            >
-              Cancelar
-            </Button>
-            <Button 
-              type="submit" 
-              disabled={isLoading || !formData.name.trim() || !formData.email.trim()}
-            >
-              {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {isLoading ? "Salvando..." : "Salvar"}
-            </Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
+            <DialogFooter className="flex-shrink-0 pt-4">
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={() => onOpenChange(false)}
+                disabled={isLoading}
+              >
+                Cancelar
+              </Button>
+              <Button 
+                type="submit" 
+                disabled={isLoading || !formData.name.trim() || !formData.email.trim()}
+              >
+                {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                {isLoading ? "Salvando..." : "Salvar"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+      <BuyCreditsDialog open={isBuyCreditsOpen} onOpenChange={setIsBuyCreditsOpen} />
+      <ChangePlanDialog open={isChangePlanOpen} onOpenChange={setIsChangePlanOpen} currentUserPlan={user.plan} />
+      <CancelPlanDialog 
+        open={isCancelPlanOpen} 
+        onOpenChange={setIsCancelPlanOpen} 
+        planExpiresAt={user.planExpiresAt} 
+      />
+    </>
   )
 }

@@ -16,15 +16,19 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { useToast } from "@/components/ui/use-toast"
-import { PlusCircle, Wand2, Settings } from "lucide-react"
+import { PlusCircle, Wand2 } from "lucide-react"
 import { getAvailableSystems } from "@/lib/rpg-systems"
 
 interface CreateCampaignDialogProps {
   children?: React.ReactNode
+  canCreate: boolean
+  canCreateWithCredits: boolean
+  userPlan: string
 }
 
-export function CreateCampaignDialog({ children }: CreateCampaignDialogProps) {
+export function CreateCampaignDialog({ children, canCreate, canCreateWithCredits, userPlan }: CreateCampaignDialogProps) {
   const [open, setOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [formData, setFormData] = useState({
@@ -36,12 +40,17 @@ export function CreateCampaignDialog({ children }: CreateCampaignDialogProps) {
   const { toast } = useToast()
   const availableSystems = getAvailableSystems()
 
+  const isButtonDisabled = userPlan === 'FREE' ? !canCreate : (userPlan === 'CREDITS' ? !canCreateWithCredits : false);
+  const tooltipMessage = userPlan === 'FREE' 
+    ? "Você atingiu o limite de 1 campanha para o plano Gratuito."
+    : "Você não tem créditos suficientes para criar uma nova campanha.";
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
 
     try {
-      const response = await fetch("/api/campaigns/create", {
+      const response = await fetch("/api/campaigns", { // Corrigido para a rota principal
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -90,16 +99,31 @@ export function CreateCampaignDialog({ children }: CreateCampaignDialogProps) {
     }
   }
 
+  const triggerButton = children || (
+    <Button disabled={isButtonDisabled}>
+      <PlusCircle className="mr-2 h-4 w-4" />
+      {userPlan === 'CREDITS' ? 'Criar (1 Crédito)' : 'Criar Nova Campanha'}
+    </Button>
+  );
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        {children || (
-          <Button>
-            <PlusCircle className="mr-2 h-4 w-4" />
-            Criar Nova Campanha
-          </Button>
-        )}
-      </DialogTrigger>
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div onClick={(e) => isButtonDisabled && e.preventDefault()}>
+              <DialogTrigger asChild disabled={isButtonDisabled}>
+                {triggerButton}
+              </DialogTrigger>
+            </div>
+          </TooltipTrigger>
+          {isButtonDisabled && (
+            <TooltipContent>
+              <p>{tooltipMessage}</p>
+            </TooltipContent>
+          )}
+        </Tooltip>
+      </TooltipProvider>
       <DialogContent className="sm:max-w-[425px]">
         <form onSubmit={handleSubmit}>
           <DialogHeader>

@@ -18,6 +18,10 @@ interface UserMenuProps {
   user: {
     name: string
     email: string
+    plan: string
+    credits: number
+    planStartedAt: Date | null
+    planExpiresAt: Date | null
   }
 }
 

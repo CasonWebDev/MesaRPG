@@ -7,6 +7,12 @@ declare module 'next-auth' {
       email: string
       name?: string | null
       role: string
+      plan: string
+      credits: number
+      planStartedAt?: string | null
+      planExpiresAt?: string | null
+      justDowngraded?: boolean
+      subscriptionStatus?: string | null; // Adicionado
     }
   }
 
@@ -15,11 +21,23 @@ declare module 'next-auth' {
     email: string
     name?: string | null
     role: string
+    plan: string
+    credits: number
+    planStartedAt?: Date | null
+    planExpiresAt?: Date | null
+    justDowngraded?: boolean
+    subscriptionStatus?: string | null; // Adicionado
   }
 }
 
 declare module 'next-auth/jwt' {
   interface JWT {
     role: string
+    plan: string
+    credits: number
+    planStartedAt?: string | null
+    planExpiresAt?: string | null
+    justDowngraded?: boolean
+    subscriptionStatus?: string | null; // Adicionado
   }
 }
