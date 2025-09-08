@@ -4,15 +4,21 @@ steps:
     args: ['install', '--legacy-peer-deps']
     id: 'npm-install'
 
-  # 2. Roda as migrações do Prisma no banco de dados
-  - name: 'gcr.io/cloud-builders/npm'
-    entrypoint: 'bash'
-    args:
-      - '-c'
-      - 'npx prisma migrate deploy'
-    secretEnv: ['DATABASE_URL']
+  # 2. Roda as migrações do Prisma no banco de dados, com o proxy do Cloud SQL
+  - name: 'gcr.io/google-appengine/exec-wrapper'
     id: 'prisma-migrate'
     waitFor: ['npm-install']
+    secretEnv: ['DATABASE_URL']
+    args:
+    - '-i'
+    - 'gcr.io/cloud-builders/npm'
+    - '-s'
+    - 'cason-471520:us-central1:mesarpg-db-instance'
+    - '--'
+    - 'npx'
+    - 'prisma'
+    - 'migrate'
+    - 'deploy'
 
   # 3. Faz o build e o deploy no Cloud Run
   - name: 'gcr.io/cloud-builders/gcloud'
