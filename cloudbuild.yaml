@@ -1,0 +1,37 @@
+steps:
+  # 1. Instala as dependências do projeto
+  - name: 'gcr.io/cloud-builders/npm'
+    args: ['install', '--legacy-peer-deps']
+    id: 'npm-install'
+
+  # 2. Roda as migrações do Prisma no banco de dados
+  - name: 'gcr.io/cloud-builders/npm'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - 'npx prisma migrate deploy'
+    secretEnv: ['DATABASE_URL']
+    id: 'prisma-migrate'
+    waitFor: ['npm-install']
+
+  # 3. Faz o build e o deploy no Cloud Run
+  - name: 'gcr.io/cloud-builders/gcloud'
+    args:
+      - 'run'
+      - 'deploy'
+      - 'mesarpg' # Nome do serviço no Cloud Run
+      - '--source'
+      - '.'
+      - '--region'
+      - 'us-central1'
+      - '--allow-unauthenticated' # Permite acesso público ao site
+      - '--add-cloudsql-instances=cason-471520:us-central1:mesarpg-db-instance'
+      - '--update-secrets=DATABASE_URL=DATABASE_URL:latest,NEXTAUTH_SECRET=NEXTAUTH_SECRET:latest'
+    id: 'cloud-run-deploy'
+    waitFor: ['prisma-migrate']
+
+# Disponibiliza os segredos do Secret Manager para os passos acima
+availableSecrets:
+  secretManager:
+    - versionName: projects/$PROJECT_ID/secrets/DATABASE_URL/versions/latest
+      env: 'DATABASE_URL'
