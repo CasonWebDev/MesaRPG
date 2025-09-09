@@ -18,16 +18,25 @@ CLOUD_SQL_PID=$!
 echo "Waiting for Cloud SQL Proxy to be ready..."
 sleep 10
 
-# Extract database credentials from DATABASE_URL
+# Parse DATABASE_URL to extract credentials
 # DATABASE_URL format: postgresql://user:password@host/database?host=/cloudsql/instance
-DB_USER=$(echo $DATABASE_URL | sed 's|postgresql://\([^:]*\):.*|\1|')
-DB_PASSWORD=$(echo $DATABASE_URL | sed 's|postgresql://[^:]*:\([^@]*\)@.*|\1|')
-DB_NAME=$(echo $DATABASE_URL | sed 's|.*/\([^?]*\).*|\1|')
+echo "Parsing DATABASE_URL..."
+DB_USER=$(echo "$DATABASE_URL" | sed -n 's|postgresql://\([^:]*\):.*|\1|p')
+DB_PASSWORD=$(echo "$DATABASE_URL" | sed -n 's|postgresql://[^:]*:\([^@]*\)@.*|\1|p')
+DB_NAME=$(echo "$DATABASE_URL" | sed -n 's|.*/\([^?]*\).*|\1|p')
+
+echo "Extracted credentials:"
+echo "User: $DB_USER"
+echo "Database: $DB_NAME"
+echo "Password length: ${#DB_PASSWORD}"
 
 # Test database connection using local proxy
 echo "Testing database connection..."
-PGPASSWORD=$DB_PASSWORD psql -h 127.0.0.1 -p 5432 -U $DB_USER -d $DB_NAME -c "SELECT 1;" || {
+PGPASSWORD="$DB_PASSWORD" psql -h 127.0.0.1 -p 5432 -U "$DB_USER" -d "$DB_NAME" -c "SELECT 1;" || {
   echo "Database connection failed"
+  echo "Debug info:"
+  echo "DATABASE_URL: $DATABASE_URL"
+  echo "Command: PGPASSWORD=*** psql -h 127.0.0.1 -p 5432 -U $DB_USER -d $DB_NAME -c 'SELECT 1;'"
   kill $CLOUD_SQL_PID
   exit 1
 }
