@@ -15,8 +15,7 @@ steps:
     - '-s'
     - 'cason-471520:us-central1:mesarpg-db-instance'
     - '--'
-    - 'npx'
-    - 'prisma'
+    - './node_modules/.bin/prisma'
     - 'migrate'
     - 'deploy'
 
