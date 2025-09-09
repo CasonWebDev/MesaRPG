@@ -55,8 +55,8 @@ COPY public ./public
 # Build the application
 RUN npm run build
 
-# Clean up dev dependencies after build
-RUN npm prune --production
+# Clean up dev dependencies after build (with legacy peer deps to avoid conflicts)
+RUN npm prune --production --legacy-peer-deps
 
 # Expose port
 EXPOSE 3000
