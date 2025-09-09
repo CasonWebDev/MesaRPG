@@ -46,7 +46,6 @@ ENV NEXTAUTH_URL=$NEXTAUTH_URL
 
 # Copy dependencies from deps stage
 COPY --from=deps /app/node_modules ./node_modules
-COPY --from=deps /app/.next/cache ./.next/cache
 
 # Copy source code
 COPY . .
