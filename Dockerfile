@@ -19,9 +19,6 @@ RUN npm install --legacy-peer-deps --only=production
 # Generate Prisma client
 RUN npx prisma generate
 
-# Copy environment file
-COPY .env.production .env.local
-
 # Copy source code
 COPY . .
 
