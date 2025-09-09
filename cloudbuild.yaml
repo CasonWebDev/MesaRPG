@@ -65,6 +65,8 @@ steps:
       - 'STRIPE_ANNUAL_PLAN_PRICE_ID=$$STRIPE_ANNUAL_PLAN_PRICE_ID'
       - '--build-arg'
       - 'STRIPE_LIFETIME_PLAN_PRICE_ID=$$STRIPE_LIFETIME_PLAN_PRICE_ID'
+      - '--build-arg'
+      - 'ALTCHA_HMAC_KEY=$$STRIPE_LIFETIME_PLAN_PRICE_ID'
       - '-t'
       - 'gcr.io/$PROJECT_ID/mesarpg:$COMMIT_SHA'
       - '-t'
@@ -80,6 +82,7 @@ steps:
       - 'STRIPE_MONTHLY_PLAN_PRICE_ID'
       - 'STRIPE_ANNUAL_PLAN_PRICE_ID'
       - 'STRIPE_LIFETIME_PLAN_PRICE_ID'
+      - 'ALTCHA_HMAC_KEY'
 
   # 4. Push da imagem para Container Registry
   - name: 'gcr.io/cloud-builders/docker'
@@ -124,6 +127,8 @@ steps:
       - 'STRIPE_ANNUAL_PLAN_PRICE_ID=STRIPE_ANNUAL_PLAN_PRICE_ID:latest'
       - '--set-secrets'
       - 'STRIPE_LIFETIME_PLAN_PRICE_ID=STRIPE_LIFETIME_PLAN_PRICE_ID:latest'
+      - '--set-secrets'
+      - 'ALTCHA_HMAC_KEY=ALTCHA_HMAC_KEY:latest'
       - '--memory'
       - '2Gi'
       - '--cpu'
@@ -162,6 +167,8 @@ availableSecrets:
       env: 'STRIPE_ANNUAL_PLAN_PRICE_ID'
     - versionName: projects/$PROJECT_ID/secrets/STRIPE_LIFETIME_PLAN_PRICE_ID/versions/latest
       env: 'STRIPE_LIFETIME_PLAN_PRICE_ID'
+    - versionName: projects/$PROJECT_ID/secrets/ALTCHA_HMAC_KEY/versions/latest
+      env: 'ALTCHA_HMAC_KEY'
 
 options:
   logging: CLOUD_LOGGING_ONLY
