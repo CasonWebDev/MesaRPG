@@ -33,7 +33,6 @@ COPY lib ./lib
 COPY hooks ./hooks
 COPY types ./types
 COPY public ./public
-COPY .env.production ./.env.local
 
 # Build the application
 RUN npm run build
