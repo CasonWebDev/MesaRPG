@@ -2,6 +2,15 @@
 set -e
 
 echo "Starting database migration process..."
+echo "Current environment variables:"
+echo "DATABASE_URL length: ${#DATABASE_URL}"
+echo "DATABASE_URL preview: ${DATABASE_URL:0:50}..."
+
+# Check if DATABASE_URL is available
+if [ -z "$DATABASE_URL" ]; then
+  echo "ERROR: DATABASE_URL environment variable is not set!"
+  exit 1
+fi
 
 # Install required packages
 apt-get update && apt-get install -y wget postgresql-client
@@ -21,12 +30,17 @@ sleep 10
 # Parse DATABASE_URL to extract credentials
 # DATABASE_URL format: postgresql://user:password@host/database?host=/cloudsql/instance
 echo "Parsing DATABASE_URL..."
-DB_USER=$(echo "$DATABASE_URL" | sed -n 's|postgresql://\([^:]*\):.*|\1|p')
-DB_PASSWORD=$(echo "$DATABASE_URL" | sed -n 's|postgresql://[^:]*:\([^@]*\)@.*|\1|p')
-DB_NAME=$(echo "$DATABASE_URL" | sed -n 's|.*/\([^?]*\).*|\1|p')
+echo "Full DATABASE_URL: $DATABASE_URL"
+
+# Extract using cut command (more reliable)
+DB_USER=$(echo "$DATABASE_URL" | cut -d'/' -f3 | cut -d':' -f1)
+DB_PASSWORD=$(echo "$DATABASE_URL" | cut -d':' -f3 | cut -d'@' -f1)
+DB_HOST=$(echo "$DATABASE_URL" | cut -d'@' -f2 | cut -d'/' -f1)
+DB_NAME=$(echo "$DATABASE_URL" | cut -d'/' -f4 | cut -d'?' -f1)
 
 echo "Extracted credentials:"
 echo "User: $DB_USER"
+echo "Host: $DB_HOST"
 echo "Database: $DB_NAME"
 echo "Password length: ${#DB_PASSWORD}"
 
