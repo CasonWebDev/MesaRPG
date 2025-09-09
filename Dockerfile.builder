@@ -13,7 +13,7 @@ WORKDIR /workspace
 COPY . .
 
 # Instala dependências
-RUN npm install
+RUN npm install --legacy-peer-deps
 
 # Gera client do Prisma
 RUN npx prisma generate
