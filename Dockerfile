@@ -13,9 +13,8 @@ FROM base AS deps
 COPY package*.json ./
 COPY prisma ./prisma
 
-# Install dependencies with cache mount
-RUN --mount=type=cache,target=/root/.npm \
-    npm ci --legacy-peer-deps --frozen-lockfile
+# Install dependencies (optimized for Cloud Build)
+RUN npm ci --legacy-peer-deps --frozen-lockfile --prefer-offline --no-audit --no-fund
 
 # Generate Prisma client
 RUN npx prisma generate
