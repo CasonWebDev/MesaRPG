@@ -85,7 +85,7 @@ steps:
       - '--add-cloudsql-instances'
       - 'cason-471520:us-central1:mesarpg-db-instance'
       - '--set-secrets'
-      - 'DATABASE_URL=DATABASE_URL:latest,NEXTAUTH_SECRET=NEXTAUTH_SECRET:latest'
+      - 'DATABASE_URL=DATABASE_URL:latest,NEXTAUTH_SECRET=NEXTAUTH_SECRET:latest,STRIPE_SECRET_KEY:latest,NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY:latest,STRIPE_WEBHOOK_SECRET:latest,STRIPE_MONTHLY_PLAN_PRICE_ID:latest,STRIPE_ANNUAL_PLAN_PRICE_ID:latest,STRIPE_LIFETIME_PLAN_PRICE_ID:latest'
       - '--memory'
       - '1Gi'
       - '--cpu'
