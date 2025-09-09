@@ -1,10 +1,5 @@
 steps:
-  # 1. Instalar dependências
-  - name: 'gcr.io/cloud-builders/npm'
-    args: ['install', '--legacy-peer-deps']
-    id: 'install-deps'
-
-  # 2. Executar migrações do Prisma com Cloud SQL Proxy
+  # 1. Executar migrações do Prisma com Cloud SQL Proxy (em paralelo)
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk:latest'
     entrypoint: 'bash'
     args:
@@ -44,10 +39,9 @@ steps:
         echo "Migrations completed successfully!" &&
         kill $$PROXY_PID
     id: 'run-migrations'
-    waitFor: ['install-deps']
     secretEnv: ['DATABASE_URL']
 
-  # 3. Construir imagem da aplicação
+  # 2. Construir imagem da aplicação (em paralelo)
   - name: 'gcr.io/cloud-builders/docker'
     args:
       - 'build'
@@ -75,7 +69,6 @@ steps:
       - 'gcr.io/$PROJECT_ID/mesarpg:latest'
       - '.'
     id: 'build-app'
-    waitFor: ['run-migrations']
     secretEnv: 
       - 'NEXTAUTH_SECRET'
       - 'STRIPE_SECRET_KEY'
@@ -87,7 +80,7 @@ steps:
       - 'ALTCHA_HMAC_KEY'
       - 'NEXTAUTH_URL'
 
-  # 4. Push da imagem para Container Registry
+  # 3. Push da imagem para Container Registry
   - name: 'gcr.io/cloud-builders/docker'
     args:
       - 'push'
@@ -95,7 +88,7 @@ steps:
     id: 'push-app'
     waitFor: ['build-app']
 
-  # 5. Deploy no Cloud Run
+  # 4. Deploy no Cloud Run
   - name: 'gcr.io/cloud-builders/gcloud'
     args:
       - 'run'
@@ -147,7 +140,7 @@ steps:
       - '--max-instances'
       - '10'
     id: 'deploy-cloud-run'
-    waitFor: ['push-app']
+    waitFor: ['push-app', 'run-migrations']
 
 images:
   - 'gcr.io/$PROJECT_ID/mesarpg:$COMMIT_SHA'
@@ -180,3 +173,6 @@ availableSecrets:
 options:
   logging: CLOUD_LOGGING_ONLY
   machineType: 'E2_HIGHCPU_8'
+  diskSizeGb: '100'
+  requestedVerifyOption: VERIFIED
+  sourceProvenanceHash: ['SHA256']

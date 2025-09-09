@@ -1,11 +1,27 @@
-# Use Node.js 18
-FROM node:18-slim
+# Multi-stage build for optimization
+FROM node:18-alpine AS base
 
-# Install OpenSSL and other dependencies
-RUN apt-get update -y && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
+# Install dependencies needed for native modules
+RUN apk add --no-cache libc6-compat openssl
 
-# Set working directory
 WORKDIR /app
+
+# Dependencies stage
+FROM base AS deps
+
+# Copy package files
+COPY package*.json ./
+COPY prisma ./prisma
+
+# Install dependencies with cache mount
+RUN --mount=type=cache,target=/root/.npm \
+    npm ci --legacy-peer-deps --frozen-lockfile
+
+# Generate Prisma client
+RUN npx prisma generate
+
+# Builder stage
+FROM base AS builder
 
 # Accept build arguments
 ARG NEXTAUTH_SECRET
@@ -29,42 +45,38 @@ ENV STRIPE_LIFETIME_PLAN_PRICE_ID=$STRIPE_LIFETIME_PLAN_PRICE_ID
 ENV ALTCHA_HMAC_KEY=$ALTCHA_HMAC_KEY
 ENV NEXTAUTH_URL=$NEXTAUTH_URL
 
-# Copy package files first
-COPY package*.json ./
+# Copy dependencies from deps stage
+COPY --from=deps /app/node_modules ./node_modules
+COPY --from=deps /app/.next/cache ./.next/cache
 
-# Copy prisma schema before installing dependencies
-COPY prisma ./prisma
-
-# Install ALL dependencies (including dev dependencies for build)
-RUN npm install --legacy-peer-deps
-
-# Generate Prisma client
-RUN npx prisma generate
-
-# Copy configuration files
-COPY next.config.mjs ./
-COPY tailwind.config.js ./
-COPY postcss.config.mjs ./
-COPY tsconfig.json ./
-COPY components.json ./
-
-# Copy source code and components
-COPY app ./app
-COPY components ./components
-COPY lib ./lib
-COPY hooks ./hooks
-COPY types ./types
-COPY public ./public
-COPY server.js ./
+# Copy source code
+COPY . .
 
 # Build the application
 RUN npm run build
 
-# Clean up dev dependencies after build (with legacy peer deps to avoid conflicts)
-RUN npm prune --production --legacy-peer-deps
+# Production stage
+FROM base AS runner
 
-# Expose port
+ENV NODE_ENV=production
+ENV PORT=3000
+
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 nextjs
+
+# Copy the public folder
+COPY --from=builder /app/public ./public
+
+# Create .next directory and set permissions
+RUN mkdir .next
+RUN chown nextjs:nodejs .next
+
+# Copy the built application
+COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+
+USER nextjs
+
 EXPOSE 3000
 
-# Start the application
-CMD ["npm", "start"]
+CMD ["node", "server.js"]
