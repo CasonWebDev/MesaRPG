@@ -43,6 +43,8 @@ steps:
 
   # 2. Construir imagem da aplicação (em paralelo)
   - name: 'gcr.io/cloud-builders/docker'
+    env:
+      - 'DOCKER_BUILDKIT=1'
     args:
       - 'build'
       - '--build-arg'
@@ -63,6 +65,8 @@ steps:
       - 'ALTCHA_HMAC_KEY=$$ALTCHA_HMAC_KEY'
       - '--build-arg'
       - 'NEXTAUTH_URL=$$NEXTAUTH_URL'
+      - '--cache-from'
+      - 'gcr.io/$PROJECT_ID/mesarpg:latest'
       - '-t'
       - 'gcr.io/$PROJECT_ID/mesarpg:$COMMIT_SHA'
       - '-t'
