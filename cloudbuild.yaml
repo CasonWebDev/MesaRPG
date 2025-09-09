@@ -51,6 +51,20 @@ steps:
   - name: 'gcr.io/cloud-builders/docker'
     args:
       - 'build'
+      - '--build-arg'
+      - 'NEXTAUTH_SECRET=$$NEXTAUTH_SECRET'
+      - '--build-arg'
+      - 'STRIPE_SECRET_KEY=$$STRIPE_SECRET_KEY'
+      - '--build-arg'
+      - 'NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=$$NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY'
+      - '--build-arg'
+      - 'STRIPE_WEBHOOK_SECRET=$$STRIPE_WEBHOOK_SECRET'
+      - '--build-arg'
+      - 'STRIPE_MONTHLY_PLAN_PRICE_ID=$$STRIPE_MONTHLY_PLAN_PRICE_ID'
+      - '--build-arg'
+      - 'STRIPE_ANNUAL_PLAN_PRICE_ID=$$STRIPE_ANNUAL_PLAN_PRICE_ID'
+      - '--build-arg'
+      - 'STRIPE_LIFETIME_PLAN_PRICE_ID=$$STRIPE_LIFETIME_PLAN_PRICE_ID'
       - '-t'
       - 'gcr.io/$PROJECT_ID/mesarpg:$COMMIT_SHA'
       - '-t'
@@ -58,6 +72,14 @@ steps:
       - '.'
     id: 'build-app'
     waitFor: ['run-migrations']
+    secretEnv: 
+      - 'NEXTAUTH_SECRET'
+      - 'STRIPE_SECRET_KEY'
+      - 'NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY'
+      - 'STRIPE_WEBHOOK_SECRET'
+      - 'STRIPE_MONTHLY_PLAN_PRICE_ID'
+      - 'STRIPE_ANNUAL_PLAN_PRICE_ID'
+      - 'STRIPE_LIFETIME_PLAN_PRICE_ID'
 
   # 4. Push da imagem para Container Registry
   - name: 'gcr.io/cloud-builders/docker'
@@ -102,6 +124,20 @@ availableSecrets:
   secretManager:
     - versionName: projects/$PROJECT_ID/secrets/DATABASE_URL/versions/latest
       env: 'DATABASE_URL'
+    - versionName: projects/$PROJECT_ID/secrets/NEXTAUTH_SECRET/versions/latest
+      env: 'NEXTAUTH_SECRET'
+    - versionName: projects/$PROJECT_ID/secrets/STRIPE_SECRET_KEY/versions/latest
+      env: 'STRIPE_SECRET_KEY'
+    - versionName: projects/$PROJECT_ID/secrets/NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY/versions/latest
+      env: 'NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY'
+    - versionName: projects/$PROJECT_ID/secrets/STRIPE_WEBHOOK_SECRET/versions/latest
+      env: 'STRIPE_WEBHOOK_SECRET'
+    - versionName: projects/$PROJECT_ID/secrets/STRIPE_MONTHLY_PLAN_PRICE_ID/versions/latest
+      env: 'STRIPE_MONTHLY_PLAN_PRICE_ID'
+    - versionName: projects/$PROJECT_ID/secrets/STRIPE_ANNUAL_PLAN_PRICE_ID/versions/latest
+      env: 'STRIPE_ANNUAL_PLAN_PRICE_ID'
+    - versionName: projects/$PROJECT_ID/secrets/STRIPE_LIFETIME_PLAN_PRICE_ID/versions/latest
+      env: 'STRIPE_LIFETIME_PLAN_PRICE_ID'
 
 options:
   logging: CLOUD_LOGGING_ONLY
