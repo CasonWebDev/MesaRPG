@@ -4,7 +4,7 @@ const next = require('next')
 const { initSocketServer, setSocketServer } = require('./lib/socket-bridge.js')
 
 const dev = process.env.NODE_ENV !== 'production'
-const hostname = 'localhost'
+const hostname = process.env.NODE_ENV === 'production' ? '0.0.0.0' : 'localhost'
 const port = parseInt(process.env.PORT, 10) || 3000
 
 const app = next({ dev, hostname, port })
@@ -31,7 +31,9 @@ app.prepare().then(() => {
       console.error(err)
       process.exit(1)
     })
-    .listen(port, () => {
+    .listen(port, hostname, () => {
       console.log(`> Ready on http://${hostname}:${port}`)
+      console.log(`> Environment: ${process.env.NODE_ENV}`)
+      console.log(`> Port: ${port}`)
     })
 })
