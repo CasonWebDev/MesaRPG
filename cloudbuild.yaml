@@ -4,23 +4,20 @@ steps:
     args: ['install', '--legacy-peer-deps']
     id: 'npm-install'
 
-  # 2. Roda as migrações do Prisma no banco de dados, com o proxy do Cloud SQL
-  - name: 'gcr.io/google-appengine/exec-wrapper'
+  # 2. Roda as migrações do Prisma via IP Privado
+  - name: 'gcr.io/cloud-builders/npm'
     id: 'prisma-migrate'
     waitFor: ['npm-install']
-    secretEnv: ['DATABASE_URL']
+    secretEnv: ['DATABASE_URL_PRIVATE']
+    entrypoint: 'npm'
     args:
-    - '-i'
-    - 'gcr.io/cloud-builders/npm'
-    - '-s'
-    - 'cason-471520:us-central1:mesarpg-db-instance'
-    - '--'
-    - 'npm'
-    - 'run'
-    - 'db:migrate'
+      - 'run'
+      - 'db:migrate'
 
   # 3. Faz o build e o deploy no Cloud Run
   - name: 'gcr.io/cloud-builders/gcloud'
+    id: 'cloud-run-deploy'
+    waitFor: ['prisma-migrate']
     args:
       - 'run'
       - 'deploy'
@@ -30,16 +27,14 @@ steps:
       - '--region'
       - 'us-central1'
       - '--allow-unauthenticated' # Permite acesso público ao site
-      - '--add-sql-instances=cason-471520:us-central1:mesarpg-db-instance'
+      - '--add-cloudsql-instances=cason-471520:us-central1:mesarpg-db-instance'
       - '--update-secrets=DATABASE_URL=DATABASE_URL:latest,NEXTAUTH_SECRET=NEXTAUTH_SECRET:latest'
-    id: 'cloud-run-deploy'
-    waitFor: ['prisma-migrate']
 
-# Disponibiliza os segredos do Secret Manager para os passos acima
+# Disponibiliza os segredos do Secret Manager para os passos de build
 availableSecrets:
   secretManager:
-    - versionName: projects/$PROJECT_ID/secrets/DATABASE_URL/versions/latest
-      env: 'DATABASE_URL'
+    - versionName: projects/$PROJECT_ID/secrets/DATABASE_URL_PRIVATE/versions/latest
+      env: 'DATABASE_URL_PRIVATE'
 
 options:
   logging: CLOUD_LOGGING_ONLY
