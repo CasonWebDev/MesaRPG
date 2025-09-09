@@ -51,6 +51,7 @@ COPY lib ./lib
 COPY hooks ./hooks
 COPY types ./types
 COPY public ./public
+COPY server.js ./
 
 # Build the application
 RUN npm run build
