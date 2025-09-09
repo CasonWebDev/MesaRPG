@@ -13,17 +13,33 @@ COPY package*.json ./
 # Copy prisma schema before installing dependencies
 COPY prisma ./prisma
 
-# Install dependencies with legacy peer deps
-RUN npm install --legacy-peer-deps --only=production
+# Install ALL dependencies (including dev dependencies for build)
+RUN npm install --legacy-peer-deps
 
 # Generate Prisma client
 RUN npx prisma generate
 
-# Copy source code
-COPY . .
+# Copy configuration files
+COPY next.config.mjs ./
+COPY tailwind.config.js ./
+COPY postcss.config.mjs ./
+COPY tsconfig.json ./
+COPY components.json ./
+
+# Copy source code and components
+COPY app ./app
+COPY components ./components
+COPY lib ./lib
+COPY hooks ./hooks
+COPY types ./types
+COPY public ./public
+COPY .env.production ./.env.local
 
 # Build the application
 RUN npm run build
+
+# Clean up dev dependencies after build
+RUN npm prune --production
 
 # Expose port
 EXPOSE 3000
