@@ -47,3 +47,5 @@ steps:
 
 images:
   - "gcr.io/$PROJECT_ID/mesa-app"
+options:
+  logging: CLOUD_LOGGING_ONLY
