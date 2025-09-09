@@ -15,9 +15,9 @@ steps:
     - '-s'
     - 'cason-471520:us-central1:mesarpg-db-instance'
     - '--'
-    - './node_modules/.bin/prisma'
-    - 'migrate'
-    - 'deploy'
+    - 'npm'
+    - 'run'
+    - 'db:migrate'
 
   # 3. Faz o build e o deploy no Cloud Run
   - name: 'gcr.io/cloud-builders/gcloud'
@@ -30,7 +30,7 @@ steps:
       - '--region'
       - 'us-central1'
       - '--allow-unauthenticated' # Permite acesso público ao site
-      - '--add-cloudsql-instances=cason-471520:us-central1:mesarpg-db-instance'
+      - '--add-sql-instances=cason-471520:us-central1:mesarpg-db-instance'
       - '--update-secrets=DATABASE_URL=DATABASE_URL:latest,NEXTAUTH_SECRET=NEXTAUTH_SECRET:latest'
     id: 'cloud-run-deploy'
     waitFor: ['prisma-migrate']
